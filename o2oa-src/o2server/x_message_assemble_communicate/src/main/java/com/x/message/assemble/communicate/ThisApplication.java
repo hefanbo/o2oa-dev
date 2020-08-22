@@ -30,6 +30,8 @@ public class ThisApplication {
 
 	public static final DingdingConsumeQueue dingdingConsumeQueue = new DingdingConsumeQueue();
 
+	public static final EmailNotificationConsumeQueue emailNotificationConsumeQueue = new EmailNotificationConsumeQueue();
+
 	public static final WeLinkConsumeQueue weLinkConsumeQueue = new WeLinkConsumeQueue();
 
 	public static final PmsInnerConsumeQueue pmsInnerConsumeQueue = new PmsInnerConsumeQueue();
@@ -79,6 +81,9 @@ public class ThisApplication {
 		}
 		if (Config.dingding().getEnable() && Config.dingding().getMessageEnable()) {
 			context().startQueue(dingdingConsumeQueue);
+		}
+		if (Config.emailNotification().getEnable()) {
+			context().startQueue(emailNotificationConsumeQueue);
 		}
 		if (BooleanUtils.isTrue(Config.pushConfig().getEnable())) {
 			context().startQueue(pmsInnerConsumeQueue);

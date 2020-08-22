@@ -64,6 +64,7 @@ public class Config {
 	public static final String PATH_CONFIG_WELINK = "config/welink.json";
 	public static final String PATH_CONFIG_ZHENGWUDINGDING = "config/zhengwuDingding.json";
 	public static final String PATH_CONFIG_QIYEWEIXIN = "config/qiyeweixin.json";
+	public static final String PATH_CONFIG_EMAILNOTIFICATION = "config/emailNotification.json";
 	public static final String PATH_CONFIG_MQ = "config/mq.json";
 	public static final String PATH_CONFIG_LOGLEVEL = "config/logLevel.json";
 	public static final String PATH_CONFIG_BINDLOGO = "config/bindLogo.png";
@@ -1095,6 +1096,23 @@ public class Config {
 			}
 		}
 		return instance().zhengwuDingding;
+	}
+
+	private EmailNotification emailNotification;
+
+	public static EmailNotification emailNotification() throws Exception {
+		if (null == instance().emailNotification) {
+			synchronized (Config.class) {
+				if (null == instance().emailNotification) {
+					EmailNotification obj = BaseTools.readConfigObject(PATH_CONFIG_EMAILNOTIFICATION, EmailNotification.class);
+					if (null == obj) {
+						obj = EmailNotification.defaultInstance();
+					}
+					instance().emailNotification = obj;
+				}
+			}
+		}
+		return instance().emailNotification;
 	}
 
 	private MQ mq;

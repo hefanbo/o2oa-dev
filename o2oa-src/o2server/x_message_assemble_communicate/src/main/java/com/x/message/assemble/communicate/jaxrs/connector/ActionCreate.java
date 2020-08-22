@@ -105,6 +105,9 @@ class ActionCreate extends BaseAction {
 					case MessageConnector.CONSUME_QIYEWEIXIN:
 						message = this.qiyeweixinMessage(effectivePerson, business, cpwi, instant);
 						break;
+					case MessageConnector.CONSUME_EMAILNOTIFICATION:
+						message = this.emailNotificationMessage(effectivePerson, business, cpwi, instant);
+						break;
 					case MessageConnector.CONSUME_CALENDAR:
 						message = this.calendarMessage(effectivePerson, business, cpwi, instant);
 						break;
@@ -168,6 +171,11 @@ class ActionCreate extends BaseAction {
 			case MessageConnector.CONSUME_QIYEWEIXIN:
 				if (Config.qiyeweixin().getEnable() && Config.qiyeweixin().getMessageEnable()) {
 					ThisApplication.qiyeweixinConsumeQueue.send(message);
+				}
+				break;
+			case MessageConnector.CONSUME_EMAILNOTIFICATION:
+				if (Config.emailNotification().getEnable()) {
+					ThisApplication.emailNotificationConsumeQueue.send(message);
 				}
 				break;
 			case MessageConnector.CONSUME_PMS_INNER:
@@ -280,6 +288,18 @@ class ActionCreate extends BaseAction {
 		message.setPerson(wi.getPerson());
 		message.setTitle(wi.getTitle());
 		message.setConsumer(MessageConnector.CONSUME_QIYEWEIXIN);
+		message.setConsumed(false);
+		message.setInstant(instant.getId());
+		return message;
+	}
+
+	private Message emailNotificationMessage(EffectivePerson effectivePerson, Business business, Wi wi, Instant instant) {
+		Message message = new Message();
+		message.setBody(Objects.toString(wi.getBody()));
+		message.setType(wi.getType());
+		message.setPerson(wi.getPerson());
+		message.setTitle(wi.getTitle());
+		message.setConsumer(MessageConnector.CONSUME_EMAILNOTIFICATION);
 		message.setConsumed(false);
 		message.setInstant(instant.getId());
 		return message;
