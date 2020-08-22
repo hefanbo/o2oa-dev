@@ -1,0 +1,15 @@
+/.idea/
+/coverage/
+/dest/
+/node_modules/
+npm-debug.log
+/test/
+**/test/
+/bak/
+**/*.min.js
+package-lock.json
+/.svn/
+/ftpconfig.js
+/gulpconfig.js
+ftpconfig.js
+gulpconfig.js
