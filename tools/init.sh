@@ -7,7 +7,7 @@ APT_SRC=http://mirrors.tuna.tsinghua.edu.cn/ubuntu
 #PROXY_SERVER=192.168.20.20
 #PROXY_PORT=1080
 
-sed -i 's/deb-src/#deb-src/g' /etc/apt/sources.list
+sed -i 's/^deb-src/#deb-src/g' /etc/apt/sources.list
 
 if [ -n "$APT_SRC" ]; then
   sed -i 's|^deb.*archive.ubuntu.com/ubuntu|deb '"$APT_SRC"'|g' /etc/apt/sources.list

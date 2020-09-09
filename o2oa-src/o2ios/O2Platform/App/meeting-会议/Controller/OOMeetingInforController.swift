@@ -77,50 +77,54 @@ class OOMeetingInforController: UIViewController {
     }
 
     func loadData() {
-        MBProgressHUD_JChat.showMessage(message: "loading...", toView: view)
-        all(viewModel.getMeetingsByYearAndMonth(Date()), viewModel.getMeetingByTheDay(Date())).then { (result) in
+        self.showLoading()
+        all(viewModel.getMeetingsByYearAndMonth(Date()), viewModel.getMeetingByTheDay(Date()))
+            .always {
+                self.hideLoading()
+                if self.tableView.mj_header.isRefreshing() {
+                    self.tableView.mj_header.endRefreshing()
+                }
+                //self.tableView.reloadData()
+            }
+        .then { (result) in
             DispatchQueue.main.async {
                 self.headerView.eventsByDate = result.0 as? [String: [OOMeetingInfo]]
                 self.viewModel.theMeetingsByDay.removeAll()
                 self.viewModel.theMeetingsByDay.append(contentsOf: result.1)
                 self.tableView.reloadData()
             }
-        }.always {
-            MBProgressHUD_JChat.hide(forView: self.view, animated: true)
-            if self.tableView.mj_header.isRefreshing() {
-                self.tableView.mj_header.endRefreshing()
-            }
-            //self.tableView.reloadData()
         }.catch { (myerror) in
             let customError = myerror as! OOAppError
-            MBProgressHUD_JChat.show(text: customError.failureReason ?? "", view: self.view)
+            self.showError(title: customError.failureReason ?? "")
         }
     }
 
 
     func loadCurrentMonthCalendar(_ theDate: Date?) {
-        MBProgressHUD_JChat.showMessage(message: "loading...", toView: view)
-        viewModel.getMeetingsByYearAndMonth(theDate ?? Date()).then { (resultDict) in
+        self.showLoading()
+        viewModel.getMeetingsByYearAndMonth(theDate ?? Date())
+            .always {
+                self.hideLoading()
+            }
+        .then { (resultDict) in
             self.headerView.eventsByDate = resultDict as? [String: [OOMeetingInfo]]
-        }.always {
-            MBProgressHUD_JChat.hide(forView: self.view, animated: true)
         }.catch { (myerror) in
             let customError = myerror as! OOAppError
-            MBProgressHUD_JChat.show(text: customError.failureReason ?? "", view: self.view)
+            self.showError(title:  customError.failureReason ?? "")
         }
     }
 
     func loadtheDayMeetingInfo(_ theDate: Date?) {
-        MBProgressHUD_JChat.showMessage(message: "loading...", toView: view)
-        viewModel.getMeetingByTheDay(theDate ?? Date()).then { (infos) in
+        self.showLoading()
+        viewModel.getMeetingByTheDay(theDate ?? Date()).always {
+            self.hideLoading()
+        }.then { (infos) in
             self.viewModel.theMeetingsByDay.removeAll()
             self.viewModel.theMeetingsByDay.append(contentsOf: infos)
             self.tableView.reloadData()
-        }.always {
-            MBProgressHUD_JChat.hide(forView: self.view, animated: true)
         }.catch { (myerror) in
             let customError = myerror as! OOAppError
-            MBProgressHUD_JChat.show(text: customError.failureReason ?? "", view: self.view)
+            self.showError(title:  customError.failureReason ?? "")
         }
     }
 
