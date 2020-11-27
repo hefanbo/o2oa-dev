@@ -205,6 +205,7 @@
 		B168BF4724F798790070329F /* libz.1.2.5.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = B168BF4624F7986C0070329F /* libz.1.2.5.tbd */; };
 		B169E3D421095EC9007156B3 /* Date+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B169E3D321095EC9007156B3 /* Date+Extension.swift */; };
 		B17126C121084A2F00369F15 /* calendar.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B17126C021084A2F00369F15 /* calendar.storyboard */; };
+		B1737EF525402E0100B487D6 /* O2PlatformTests1.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1737EF425402E0100B487D6 /* O2PlatformTests1.swift */; };
 		B1750078233C6908003DA7B9 /* BlockPan.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1750072233C6907003DA7B9 /* BlockPan.swift */; };
 		B1750079233C6908003DA7B9 /* BlockSwipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1750073233C6907003DA7B9 /* BlockSwipe.swift */; };
 		B175007A233C6908003DA7B9 /* BlockLongPress.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1750074233C6908003DA7B9 /* BlockLongPress.swift */; };
@@ -218,6 +219,8 @@
 		B1750087233C937E003DA7B9 /* IntExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1750086233C937E003DA7B9 /* IntExtensions.swift */; };
 		B1750089233C9B2C003DA7B9 /* Stack.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1750088233C9B2C003DA7B9 /* Stack.swift */; };
 		B17BF43022B23758009E36E0 /* SkinViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B17BF42F22B23758009E36E0 /* SkinViewController.swift */; };
+		B17DCCB32519A31900E9EE37 /* OOCalendarStoreViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B17DCCB22519A31900E9EE37 /* OOCalendarStoreViewController.swift */; };
+		B17DCCE32519BCC100E9EE37 /* CalendarStoreTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B17DCCE22519BCC100E9EE37 /* CalendarStoreTableViewCell.swift */; };
 		B183987D249AFF64001C6FAA /* IMLocationView.xib in Resources */ = {isa = PBXBuildFile; fileRef = B183987C249AFF64001C6FAA /* IMLocationView.xib */; };
 		B18398AD249B00AA001C6FAA /* IMLocationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B18398AC249B00AA001C6FAA /* IMLocationView.swift */; };
 		B18398B0249B079B001C6FAA /* IMLocationChooseController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B18398AE249B079B001C6FAA /* IMLocationChooseController.swift */; };
@@ -246,6 +249,7 @@
 		B1B0103023586B34002BF874 /* CFFileTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = B1B0102E23586B34002BF874 /* CFFileTableViewCell.xib */; };
 		B1B110E2223622C400775BEF /* O2BioLocalAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B110AB223622C400775BEF /* O2BioLocalAuth.swift */; };
 		B1B110E422363F7200775BEF /* BioAuthLoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B110E322363F7200775BEF /* BioAuthLoginViewController.swift */; };
+		B1B1303025021EAC003B99DF /* WorkInfoResData.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B1302F25021EAC003B99DF /* WorkInfoResData.swift */; };
 		B1B2148F216073B400D9CA7E /* ScanHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B21459216073B400D9CA7E /* ScanHelper.swift */; };
 		B1B214912160A69E00D9CA7E /* Tuling123API.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B214902160A69E00D9CA7E /* Tuling123API.swift */; };
 		B1B214932160A8A300D9CA7E /* TulingPostModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B214922160A8A300D9CA7E /* TulingPostModel.swift */; };
@@ -270,6 +274,7 @@
 		B1D1BC8F234C8349002025DA /* CloudFileCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D1BC8E234C8349002025DA /* CloudFileCell.swift */; };
 		B1D4AFED24B409A9004E648E /* AudioTouchButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1D4AFEC24B409A9004E648E /* AudioTouchButton.swift */; };
 		B1DA305F2282754500669418 /* QCalendarPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1DA305E2282754500669418 /* QCalendarPicker.swift */; };
+		B1DB0843252314F400EE6673 /* SecurityCheckManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1DB0842252314F400EE6673 /* SecurityCheckManager.swift */; };
 		B1DB6EA5237E6F2C00D7BA94 /* O2VersionInfoModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1DB6EA4237E6F2C00D7BA94 /* O2VersionInfoModel.swift */; };
 		B1DE853823602D36003C36E2 /* Languager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1DE853723602D36003C36E2 /* Languager.swift */; };
 		B1DE8564236030E2003C36E2 /* Bundle+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1DE8563236030E2003C36E2 /* Bundle+Extension.swift */; };
@@ -1082,6 +1087,13 @@
 			remoteGlobalIDString = AEBB0C4F19DFB746403D40BC540276A3;
 			remoteInfo = JTCalendar;
 		};
+		B1737EF725402E0100B487D6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E4B8870B1D9D477A002E1A46 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E4B887121D9D477A002E1A46;
+			remoteInfo = O2Platform;
+		};
 		B1AE4E6321A3F53A00183FCD /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = E4E7755421017DB4006ED7FC /* Pods.xcodeproj */;
@@ -1375,6 +1387,9 @@
 		B168BF4624F7986C0070329F /* libz.1.2.5.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.1.2.5.tbd; path = usr/lib/libz.1.2.5.tbd; sourceTree = SDKROOT; };
 		B169E3D321095EC9007156B3 /* Date+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Extension.swift"; sourceTree = "<group>"; };
 		B17126C021084A2F00369F15 /* calendar.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = calendar.storyboard; sourceTree = "<group>"; };
+		B1737EF225402E0100B487D6 /* O2PlatformTests1.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = O2PlatformTests1.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B1737EF425402E0100B487D6 /* O2PlatformTests1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = O2PlatformTests1.swift; sourceTree = "<group>"; };
+		B1737EF625402E0100B487D6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B1750072233C6907003DA7B9 /* BlockPan.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlockPan.swift; sourceTree = "<group>"; };
 		B1750073233C6907003DA7B9 /* BlockSwipe.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlockSwipe.swift; sourceTree = "<group>"; };
 		B1750074233C6908003DA7B9 /* BlockLongPress.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlockLongPress.swift; sourceTree = "<group>"; };
@@ -1388,6 +1403,8 @@
 		B1750086233C937E003DA7B9 /* IntExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntExtensions.swift; sourceTree = "<group>"; };
 		B1750088233C9B2C003DA7B9 /* Stack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stack.swift; sourceTree = "<group>"; };
 		B17BF42F22B23758009E36E0 /* SkinViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkinViewController.swift; sourceTree = "<group>"; };
+		B17DCCB22519A31900E9EE37 /* OOCalendarStoreViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OOCalendarStoreViewController.swift; sourceTree = "<group>"; };
+		B17DCCE22519BCC100E9EE37 /* CalendarStoreTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarStoreTableViewCell.swift; sourceTree = "<group>"; };
 		B183987C249AFF64001C6FAA /* IMLocationView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = IMLocationView.xib; sourceTree = "<group>"; };
 		B18398AC249B00AA001C6FAA /* IMLocationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMLocationView.swift; sourceTree = "<group>"; };
 		B18398AE249B079B001C6FAA /* IMLocationChooseController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMLocationChooseController.swift; sourceTree = "<group>"; };
@@ -1414,6 +1431,7 @@
 		B1B0102E23586B34002BF874 /* CFFileTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CFFileTableViewCell.xib; sourceTree = "<group>"; };
 		B1B110AB223622C400775BEF /* O2BioLocalAuth.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = O2BioLocalAuth.swift; sourceTree = "<group>"; };
 		B1B110E322363F7200775BEF /* BioAuthLoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BioAuthLoginViewController.swift; sourceTree = "<group>"; };
+		B1B1302F25021EAC003B99DF /* WorkInfoResData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkInfoResData.swift; sourceTree = "<group>"; };
 		B1B21459216073B400D9CA7E /* ScanHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScanHelper.swift; sourceTree = "<group>"; };
 		B1B214902160A69E00D9CA7E /* Tuling123API.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tuling123API.swift; sourceTree = "<group>"; };
 		B1B214922160A8A300D9CA7E /* TulingPostModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TulingPostModel.swift; sourceTree = "<group>"; };
@@ -1438,6 +1456,7 @@
 		B1D1BC8E234C8349002025DA /* CloudFileCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudFileCell.swift; sourceTree = "<group>"; };
 		B1D4AFEC24B409A9004E648E /* AudioTouchButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioTouchButton.swift; sourceTree = "<group>"; };
 		B1DA305E2282754500669418 /* QCalendarPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QCalendarPicker.swift; sourceTree = "<group>"; };
+		B1DB0842252314F400EE6673 /* SecurityCheckManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityCheckManager.swift; sourceTree = "<group>"; };
 		B1DB6EA4237E6F2C00D7BA94 /* O2VersionInfoModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = O2VersionInfoModel.swift; sourceTree = "<group>"; };
 		B1DE853723602D36003C36E2 /* Languager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Languager.swift; sourceTree = "<group>"; };
 		B1DE8563236030E2003C36E2 /* Bundle+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Extension.swift"; sourceTree = "<group>"; };
@@ -2051,6 +2070,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		B1737EEF25402E0100B487D6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E4B887101D9D477A002E1A46 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -2589,6 +2615,15 @@
 			path = BDSClientLib;
 			sourceTree = "<group>";
 		};
+		B1737EF325402E0100B487D6 /* O2PlatformTests1 */ = {
+			isa = PBXGroup;
+			children = (
+				B1737EF425402E0100B487D6 /* O2PlatformTests1.swift */,
+				B1737EF625402E0100B487D6 /* Info.plist */,
+			);
+			path = O2PlatformTests1;
+			sourceTree = "<group>";
+		};
 		B18FFF3323756B24001B2887 /* JpushAPI */ = {
 			isa = PBXGroup;
 			children = (
@@ -2632,6 +2667,7 @@
 				B15F812B21102BBF00B81F35 /* DatePickerView.xib */,
 				B1089692210AD8E400F02267 /* CalendarEventTableViewCell.swift */,
 				B1C1905C2114410D00935829 /* CalendarTableViewCell.swift */,
+				B17DCCE22519BCC100E9EE37 /* CalendarStoreTableViewCell.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -2644,6 +2680,7 @@
 				B1C19024211437E200935829 /* OOCalendarLeftMenuController.swift */,
 				B1FAE9E02115F95800981A25 /* OOCalendarViewController.swift */,
 				8840A991248CDC9D005970A5 /* OOCalendarEditRemarkViewController.swift */,
+				B17DCCB22519A31900E9EE37 /* OOCalendarStoreViewController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -2805,6 +2842,7 @@
 				B14E0C0B2484F1F0008AF6AE /* O2WebsocketManager.swift */,
 				B15BE0BD2499BCEF008CD1DB /* O2RecordVoiceManager.swift */,
 				B15BE110249A6002008CD1DB /* AudioPlayerManager.swift */,
+				B1DB0842252314F400EE6673 /* SecurityCheckManager.swift */,
 			);
 			path = Manager;
 			sourceTree = "<group>";
@@ -3574,6 +3612,7 @@
 				E4E7755421017DB4006ED7FC /* Pods.xcodeproj */,
 				E4B889061D9D4C7E002E1A46 /* podfile */,
 				E4B887151D9D477A002E1A46 /* O2Platform */,
+				B1737EF325402E0100B487D6 /* O2PlatformTests1 */,
 				E4B887141D9D477A002E1A46 /* Products */,
 				6FDEB623AC8AB47096221625 /* Pods */,
 				E034A62CD4B3425CCABD0B19 /* Frameworks */,
@@ -3586,6 +3625,7 @@
 				E4B887131D9D477A002E1A46 /* O2Platform.app */,
 				E4B887271D9D477A002E1A46 /* O2PlatformTests.xctest */,
 				E4B887321D9D477A002E1A46 /* O2PlatformUITests.xctest */,
+				B1737EF225402E0100B487D6 /* O2PlatformTests1.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -4111,6 +4151,7 @@
 				E4B888501D9D48F1002E1A46 /* TodoTask.swift */,
 				B1908E1322685E8F00D75632 /* O2WebViewModels.swift */,
 				B1BA42B724133AC40081CED8 /* TaskCreateData.swift */,
+				B1B1302F25021EAC003B99DF /* WorkInfoResData.swift */,
 			);
 			path = m;
 			sourceTree = "<group>";
@@ -4314,6 +4355,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		B1737EF125402E0100B487D6 /* O2PlatformTests1 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B1737F2925402E0100B487D6 /* Build configuration list for PBXNativeTarget "O2PlatformTests1" */;
+			buildPhases = (
+				B1737EEE25402E0100B487D6 /* Sources */,
+				B1737EEF25402E0100B487D6 /* Frameworks */,
+				B1737EF025402E0100B487D6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B1737EF825402E0100B487D6 /* PBXTargetDependency */,
+			);
+			name = O2PlatformTests1;
+			productName = O2PlatformTests1;
+			productReference = B1737EF225402E0100B487D6 /* O2PlatformTests1.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		E4B887121D9D477A002E1A46 /* O2Platform */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = E4B8873B1D9D477A002E1A46 /* Build configuration list for PBXNativeTarget "O2Platform" */;
@@ -4379,10 +4438,17 @@
 		E4B8870B1D9D477A002E1A46 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 0930;
+				DefaultBuildSystemTypeForWorkspace = Original;
+				LastSwiftUpdateCheck = 1200;
 				LastUpgradeCheck = 0930;
 				ORGANIZATIONNAME = zoneland;
 				TargetAttributes = {
+					B1737EF125402E0100B487D6 = {
+						CreatedOnToolsVersion = 12.0;
+						DevelopmentTeam = NYCN9K3RXF;
+						ProvisioningStyle = Automatic;
+						TestTargetID = E4B887121D9D477A002E1A46;
+					};
 					E4B887121D9D477A002E1A46 = {
 						CreatedOnToolsVersion = 8.0;
 						DevelopmentTeam = NTDRU2P6T4;
@@ -4439,6 +4505,7 @@
 				E4B887121D9D477A002E1A46 /* O2Platform */,
 				E4B887261D9D477A002E1A46 /* O2PlatformTests */,
 				E4B887311D9D477A002E1A46 /* O2PlatformUITests */,
+				B1737EF125402E0100B487D6 /* O2PlatformTests1 */,
 			);
 		};
 /* End PBXProject section */
@@ -4727,6 +4794,13 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B1737EF025402E0100B487D6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E4B887111D9D477A002E1A46 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -5106,6 +5180,14 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		B1737EEE25402E0100B487D6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B1737EF525402E0100B487D6 /* O2PlatformTests1.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E4B8870F1D9D477A002E1A46 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -5292,6 +5374,7 @@
 				E4B888811D9D48F1002E1A46 /* CellTouchImageView.swift in Sources */,
 				E40E246320B55064009F8BE7 /* OOAttanceCheckinHeaderView.swift in Sources */,
 				B107453921A52BC70015F1B2 /* PersonalAPI.swift in Sources */,
+				B17DCCB32519A31900E9EE37 /* OOCalendarStoreViewController.swift in Sources */,
 				E4B8885D1D9D48F1002E1A46 /* O2App.swift in Sources */,
 				E4B697C120764A2D0062F6E8 /* O2DesktopAPI.swift in Sources */,
 				B165CD6A2242093500373B66 /* CoverVerticalFromTopAnimation.swift in Sources */,
@@ -5410,6 +5493,7 @@
 				09E02E8C1F16319600579887 /* Haneke.swift in Sources */,
 				B1E95F7B23750CC2004876B7 /* CloudFilePreviewController.swift in Sources */,
 				E4C24C52208D7EDE00E426B0 /* OOContactUnitHeader.swift in Sources */,
+				B1B1303025021EAC003B99DF /* WorkInfoResData.swift in Sources */,
 				B165CD662242093500373B66 /* OOAlertViewController.swift in Sources */,
 				E428AF5D20AC1CD100D964B9 /* OOAttandanceViewModel.swift in Sources */,
 				E4B8886F1D9D48F1002E1A46 /* ContactHomeViewController.swift in Sources */,
@@ -5606,6 +5690,7 @@
 				E45DA8F91DADC06400E0735D /* TaskBarButtonItem.swift in Sources */,
 				E4B888A21D9D48F1002E1A46 /* MJRefreshAutoStateFooter.m in Sources */,
 				B12FD1DF2283D5B700E636BA /* ThemePicker.swift in Sources */,
+				B17DCCE32519BCC100E9EE37 /* CalendarStoreTableViewCell.swift in Sources */,
 				B165CD622242093500373B66 /* BackgroundView.swift in Sources */,
 				B1912BE72146154700AB36E6 /* OOAIViewModel.swift in Sources */,
 				E4C24C4E208D7EDE00E426B0 /* OOContactSearchCell.swift in Sources */,
@@ -5633,6 +5718,7 @@
 				B15F8129210EF15E00B81F35 /* OOCalendarEventViewController.swift in Sources */,
 				09E02E941F16319600579887 /* String+Haneke.swift in Sources */,
 				E40E24B420B7DA3C009F8BE7 /* OOMeetingModels.swift in Sources */,
+				B1DB0843252314F400EE6673 /* SecurityCheckManager.swift in Sources */,
 				E4B888F61D9D48F1002E1A46 /* Application.swift in Sources */,
 				E4C24C3F208D7EDE00E426B0 /* OOContactSearchViewModel.swift in Sources */,
 				E4B697FC2076520E0062F6E8 /* OOFileModels.swift in Sources */,
@@ -5692,6 +5778,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		B1737EF825402E0100B487D6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E4B887121D9D477A002E1A46 /* O2Platform */;
+			targetProxy = B1737EF725402E0100B487D6 /* PBXContainerItemProxy */;
+		};
 		E4B887291D9D477A002E1A46 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = E4B887121D9D477A002E1A46 /* O2Platform */;
@@ -5731,6 +5822,55 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		B1737EF925402E0100B487D6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = NYCN9K3RXF;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				INFOPLIST_FILE = O2PlatformTests1/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = net.muliba.O2PlatformTests1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/O2Platform.app/O2Platform";
+			};
+			name = Debug;
+		};
+		B1737EFA25402E0100B487D6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = NYCN9K3RXF;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				INFOPLIST_FILE = O2PlatformTests1/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = net.muliba.O2PlatformTests1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/O2Platform.app/O2Platform";
+			};
+			name = Release;
+		};
 		E4B887391D9D477A002E1A46 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -6146,6 +6286,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		B1737F2925402E0100B487D6 /* Build configuration list for PBXNativeTarget "O2PlatformTests1" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B1737EF925402E0100B487D6 /* Debug */,
+				B1737EFA25402E0100B487D6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		E4B8870E1D9D477A002E1A46 /* Build configuration list for PBXProject "O2Platform" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

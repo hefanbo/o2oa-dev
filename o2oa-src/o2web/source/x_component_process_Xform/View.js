@@ -25,8 +25,8 @@ MWF.xApplication.process.Xform.View = MWF.APPView =  new Class({
     },
     reload: function(){
         if (this.view){
-            if (this.view.loadViewRes) if (this.view.loadViewRes.isRunning()) this.view.loadViewRes.cancel();
-            if (this.view.getViewRes) if (this.view.getViewRes.isRunning()) this.view.getViewRes.cancel();
+            if (this.view.loadViewRes && this.view.loadViewRes.res) if (this.view.loadViewRes.res.isRunning()) this.view.loadViewRes.res.cancel();
+            if (this.view.getViewRes && this.view.getViewRes.res) if (this.view.getViewRes.res.isRunning()) this.view.getViewRes.res.cancel();
         }
         this.node.empty();
         this.loadView();
@@ -50,6 +50,8 @@ MWF.xApplication.process.Xform.View = MWF.APPView =  new Class({
             }.bind(this));
         }
 
+
+
         //var data = JSON.parse(this.json.data);
         var viewJson = {
             "application": (this.json.queryView) ? this.json.queryView.appName : this.json.application,
@@ -60,7 +62,9 @@ MWF.xApplication.process.Xform.View = MWF.APPView =  new Class({
             "itemStyles": this.json.itemStyles,
             "isExpand": this.json.isExpand || "no",
             "showActionbar" : this.json.actionbar === "show",
-            "filter": filter
+            "filter": filter,
+            "defaultSelectedScript" : this.json.defaultSelectedScript ? this.json.defaultSelectedScript.code : null,
+            "selectedAbleScript" : this.json.selectedAbleScript ? this.json.selectedAbleScript.code : null
         };
 
         //MWF.xDesktop.requireApp("query.Query", "Viewer", function(){

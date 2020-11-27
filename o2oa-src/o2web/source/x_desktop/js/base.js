@@ -57,9 +57,11 @@ o2.xDesktop.requireApp = function (module, clazz, callback, async) {
             app.appId = (options.appId) ? options.appId : ((appNamespace.options.multitask) ? appName + "-" + (new o2.widget.UUID()) : appName);
             app.options.appId = app.appId;
 
-            if (!taskitem) taskitem = layout.desktop.createTaskItem(app);
-            app.taskitem = taskitem;
-            app.taskitem.app = app;
+            if (layout.desktop.createTaskItem){
+                if (!taskitem) taskitem = layout.desktop.createTaskItem(app);
+                app.taskitem = taskitem;
+                app.taskitem.app = app;
+            }
 
             app.isLoadApplication = true;
             app.load(!notCurrent);
@@ -72,10 +74,11 @@ o2.xDesktop.requireApp = function (module, clazz, callback, async) {
                 layout.desktop.apps[app.appId] = app;
             }
 
-            layout.desktop.appArr.push(app);
-            layout.desktop.appCurrentList.push(app);
-            if (!notCurrent) layout.desktop.currentApp = app;
-
+            //if (layout.desktop.appArr){
+                layout.desktop.appArr.push(app);
+                layout.desktop.appCurrentList.push(app);
+                if (!notCurrent) layout.desktop.currentApp = app;
+            //}
             //app.taskitem = new MWF.xDesktop.Layout.Taskitem(app, this);
         } else {
             app.load(true);
@@ -91,9 +94,9 @@ o2.xDesktop.requireApp = function (module, clazz, callback, async) {
     var _openWorkAndroid = function (options) {
         if (window.o2android && window.o2android.openO2Work) {
             if (options.workId) {
-                window.o2android.openO2Work(options.workId, "", options.title || "");
+                window.o2android.openO2Work(options.workId, "", options.title || options.docTitle || "");
             } else if (options.workCompletedId) {
-                window.o2android.openO2Work("", options.workCompletedId, options.title || "");
+                window.o2android.openO2Work("", options.workCompletedId, options.title || options.docTitle || "");
             }
             return true;
         }
@@ -105,13 +108,13 @@ o2.xDesktop.requireApp = function (module, clazz, callback, async) {
                 window.webkit.messageHandlers.openO2Work.postMessage({
                     "work": options.workId,
                     "workCompleted": "",
-                    "title": options.title || ""
+                    "title": options.title || options.docTitle || ""
                 });
             } else if (options.workCompletedId) {
                 window.webkit.messageHandlers.openO2Work.postMessage({
                     "work": "",
                     "workCompleted": options.workCompletedId,
-                    "title": options.title || ""
+                    "title": options.title || options.docTitle || ""
                 });
             }
             return true;
@@ -221,6 +224,64 @@ o2.xDesktop.requireApp = function (module, clazz, callback, async) {
         }
     };
 
+    var _openApplicationPC = function (appNames, options, statusObj) {
+        delete options.docTitle;
+        var par = "app=" + encodeURIComponent(appNames) + "&status=" + encodeURIComponent((statusObj) ? JSON.encode(statusObj) : "") + "&option=" + encodeURIComponent((options) ? JSON.encode(options) : "");
+        switch (appNames) {
+            case "process.Work":
+                var url = "../x_desktop/work.html".toURI();
+                if (options.draft){
+                    url = "../x_desktop/app.html?" + par;
+                }else{
+                    url = url.setData(options).toString();
+                }
+
+                // if (options.workId) {
+                //     url += "?workid=" + options.workId+"&"+par;
+                //     //window.location = o2.filterUrl("../x_desktop/workmobilewithaction.html?workid=" + options.workId + ((layout.debugger) ? "&debugger" : "") + "&redirectlink=" + redirectlink);
+                // } else if (options.workCompletedId) {
+                //     url += "?workcompletedid=" + options.workCompletedId+"&"+par;;
+                //     //window.location = o2.filterUrl("../x_desktop/workmobilewithaction.html?workcompletedid=" + options.workCompletedId + ((layout.debugger) ? "&debugger" : "") + "&redirectlink=" + redirectlink);
+                // } else if (options.draftId){
+                //     url += "?draftId=" + options.draftId+"&"+par;;
+                // } else if (options.draft) {
+                //     url = "../x_desktop/app.html?" + par;
+                // }
+                var job = (options.jobid || options.jobId || options.job);
+                if (job) url += ((url.indexOf("?")!=-1) ? "&" : "?") + "jobid="+job;
+                url +=((layout.debugger) ? "&debugger" : "");
+
+                if (layout.app.$openWithSelf) {
+                    return window.location = o2.filterUrl(url);
+                } else {
+                    return window.open(o2.filterUrl(url), par);
+                }
+                break;
+            // case "cms.Document":
+            //     _openDocument(appNames, options, statusObj);
+            //     break;
+            // case "cms.Module":
+            //     _openCms(appNames, options, statusObj);
+            //     break;
+            // case "Meeting":
+            //     _openMeeting(appNames, options, statusObj);
+            //     break;
+            // case "Calendar":
+            //     _openCalendar(appNames, options, statusObj);
+            //     break;
+            // case "process.TaskCenter":
+            //     _openTaskCenter(appNames, options, statusObj);
+            //     break;
+            default:
+                //var par = "app=" + encodeURIComponent(appNames) + "&status=" + encodeURIComponent((statusObj) ? JSON.encode(statusObj) : "") + "&option=" + encodeURIComponent((options) ? JSON.encode(options) : "");
+                if (layout.app.$openWithSelf) {
+                    return window.location = o2.filterUrl("../x_desktop/app.html?" + par + ((layout.debugger) ? "&debugger" : ""));
+                } else {
+                    return window.open(o2.filterUrl("../x_desktop/app.html?" + par + ((layout.debugger) ? "&debugger" : "")), par);
+                }
+        }
+    };
+
     layout.openApplication = function (e, appNames, options, statusObj, inBrowser, taskitem, notCurrent) {
         if (appNames.substring(0, 4) === "@url") {
             var url = appNames.replace(/\@url\:/i, "");
@@ -235,13 +296,14 @@ o2.xDesktop.requireApp = function (module, clazz, callback, async) {
             if (layout.mobile) {
                 _openApplicationMobile(appNames, options, statusObj);
             } else {
-                var par = "app=" + encodeURIComponent(appNames) + "&status=" + encodeURIComponent((statusObj) ? JSON.encode(statusObj) : "") + "&option=" + encodeURIComponent((options) ? JSON.encode(options) : "");
-
-                if (layout.app.$openWithSelf) {
-                    return window.location = o2.filterUrl("../x_desktop/app.html?" + par + ((layout.debugger) ? "&debugger" : ""));
-                } else {
-                    return window.open(o2.filterUrl("../x_desktop/app.html?" + par + ((layout.debugger) ? "&debugger" : "")), par);
-                }
+                return _openApplicationPC(appNames, options, statusObj);
+                // var par = "app=" + encodeURIComponent(appNames) + "&status=" + encodeURIComponent((statusObj) ? JSON.encode(statusObj) : "") + "&option=" + encodeURIComponent((options) ? JSON.encode(options) : "");
+                //
+                // if (layout.app.$openWithSelf) {
+                //     return window.location = o2.filterUrl("../x_desktop/app.html?" + par + ((layout.debugger) ? "&debugger" : ""));
+                // } else {
+                //     return window.open(o2.filterUrl("../x_desktop/app.html?" + par + ((layout.debugger) ? "&debugger" : "")), par);
+                // }
             }
         } else {
             var appPath = appNames.split(".");
@@ -344,7 +406,6 @@ o2.addReady(function () {
             loadingNode.destroy();
             loadingNode = null;
         }
-
     };
     var _loadProgressBar = function (complete) {
         if (loadingNode) {
@@ -362,6 +423,239 @@ o2.addReady(function () {
         }
     };
 
+    var _setLayoutService = function(service, center){
+        layout.serviceAddressList = service;
+        layout.centerServer = center;
+        layout.desktop.serviceAddressList = service;
+        layout.desktop.centerServer = center;
+    };
+    var _getDistribute = function (callback) {
+
+        if (layout.config.app_protocol === "auto") {
+            layout.config.app_protocol = window.location.protocol;
+        }
+
+        if (layout.config.configMapping && (layout.config.configMapping[window.location.host] || layout.config.configMapping[window.location.hostname])){
+            var mapping = layout.config.configMapping[window.location.host] || layout.config.configMapping[window.location.hostname];
+            if (mapping.servers){
+                layout.serviceAddressList = mapping.servers;
+                layout.desktop.serviceAddressList = mapping.servers;
+                if (mapping.center) center = (o2.typeOf(mapping.center)==="array") ? mapping.center[0] : mapping.center;
+                layout.centerServer = center;
+                layout.desktop.centerServer = center;
+                if (callback) callback();
+            }else{
+                if (mapping.center) layout.config.center = (o2.typeOf(mapping.center)==="array") ? mapping.center : [mapping.center];
+                o2.xDesktop.getServiceAddress(layout.config, function (service, center) {
+                    _setLayoutService(service, center);
+                    _loadProgressBar();
+                    if (callback) callback();
+                }.bind(this));
+            }
+        }else{
+            o2.xDesktop.getServiceAddress(layout.config, function (service, center) {
+                _setLayoutService(service, center);
+                _loadProgressBar();
+                if (callback) callback();
+            }.bind(this));
+        }
+
+    };
+
+    var _load = function () {
+        var _loadApp = function (json) {
+            //用户已经登录
+            if (json){
+                layout.user = json.data;
+                layout.session = layout.session || {};
+                layout.session.user = json.data;
+                layout.session.token = json.data.token;
+                layout.desktop.session = layout.session;
+            }
+
+            _loadProgressBar(true);
+            while (layout.readys && layout.readys.length) {
+                console.log("load app ...")
+                layout.readys.shift().apply(window);
+            }
+        };
+
+        //修改支持x-token
+        var uri = new URI(window.location.href);
+        var options = uri.get("data");
+        if (options["x-token"]) {
+            Cookie.write("x-token", options["x-token"]);
+        }
+
+        layout.sessionPromise = new Promise(function(resolve, reject){
+            o2.Actions.get("x_organization_assemble_authentication").getAuthentication(function (json) {
+                if (resolve) resolve(json.data);
+            }.bind(this), function (xhr, text, error) {
+                if (reject) reject({"xhr": xhr, "text": text, "error": error});
+            }.bind(this));
+        });
+
+        // layout.sessionPromise = {
+        //     "resolveList": [],
+        //     "rejectList": [],
+        //     "init": function(resolve, reject){
+        //         if (resolve) this.resolveList.push(resolve);
+        //         if (reject) this.rejectList.push(reject);
+        //         this.status = "pending";
+        //         this.resolveReturn = this;
+        //
+        //         //先判断用户是否登录
+        //         console.log("layout.sessionPromise.init")
+        //         o2.Actions.get("x_organization_assemble_authentication").getAuthentication(function (json) {
+        //             this.status = "fulfilled";
+        //             this.resolveReturn = json.data;
+        //             this.runResolve(this.resolveReturn);
+        //         }.bind(this), function (xhr, text, error) {
+        //             this.status = "rejected";
+        //             this.resolveReturn = {"xhr": xhr, "text": text, "error": error};
+        //             this.runReject(this.resolveReturn);
+        //         }.bind(this));
+        //     },
+        //     "runResolve": function(json){
+        //         while (this.resolveList.length){
+        //             var r = this.resolveList.shift()(this.resolveReturn);
+        //             if (r) this.resolveReturn = r;
+        //         }
+        //     },
+        //     "runReject": function(json){
+        //         while (this.rejectList.length){
+        //             var r = this.rejectList.shift()(json);
+        //             if (r) this.resolveReturn = r;
+        //         }
+        //     },
+        //     "then": function(resolve, reject){
+        //         if (resolve) this.resolveList.push(resolve);
+        //         if (reject) this.rejectList.push(reject);
+        //         switch (this.status){
+        //             case "fulfilled":
+        //                 this.runResolve();
+        //                 break;
+        //             case "rejected":
+        //                 this.runReject();
+        //                 break;
+        //             default:
+        //             //nothing
+        //         }
+        //         return this;
+        //     }
+        // }
+
+        layout.sessionPromise.then(function(data){
+            //已经登录
+            layout.user = data;
+            layout.session = layout.session || {};
+            layout.session.user = data;
+            layout.session.token = data.token;
+            layout.desktop.session = layout.session;
+            //_loadApp();
+        }, function(){
+            //允许匿名访问
+            if (layout.anonymous) {
+                var data = { name: "anonymous", roleList: [] };
+                layout.user = data;
+                layout.session = layout.session || {};
+                layout.session.user = data;
+                layout.session.token = data.token;
+                layout.desktop.session = layout.session;
+                //_loadApp();
+            } else {
+                _loadProgressBar(true);
+                if (layout.yqwx) {
+                    layout.openLoginQywx();
+                } else {
+                    layout.openLogin();
+                }
+            }
+        });
+        _loadApp();
+
+        // //先判断用户是否登录
+        // o2.Actions.get("x_organization_assemble_authentication").getAuthentication(function (json) {
+        //     //已经登录
+        //     //_loadProgressBar();
+        //
+        //     layout.user = json.data;
+        //     layout.session = layout.session || {};
+        //     layout.session.user = json.data;
+        //     layout.session.token = json.data.token;
+        //     layout.desktop.session = layout.session;
+        //
+        //     //_loadApp(json);
+        // }.bind(this), function (json) {
+        //     //_loadProgressBar();
+        //     //允许匿名访问
+        //     if (layout.anonymous) {
+        //         //_loadProgressBar(true);
+        //         // _loadApp({
+        //         //     data : {
+        //         //         user: "anonymous",
+        //         //         session: {
+        //         //             user: {
+        //         //                 name: "anonymous",
+        //         //                 roleList: []
+        //         //             }
+        //         //         }
+        //         //     }
+        //         // });
+        //     } else {
+        //         _loadProgressBar(true);
+        //         if (layout.yqwx) {
+        //             layout.openLoginQywx();
+        //         } else {
+        //             layout.openLogin();
+        //         }
+        //     }
+        // });
+
+
+
+        layout.openLogin = function () {
+            layout.desktop.type = "app";
+            layout.app = null;
+            var content = $("appContent") || $("layout");
+            if (content) content.empty();
+            layout.authentication = new o2.xDesktop.Authentication({
+                "style": "flat",
+                "onLogin": _load.bind(layout)
+            });
+            layout.authentication.loadLogin(document.body);
+            var loadingNode = $("browser_loading");
+            if (loadingNode) loadingNode.fade("out");
+        };
+
+        layout.openLoginQywx = function () {
+            console.log("开始login。。。。。。。。。。。。。");
+            var uri = locate.href.toURI();
+
+            console.log("执行单点。。。。。。。。。。");
+            var action = new MWF.xDesktop.Actions.RestActions("", "x_organization_assemble_authentication", "");
+            action.getActions = function (actionCallback) {
+                this.actions = { "sso": { "uri": "/jaxrs/qiyeweixin/code/{code}", "method": "GET" } };
+                if (actionCallback) actionCallback();
+            };
+            action.invoke({
+                "name": "sso", "async": true, "parameter": { "code": uri.getData("code") }, "success": function (json) {
+                    console.log("单点成功。");
+                    console.log(json);
+                    //基础数据。。。。
+                    layout.session.user = json.data;
+                    //
+                    _load();
+
+                }.bind(this), "failure": function (xhr, text, error) {
+                    var n = document.getElementById("loaddingArea");
+                    if (n) { n.destroy(); }
+                    document.id("layout").set("html", "<div>企业微信单点异常！</div>")
+                }.bind(this)
+            });
+        };
+    };
+
     //异步载入必要模块
     layout.config = null;
     var configLoaded = false;
@@ -371,7 +665,7 @@ o2.addReady(function () {
 
     if (o2.session.isDebugger && (o2.session.isMobile || layout.mobile)) o2.load("../o2_lib/eruda/eruda.js");
 
-    o2.load(lp, function () {
+    var loadModuls = function () {
         _loadProgressBar();
         lpLoaded = true;
 
@@ -385,9 +679,13 @@ o2.addReady(function () {
                 _loadProgressBar();
             }
         });
+    }
 
-        //if (configLoaded && lpLoaded && commonLoaded) _getDistribute(function () { _load(); });
-    });
+    if (!o2.LP){
+        o2.load(lp, loadModuls);
+    }else{
+        loadModuls();
+    }
 
     o2.getJSON("../x_desktop/res/config/config.json", function (config) {
         _loadProgressBar();
@@ -395,180 +693,4 @@ o2.addReady(function () {
         configLoaded = true;
         if (configLoaded && commonLoaded && lpLoaded) _getDistribute(function () { _load(); });
     });
-
-    var _getDistribute = function (callback) {
-        if (layout.config.app_protocol === "auto") {
-            layout.config.app_protocol = window.location.protocol;
-        }
-        o2.xDesktop.getServiceAddress(layout.config, function (service, center) {
-            layout.serviceAddressList = service;
-            layout.centerServer = center;
-            layout.desktop.serviceAddressList = service;
-            layout.desktop.centerServer = center;
-            _loadProgressBar();
-            if (callback) callback();
-        }.bind(this));
-    };
-
-    var _load = function () {
-        var _loadApp = function (json) {
-            //用户已经登录
-            layout.user = json.data;
-            //layout.session = {};
-            layout.session.user = json.data;
-            layout.session.token = json.data.token;
-            layout.desktop.session = layout.session;
-            //(function (layout) {
-                // var _loadResource = function (callback) {
-                //     // var isLoadedA = false;
-                //     // var isLoadedB = false;
-                //     //var isLoadedC = false;
-                //
-                //     var modules = [
-                //         "o2.widget._base",
-                //         "o2.xDesktop._base"
-                //     ];
-                //     //o2.xDesktop.requireApp("Common", "", null, false);
-                //     //var _check = function () { if (isLoadedA && isLoadedB) if (callback) callback(); };
-                //
-                //     //o2.load(["../o2_lib/mootools/plugin/mBox.min.js"], function () { _loadProgressBar(); isLoadedA = true; _check(); });
-                //     // o2.require("o2.widget.Common", function () {
-                //     //     _loadProgressBar();
-                //     o2.require(modules, {
-                //         "onSuccess": function () {
-                //             _loadProgressBar();
-                //             if (callback) callback();
-                //             //o2.requireApp("Common", "", function () { _loadProgressBar(); isLoadedB = true; _check(); })
-                //         },
-                //         "onEvery": function () {
-                //             _loadProgressBar();
-                //         }
-                //     });
-                //     // });
-                // };
-
-            //    var _loadContent = function () {
-                    //_loadResource(function () {
-                        _loadProgressBar(true);
-                        while (layout.readys && layout.readys.length) {
-                            layout.readys.shift().apply(window);
-                        }
-
-                    //});
-            //    };
-
-            //    _loadContent();
-            //})(layout);
-        };
-
-        //修改支持x-token
-        var uri = new URI(window.location.href);
-        var options = uri.get("data");
-        if (options["x-token"]) {
-            Cookie.write("x-token", options["x-token"]);
-        }
-
-        //先判断用户是否登录
-        o2.Actions.get("x_organization_assemble_authentication").getAuthentication(function (json) {
-            //已经登录
-            _loadProgressBar();
-            _loadApp(json);
-        }.bind(this), function (json) {
-            _loadProgressBar();
-            //允许匿名访问
-            if (layout.anonymous) {
-                _loadProgressBar(true);
-                _loadApp({
-                    data : {
-                        user: "anonymous",
-                        session: {
-                            user: {
-                                name: "anonymous",
-                                roleList: []
-                            }
-                        }
-                    }
-                });
-            } else {
-                //用户未经登录
-                //打开登录页面
-                // var _loadResource = function (callback) {
-                //     var isLoadedA = false;
-                //     var isLoadedB = false;
-                //     //var isLoadedC = false;
-                //
-                //     //var lp = o2.session.path+"/lp/"+o2.language+".js";
-                //     var modules = [
-                //         "o2.xDesktop.desktopInit"
-                //     ];
-                //     //o2.xDesktop.requireApp("Common", "", null, false);
-                //     var _check = function () { if (isLoadedA && isLoadedB) if (callback) callback(); };
-                //
-                //     o2.load(["../o2_lib/mootools/plugin/mBox.min.js"], function () { _loadProgressBar(); isLoadedA = true; _check(); });
-                //     o2.require("o2.widget.Common", function () {
-                //         _loadProgressBar();
-                //         o2.require(modules, {
-                //             "onSuccess": function () {
-                //                 o2.requireApp("Common", "", function () { isLoadedB = true; _check(); })
-                //             },
-                //             "onEvery": function () {
-                //                 _loadProgressBar();
-                //             }
-                //         });
-                //     });
-                // };
-                //_loadResource(function () {
-                    _loadProgressBar(true);
-                    if (layout.yqwx) {
-                        layout.openLoginQywx();
-                    } else {
-                        layout.openLogin();
-                    }
-                //});
-            }
-        });
-
-        layout.openLogin = function () {
-        //    o2.require("o2.widget.Common", null, false);
-        //    o2.require("o2.xDesktop.Authentication", function () {
-                layout.authentication = new o2.xDesktop.Authentication({
-                    "style": "flat",
-                    "onLogin": _load.bind(layout)
-                });
-                layout.authentication.loadLogin(document.body);
-                var loadingNode = $("browser_loading");
-                if (loadingNode) loadingNode.fade("out");
-        //    });
-        };
-
-        layout.openLoginQywx = function () {
-            console.log("开始login。。。。。。。。。。。。。");
-            var uri = locate.href.toURI();
-
-        //    MWF.require("MWF.xDesktop.Actions.RestActions", function () {
-                console.log("执行单点。。。。。。。。。。");
-                var action = new MWF.xDesktop.Actions.RestActions("", "x_organization_assemble_authentication", "");
-                action.getActions = function (actionCallback) {
-                    this.actions = { "sso": { "uri": "/jaxrs/qiyeweixin/code/{code}", "method": "GET" } };
-                    if (actionCallback) actionCallback();
-                };
-                action.invoke({
-                    "name": "sso", "async": true, "parameter": { "code": uri.getData("code") }, "success": function (json) {
-                        console.log("单点成功。");
-                        console.log(json);
-                        //基础数据。。。。
-                        layout.session.user = json.data;
-                        //
-                        _load();
-
-                    }.bind(this), "failure": function (xhr, text, error) {
-                        var n = document.getElementById("loaddingArea");
-                        if (n) { n.destroy(); }
-                        document.id("layout").set("html", "<div>企业微信单点异常！</div>")
-                    }.bind(this)
-                });
-        //    });
-        };
-
-    };
 });

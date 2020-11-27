@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>o2oa</groupId>
 	<artifactId>o2server</artifactId>
-	<version>5</version>
+	<version>5.3</version>
 	<packaging>pom</packaging>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -29,7 +29,6 @@
 		<module>x_meeting_core_entity</module>
 		<module>x_message_core_entity</module>
 		<module>x_mind_core_entity</module>
-		<module>x_okr_core_entity</module>
 		<module>x_organization_core_entity</module>
 		<module>x_portal_core_entity</module>
 		<module>x_processplatform_core_entity</module>
@@ -50,7 +49,6 @@
 		<module>x_meeting_assemble_control</module>
 		<module>x_message_assemble_communicate</module>
 		<module>x_mind_assemble_control</module>
-		<module>x_okr_assemble_control</module>
 		<module>x_organization_assemble_authentication</module>
 		<module>x_organization_assemble_control</module>
 		<module>x_organization_assemble_express</module>
@@ -129,6 +127,10 @@
 			<artifactId>commons-text</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-compress</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-server</artifactId>
 		</dependency>
@@ -143,6 +145,10 @@
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-quickstart</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-proxy</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.google.zxing</groupId>
@@ -338,6 +344,10 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-email</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>javax.activation</groupId>
+			<artifactId>activation</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -522,6 +532,11 @@
 				<version>3.0</version>
 			</dependency>
 			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-compress</artifactId>
+				<version>1.20</version>
+			</dependency>
+			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-server</artifactId>
 				<version>9.4.20.v20190813</version>
@@ -540,6 +555,11 @@
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-quickstart</artifactId>
 				<version>9.4.20.v20190813</version>
+			</dependency>
+			<dependency>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-proxy</artifactId>
+				<version>9.4.31.v20200723</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.zxing</groupId>
@@ -810,7 +830,7 @@
 			<dependency>
 				<groupId>com.alibaba</groupId>
 				<artifactId>druid</artifactId>
-				<version>1.1.23</version>
+				<version>1.1.22</version>
 			</dependency>
 			<dependency>
 				<groupId>com.itextpdf</groupId>
@@ -838,149 +858,149 @@
 				<version>1.5</version>
 			</dependency>
 			<dependency>
+				<groupId>javax.activation</groupId>
+				<artifactId>activation</artifactId>
+				<version>1.1.1</version>
+			</dependency>
+			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_base_core_project</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_attendance_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_bbs_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_calendar_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_cms_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_cms_core_express</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_component_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_file_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_general_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_hotpic_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_meeting_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_message_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_mind_core_entity</artifactId>
-				<version>5</version>
-			</dependency>
-			<dependency>
-				<groupId>o2oa</groupId>
-				<artifactId>x_okr_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_organization_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_jpush_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_organization_core_express</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_portal_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_processplatform_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_processplatform_core_express</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_query_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_query_core_express</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_report_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_strategydeploy_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_strategydeploy_assemble_control</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_program_center</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_program_center_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_teamwork_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 			<dependency>
 				<groupId>o2oa</groupId>
 				<artifactId>x_workschedu_core_entity</artifactId>
-				<version>5</version>
+				<version>5.3</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -997,4 +1017,10 @@
 			</snapshots>
 		</repository>
 	</repositories>
+	<distributionManagement>
+		<repository>
+			<id>o2oa-release</id>
+			<url>http://maven.o2oa.net/repository/o2oa-release/</url>
+		</repository>
+	</distributionManagement>
 </project>

@@ -1,5 +1,7 @@
 package com.x.processplatform.service.processing;
 
+import org.apache.commons.lang3.BooleanUtils;
+
 import com.x.base.core.project.Context;
 import com.x.base.core.project.cache.CacheManager;
 import com.x.base.core.project.config.Config;
@@ -8,16 +10,14 @@ import com.x.base.core.project.message.MessageConnector;
 import com.x.processplatform.service.processing.processor.embed.SyncEmbedQueue;
 import com.x.processplatform.service.processing.processor.invoke.SyncJaxrsInvokeQueue;
 import com.x.processplatform.service.processing.processor.invoke.SyncJaxwsInvokeQueue;
-import com.x.processplatform.service.processing.schedule.Combine;
 import com.x.processplatform.service.processing.schedule.DeleteDraft;
 import com.x.processplatform.service.processing.schedule.Expire;
 import com.x.processplatform.service.processing.schedule.LogLongDetained;
+import com.x.processplatform.service.processing.schedule.Merge;
 import com.x.processplatform.service.processing.schedule.PassExpired;
 import com.x.processplatform.service.processing.schedule.TouchDelay;
 import com.x.processplatform.service.processing.schedule.TouchDetained;
 import com.x.processplatform.service.processing.schedule.Urge;
-
-import org.apache.commons.lang3.BooleanUtils;
 
 public class ThisApplication {
 
@@ -33,6 +33,12 @@ public class ThisApplication {
 
 	public static final SyncEmbedQueue syncEmbedQueue = new SyncEmbedQueue();
 
+	private static ProcessingToProcessingSignalStack processingToProcessingSignalStack = new ProcessingToProcessingSignalStack();
+
+	public static ProcessingToProcessingSignalStack getProcessingToProcessingSignalStack() {
+		return processingToProcessingSignalStack;
+	}
+
 	public static Context context() {
 		return context;
 	}
@@ -45,8 +51,8 @@ public class ThisApplication {
 			context().startQueue(syncJaxrsInvokeQueue);
 			context().startQueue(syncJaxwsInvokeQueue);
 			context().startQueue(syncEmbedQueue);
-			if (BooleanUtils.isTrue(Config.processPlatform().getCombine().getEnable())) {
-				context.schedule(Combine.class, Config.processPlatform().getCombine().getCron());
+			if (BooleanUtils.isTrue(Config.processPlatform().getMerge().getEnable())) {
+				context.schedule(Merge.class, Config.processPlatform().getMerge().getCron());
 			}
 			if (BooleanUtils.isTrue(Config.processPlatform().getDeleteDraft().getEnable())) {
 				context.schedule(DeleteDraft.class, Config.processPlatform().getDeleteDraft().getCron());
@@ -69,6 +75,7 @@ public class ThisApplication {
 			if (BooleanUtils.isTrue(Config.processPlatform().getUrge().getEnable())) {
 				context.schedule(Urge.class, Config.processPlatform().getUrge().getCron());
 			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

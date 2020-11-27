@@ -1,7 +1,6 @@
 package com.x.base.core.project.tools;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.KeyFactory;
@@ -10,27 +9,35 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Objects;
+import java.util.regex.Matcher;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
+import javax.script.ScriptContext;
+import javax.script.SimpleScriptContext;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
+
+import com.x.base.core.project.script.ScriptFactory;
 
 public class Crypto {
 
+	private Crypto() {
+	}
+
 	private static final String utf8 = "UTF-8";
 
-	private final static String DES = "DES";
-	
-	//private final static String CIPHER_INIT = "DES";
+	private static final String DES = "DES";
 
-	private final static String RSA = "RSA";
+	private static final String RSA = "RSA";
 
-	//private final static SecureRandom sr = new SecureRandom();
+	private static final String NEVERCHANGEKEY = "NEVERCHANGEKEY";
 
 	public static String encrypt(String data, String key) throws Exception {
 		byte[] bt = encrypt(data.getBytes(), key.getBytes());
@@ -53,7 +60,7 @@ public class Crypto {
 		return cipher.doFinal(data);
 	}
 
-	public static String decrypt(String data, String key) throws IOException, Exception {
+	public static String decrypt(String data, String key) throws Exception {
 		if (StringUtils.isEmpty(data)) {
 			return null;
 		}
@@ -119,4 +126,34 @@ public class Crypto {
 	public static final String TEST_PUBLIC_KEY = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCWcVZIS57VeOUzi8c01WKvwJK9uRe6hrGTUYmF6J/pI6/UvCbdBWCoErbzsBZOElOH8Sqal3vsNMVLjPYClfoDyYDaUlakP3ldfnXJzAFJVVubF53KadG+fwnh9ZMvxdh7VXVqRL3IQBDwGgzX4rmSK+qkUJjc3OkrNJPB7LLD8QIDAQAB";
 	public static final String TEST_PRIVATE_KEY = "MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBAJZxVkhLntV45TOLxzTVYq/Akr25F7qGsZNRiYXon+kjr9S8Jt0FYKgStvOwFk4SU4fxKpqXe+w0xUuM9gKV+gPJgNpSVqQ/eV1+dcnMAUlVW5sXncpp0b5/CeH1ky/F2HtVdWpEvchAEPAaDNfiuZIr6qRQmNzc6Ss0k8HsssPxAgMBAAECgYAWtRy05NUgm5Lc6Og0jVDL/mEnydxPBy2ectwzHh2k7wIHNi8XhUxFki2TMqzrM9Dv3/LySpMl4AE3mhs34LNPy6F+MwyF5X7j+2Y6MflJyeb9HNyT++viysQneoOEiOk3ghxF2/GPjpiEF79wSp+1YKTxRAyq7ypV3t35fGOOEQJBANLDPWl8b5c3lrcz/dTamMjHbVamEyX43yzQOphzkhYsz4pruATzTxU+z8/zPdEqHcWWV39CP3xu3EYNcAhxJW8CQQC2u7PF5Xb1xYRCsmIPssFxil64vvdUadSxl7GLAgjQ9ULyYWB24KObCEzLnPcT8Pf2Q0YQOixxa/78FuzmgbyfAkA7ZFFV/H7lugB6t+f7p24OhkRFep9CwBMD6dnZRBgSr6X8d8ZvfrD2Z7DgBMeSva+OEoOtlNmXExZ3lynO9zN5AkAVczEmIMp3DSl6XtAuAZC9kD2QODJ2QToLYsAfjiyUwsWKCC43piTuVOoW2KUUPSwOR1VZIEsJQWEcHGDQqhgHAkAeZ7a6dVRZFdBwKA0ADjYCufAW2cIYiVDQBJpgB+kiLQflusNOCBK0FT3lg8BdUSy2D253Ih6l3lbaM/4M7DFQ";
 
+	public static String plainText(String text) {
+		if (StringUtils.isEmpty(text)) {
+			return text;
+		}
+		try {
+			Matcher matcher = StringTools.SCRIPTTEXT_REGEX.matcher(text);
+			if (matcher.matches()) {
+				String value = StringEscapeUtils.unescapeJson(matcher.group(1));
+				if (StringUtils.startsWithIgnoreCase(value, "ENCRYPT:")) {
+					String de = StringUtils.substringAfter(value, ":");
+					return decrypt(de, NEVERCHANGEKEY);
+				} else {
+					String eval = ScriptFactory.functionalization(StringEscapeUtils.unescapeJson(value));
+					ScriptContext scriptContext = new SimpleScriptContext();
+					return Objects.toString(ScriptFactory.scriptEngine.eval(eval, scriptContext));
+				}
+			} else {
+				return text;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static String defaultEncrypt(String data) throws Exception {
+		byte[] bt = encrypt(data.getBytes(), NEVERCHANGEKEY.getBytes());
+		String str = Base64.encodeBase64URLSafeString(bt);
+		return URLEncoder.encode(str, utf8);
+	}
 }

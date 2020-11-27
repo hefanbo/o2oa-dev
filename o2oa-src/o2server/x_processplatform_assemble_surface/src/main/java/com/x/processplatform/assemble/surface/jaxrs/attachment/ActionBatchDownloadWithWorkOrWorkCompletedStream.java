@@ -7,16 +7,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
+import com.x.base.core.project.config.StorageMapping;
+import com.x.processplatform.assemble.surface.ThisApplication;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.x.base.core.container.EntityManagerContainer;
 import com.x.base.core.container.factory.EntityManagerContainerFactory;
-import com.x.base.core.project.cache.Cache.CacheCategory;
-import com.x.base.core.project.cache.Cache.CacheKey;
-import com.x.base.core.project.cache.CacheManager;
 import com.x.base.core.project.exception.ExceptionAccessDenied;
 import com.x.base.core.project.http.ActionResult;
 import com.x.base.core.project.http.EffectivePerson;
@@ -24,6 +22,7 @@ import com.x.base.core.project.jaxrs.WoFile;
 import com.x.base.core.project.logger.Logger;
 import com.x.base.core.project.logger.LoggerFactory;
 import com.x.base.core.project.tools.DateTools;
+import com.x.general.core.entity.GeneralFile;
 import com.x.processplatform.assemble.surface.Business;
 import com.x.processplatform.core.entity.content.Attachment;
 import com.x.processplatform.core.entity.content.Work;
@@ -74,11 +73,14 @@ class ActionBatchDownloadWithWorkOrWorkCompletedStream extends BaseAction {
 			List<String> units = business.organization().unit().listWithPerson(effectivePerson);
 			List<Attachment> readableAttachmentList = new ArrayList<>();
 			for (Attachment attachment : attachmentList) {
-				if (this.read(attachment, effectivePerson, identities, units)) {
+				if (this.read(attachment, effectivePerson, identities, units, business)) {
 					readableAttachmentList.add(attachment);
 				}
 			}
 			if (StringUtils.isBlank(fileName)) {
+				if(title.length()>60){
+					title = title.substring(0, 60);
+				}
 				fileName = title + DateTools.format(new Date(), DateTools.formatCompact_yyyyMMddHHmmss) + ".zip";
 			} else {
 				String extension = FilenameUtils.getExtension(fileName);
@@ -89,15 +91,21 @@ class ActionBatchDownloadWithWorkOrWorkCompletedStream extends BaseAction {
 
 			Map<String, byte[]> map = new HashMap<>();
 			if (StringUtils.isNotEmpty(flag)) {
-				CacheCategory cacheCategory = new CacheCategory(CacheResultObject.class);
-				CacheKey cacheKey = new CacheKey(flag);
-				Optional<?> optional = CacheManager.get(cacheCategory, cacheKey);
-				if (optional.isPresent()) {
-					CacheResultObject ro = (CacheResultObject) optional.get();
-					map.put(ro.getName(), ro.getBytes());
+				GeneralFile generalFile = emc.find(flag, GeneralFile.class);
+				if(generalFile!=null){
+					StorageMapping gfMapping = ThisApplication.context().storageMappings().get(GeneralFile.class,
+							generalFile.getStorage());
+					map.put(generalFile.getName(), generalFile.readContent(gfMapping));
+
+					generalFile.deleteContent(gfMapping);
+					emc.beginTransaction(GeneralFile.class);
+					emc.delete(GeneralFile.class, generalFile.getId());
+					emc.commit();
 				}
 			}
 
+			fileName = StringUtils.replaceEach(fileName,
+					new String[] { "/",":","*","?","<<",">>","|","<",">","\\" }, new String[] { "","","","","","","","","","" });
 			logger.info("batchDown to {}，att size {}, from work {}, has form {}", fileName, attachmentList.size(),
 					workId, map.size());
 			try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {

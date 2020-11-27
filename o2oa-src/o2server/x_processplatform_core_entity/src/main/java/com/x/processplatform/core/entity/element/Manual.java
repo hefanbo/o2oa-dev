@@ -13,14 +13,18 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.Lob;
 import javax.persistence.OrderColumn;
+import javax.persistence.PostLoad;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
+import org.apache.openjpa.persistence.Persistent;
 import org.apache.openjpa.persistence.PersistentCollection;
 import org.apache.openjpa.persistence.jdbc.ContainerTable;
 import org.apache.openjpa.persistence.jdbc.ElementColumn;
 import org.apache.openjpa.persistence.jdbc.ElementIndex;
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.apache.openjpa.persistence.jdbc.Strategy;
 
 import com.x.base.core.entity.AbstractPersistenceProperties;
 import com.x.base.core.entity.JpaObject;
@@ -62,10 +66,24 @@ public class Manual extends Activity {
 		// nothing
 	}
 
-	/* 更新运行方法 */
+	@PostLoad
+	public void postLoad() {
+	}
 
-	/* flag标志位 */
-	/* Entity 默认字段结束 */
+	public Manual() {
+		this.properties = new ManualProperties();
+	}
+
+	public ManualProperties getProperties() {
+		if (null == this.properties) {
+			this.properties = new ManualProperties();
+		}
+		return this.properties;
+	}
+
+	public void setProperties(ManualProperties properties) {
+		this.properties = properties;
+	}
 
 	@FieldDescribe("分组")
 	@CheckPersist(allowEmpty = true)
@@ -332,6 +350,11 @@ public class Manual extends Activity {
 	@Column(name = ColumnNamePrefix + allowRerouteTo_FIELDNAME)
 	@Index(name = TABLE + IndexNameMiddle + allowRerouteTo_FIELDNAME)
 	private Boolean allowRerouteTo;
+
+	@FieldDescribe("允许挂起")
+	@CheckPersist(allowEmpty = true)
+	@Column(name = ColumnNamePrefix + allowSuspend_FIELDNAME)
+	private Boolean allowSuspend;
 
 	public static final String routeList_FIELDNAME = "routeList";
 	@IdReference(Route.class)
@@ -600,6 +623,14 @@ public class Manual extends Activity {
 	@FieldDescribe("版本编码.")
 	@Column(length = JpaObject.length_255B, name = ColumnNamePrefix + edition_FIELDNAME)
 	private String edition;
+
+	public static final String properties_FIELDNAME = "properties";
+	@FieldDescribe("属性对象存储字段.")
+	@Persistent(fetch = FetchType.EAGER)
+	@Strategy(JsonPropertiesValueHandler)
+	@Column(length = JpaObject.length_10M, name = ColumnNamePrefix + properties_FIELDNAME)
+	@CheckPersist(allowEmpty = true)
+	private ManualProperties properties;
 
 	public String getDisplayLogScript() {
 		return displayLogScript;
@@ -905,41 +936,13 @@ public class Manual extends Activity {
 		this.afterInquireScriptText = afterInquireScriptText;
 	}
 
-	// public String getBeforeArrivedExecuteScript() {
-	// return beforeArrivedExecuteScript;
-	// }
-	//
-	// public void setBeforeArrivedExecuteScript(String
-	// beforeArrivedExecuteScript) {
-	// this.beforeArrivedExecuteScript = beforeArrivedExecuteScript;
-	// }
-	//
-	// public String getBeforeArrivedExecuteScriptText() {
-	// return beforeArrivedExecuteScriptText;
-	// }
-	//
-	// public void setBeforeArrivedExecuteScriptText(String
-	// beforeArrivedExecuteScriptText) {
-	// this.beforeArrivedExecuteScriptText = beforeArrivedExecuteScriptText;
-	// }
-	//
-	// public String getAfterArrivedExecuteScript() {
-	// return afterArrivedExecuteScript;
-	// }
-	//
-	// public void setAfterArrivedExecuteScript(String
-	// afterArrivedExecuteScript) {
-	// this.afterArrivedExecuteScript = afterArrivedExecuteScript;
-	// }
-	//
-	// public String getAfterArrivedExecuteScriptText() {
-	// return afterArrivedExecuteScriptText;
-	// }
-	//
-	// public void setAfterArrivedExecuteScriptText(String
-	// afterArrivedExecuteScriptText) {
-	// this.afterArrivedExecuteScriptText = afterArrivedExecuteScriptText;
-	// }
+	public Boolean getAllowSuspend() {
+		return allowSuspend;
+	}
+
+	public void setAllowSuspend(Boolean allowSuspend) {
+		this.allowSuspend = allowSuspend;
+	}
 
 	public Boolean getAllowReset() {
 		return allowReset;

@@ -75,6 +75,10 @@ MWF.xApplication.cms.Xform.Readerfield = MWF.CMSReaderfield =  new Class({
 		this.node.empty();
 		this.node.setStyle("overflow" , "hidden");
         var node = new Element("div").inject(this.node);
+        this.node.set({
+            "nodeId": this.json.id,
+            "MWFType": this.json.type
+        });
 	},
     _searchConfirmPerson: function(item){
         var inforNode = item.inforNode || new Element("div");
@@ -466,7 +470,9 @@ MWF.xApplication.cms.Xform.Readerfield = MWF.CMSReaderfield =  new Class({
         }
 	},
 	loadOrgWidget: function(value, node){
-		var options = {"style": "xform", "canRemove":!this.readonly , "onRemove" : this.removeItem};
+        var disableInfor = layout.mobile ? true : false;
+        if( this.json.showCard === "no" )disableInfor = true;
+		var options = {"style": "xform", "canRemove":!this.readonly , "onRemove" : this.removeItem, "disableInfor" : disableInfor};
 		value.each(function(data){
 			if( data.distinguishedName ){
 				var flag = data.distinguishedName.substr(data.distinguishedName.length-1, 1);

@@ -12,11 +12,21 @@ MWF.xApplication.Selector.UnitWithType = new Class({
         "zIndex": 1000,
         "expand": true,
         "exclude" : [],
+        "selectType" : "unit",
         "expandSubEnable" : true, //是否允许展开下一层
         "selectAllEnable" : true //分类是否允许全选下一层
     },
-
+    _init : function(){
+        this.selectType = "unit";
+        this.className = "UnitWithType";
+    },
     loadSelectItems: function(addToNext){
+
+        if( this.options.disabled ){
+            this.afterLoadSelectItem();
+            return;
+        }
+
         var afterLoadSelectItemFun = this.afterLoadSelectItem.bind(this);
 
         var data = {};
@@ -58,8 +68,8 @@ MWF.xApplication.Selector.UnitWithType = new Class({
     _getChildrenItemIds: function(){
         return null;
     },
-    _newItemCategory: function(type, data, selector, item, level, category){
-        return new MWF.xApplication.Selector.UnitWithType[type](data, selector, item, level, category)
+    _newItemCategory: function(type, data, selector, item, level, category, delay){
+        return new MWF.xApplication.Selector.UnitWithType[type](data, selector, item, level, category, delay)
     },
 
     _listItemByKey: function(callback, failure, key){

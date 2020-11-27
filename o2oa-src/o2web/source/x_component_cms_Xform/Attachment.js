@@ -358,6 +358,12 @@ MWF.xApplication.cms.Xform.Attachment = MWF.CMSAttachment = new Class({
                 this.form.documentAction.getAttachment(attachment.data.id, this.form.businessData.document.id, function (json) {
                     attachment.data = json.data;
                     attachment.reload();
+
+                    if (o.messageId && this.attachmentController.messageItemList) {
+                        var message = this.attachmentController.messageItemList[o.messageId];
+                        if( message && message.node )message.node.destroy();
+                    }
+
                     this.attachmentController.checkActions();
                 }.bind(this))
             }.bind(this), null);
@@ -389,7 +395,16 @@ MWF.xApplication.cms.Xform.Attachment = MWF.CMSAttachment = new Class({
         // }.bind(this));
     },
 
-
+    //小程序文件是否支持打开
+    checkMiniProgramFile: function(ext) {
+        var exts = ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "pdf"];
+        for(var i = 0; i < exts.length; i++){
+            if(ext === exts[i]){
+                return true;
+            }
+        }
+        return false;
+    },
     downloadAttachment: function (e, node, attachments) {
         if (this.form.businessData.document) {
             attachments.each(function (att) {
@@ -397,6 +412,10 @@ MWF.xApplication.cms.Xform.Attachment = MWF.CMSAttachment = new Class({
                     window.o2android.downloadAttachment(att.data.id);
                 } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.downloadAttachment) {
                     window.webkit.messageHandlers.downloadAttachment.postMessage({ "id": att.data.id, "site": this.json.id });
+                } else if (window.wx && window.__wxjs_environment === 'miniprogram' && this.checkMiniProgramFile(att.data.extension)) { //微信小程序
+                    wx.miniProgram.navigateTo({ 
+                        url: '../file/download?attId=' + att.data.id + '&type=cms&documentId=' + this.form.businessData.document.id
+                    });
                 } else {
                     if (layout.mobile) {
                         //移动端 企业微信 钉钉 用本地打开 防止弹出自带浏览器 无权限问题
@@ -418,6 +437,10 @@ MWF.xApplication.cms.Xform.Attachment = MWF.CMSAttachment = new Class({
                     window.o2android.downloadAttachment(att.data.id);
                 } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.downloadAttachment) {
                     window.webkit.messageHandlers.downloadAttachment.postMessage({ "id": att.data.id, "site": this.json.id });
+                } else if (window.wx && window.__wxjs_environment === 'miniprogram' && this.checkMiniProgramFile(att.data.extension)) { //微信小程序
+                    wx.miniProgram.navigateTo({ 
+                        url: '../file/download?attId=' + att.data.id + '&type=cms&documentId=' + this.form.businessData.document.id
+                    });
                 } else {
                     if (layout.mobile) {
                         //移动端 企业微信 钉钉 用本地打开 防止弹出自带浏览器 无权限问题

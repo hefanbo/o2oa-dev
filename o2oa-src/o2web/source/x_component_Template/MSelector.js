@@ -50,7 +50,7 @@ var MSelector = new Class({
             this.cssPath = "../x_component_Template/$MSelector/"+this.options.style+"/css.wcss";
             this._loadCss();
             if( css ){
-                this.css = Object.merge( this.css, css )
+                this.css = Object.merge( Object.clone(this.css), css )
             }
         }
 
@@ -694,3 +694,5 @@ MSelector.Tootips = new Class({
         _selector._postCreateItem(listItemNode, data)
     }
 });
+MWF.xApplication.Template = MWF.xApplication.Template || {};
+MWF.xApplication.Template.MSelector = MSelector;

@@ -76,7 +76,7 @@ public class IdentityFactory extends AbstractFactory {
 				CriteriaQuery<Identity> cq = cb.createQuery(Identity.class);
 				Root<Identity> root = cq.from(Identity.class);
 				Predicate p = cb.equal(root.get(Identity_.name), name);
-				List<Identity> os = em.createQuery(cq.select(root).where(p).distinct(true)).getResultList();
+				List<Identity> os = em.createQuery(cq.select(root).where(p)).getResultList();
 				if (os.size() == 1) {
 					o = os.get(0);
 					em.detach(o);
@@ -157,6 +157,16 @@ public class IdentityFactory extends AbstractFactory {
 			}
 		}
 		return list;
+	}
+
+	public Long countByUnit(String unitId) throws Exception {
+		EntityManager em = this.entityManagerContainer().get(Identity.class);
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+		CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+		Root<Identity> root = cq.from(Identity.class);
+		Predicate p = cb.equal(root.get(Identity_.unit), unitId);
+		Long count = em.createQuery(cq.select(cb.count(root)).where(p)).getSingleResult();
+		return count;
 	}
 
 }

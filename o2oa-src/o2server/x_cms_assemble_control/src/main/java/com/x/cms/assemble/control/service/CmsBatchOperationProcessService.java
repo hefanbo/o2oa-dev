@@ -2,6 +2,7 @@ package com.x.cms.assemble.control.service;
 
 import java.util.List;
 
+import com.x.base.core.project.cache.CacheManager;
 import org.apache.commons.lang3.StringUtils;
 
 import com.x.base.core.container.EntityManagerContainer;
@@ -213,8 +214,8 @@ public class CmsBatchOperationProcessService {
 		} catch (Exception e) {
 			throw e;
 		}
-		ApplicationCache.notify( Review.class );
-		ApplicationCache.notify( Document.class );
+		CacheManager.notify( Review.class );
+		CacheManager.notify( Document.class );
 	}
 
 	/**
@@ -230,16 +231,16 @@ public class CmsBatchOperationProcessService {
 			cmsBatchOperation = emc.find( id, CmsBatchOperation.class );
 			
 			reviewService.refreshDocumentReview( emc, docId );
-			
-			Document document = emc.find( docId, Document.class );
+
+			/*Document document = emc.find( docId, Document.class );
 			if( document != null ) {
 				emc.beginTransaction( Document.class );
 				document.setReviewed( true );
-				
+
 				if( StringUtils.isEmpty( document.getAppAlias()  )) {
 					document.setAppAlias( document.getAppName() );
 				}
-				
+
 				document.setSequenceAppAlias( document.getAppAlias() + document.getId() );
 				document.setSequenceCategoryAlias( document.getCategoryAlias() + document.getId() );
 				if( StringUtils.isNotEmpty( document.getTitle() ) && document.getTitle().length() > 30 ) {
@@ -257,10 +258,10 @@ public class CmsBatchOperationProcessService {
 				}else {
 					document.setSequenceCreatorUnitName( document.getCreatorUnitName() + document.getId() );
 				}
-				
+
 				emc.check( document, CheckPersistType.all );
 				emc.commit();
-			}
+			}*/
 			
 			if( cmsBatchOperation != null ) {
 				emc.beginTransaction( CmsBatchOperation.class );
@@ -271,8 +272,57 @@ public class CmsBatchOperationProcessService {
 		} catch (Exception e) {
 			throw e;
 		}
-		ApplicationCache.notify( Review.class );
-		ApplicationCache.notify( Document.class );
+		CacheManager.notify( Review.class );
+		CacheManager.notify( Document.class );
+	}
+
+	/**
+	 * 根据数据库中的文档的信息，重新计算文档的Review信息
+	 * 全部删除，然后再重新插入Review记录
+	 * @param docId
+	 * @throws Exception
+	 */
+	public void refreshDocumentReview(String docId ) throws Exception {
+		logger.debug( "refreshDocumentReview {}", docId);
+		try (EntityManagerContainer emc = EntityManagerContainerFactory.instance().create()) {
+			reviewService.refreshDocumentReview( emc, docId );
+
+			Document document = emc.find( docId, Document.class );
+			if( document != null ) {
+				emc.beginTransaction( Document.class );
+				document.setReviewed( true );
+
+				if( StringUtils.isEmpty( document.getAppAlias()  )) {
+					document.setAppAlias( document.getAppName() );
+				}
+
+				document.setSequenceAppAlias( document.getAppAlias() + document.getId() );
+				document.setSequenceCategoryAlias( document.getCategoryAlias() + document.getId() );
+				if( StringUtils.isNotEmpty( document.getTitle() ) && document.getTitle().length() > 30 ) {
+					document.setSequenceTitle( document.getTitle().substring(0, 30) + document.getId() );
+				}else {
+					document.setSequenceTitle( document.getTitle() + document.getId() );
+				}
+				if( StringUtils.isNotEmpty( document.getCreatorPerson() ) && document.getCreatorPerson().length() > 50 ) {
+					document.setSequenceCreatorPerson( document.getCreatorPerson().substring(0, 50) + document.getId() );
+				}else {
+					document.setSequenceCreatorPerson( document.getCreatorPerson() + document.getId() );
+				}
+				if( StringUtils.isNotEmpty( document.getCreatorUnitName() ) && document.getCreatorUnitName().length() > 50 ) {
+					document.setSequenceCreatorUnitName( document.getCreatorUnitName().substring(0, 50) + document.getId() );
+				}else {
+					document.setSequenceCreatorUnitName( document.getCreatorUnitName() + document.getId() );
+				}
+
+				emc.check( document, CheckPersistType.all );
+				emc.commit();
+			}
+		} catch (Exception e) {
+			logger.warn("refreshDocumentReview error:{}",e.getMessage());
+		}finally {
+			CacheManager.notify( Review.class );
+			CacheManager.notify( Document.class );
+		}
 	}
 
 
@@ -343,9 +393,9 @@ public class CmsBatchOperationProcessService {
 		} catch (Exception e) {
 			throw e;
 		}
-		
-		ApplicationCache.notify( Document.class );
-		ApplicationCache.notify( CategoryInfo.class );
+
+		CacheManager.notify( Document.class );
+		CacheManager.notify( CategoryInfo.class );
 	}
 
 	/**
@@ -414,8 +464,8 @@ public class CmsBatchOperationProcessService {
 				emc.commit();
 			}
 		}
-		ApplicationCache.notify( Document.class );
-		ApplicationCache.notify( CategoryInfo.class );
+		CacheManager.notify( Document.class );
+		CacheManager.notify( CategoryInfo.class );
 	}
 
 	/**
@@ -479,8 +529,8 @@ public class CmsBatchOperationProcessService {
 		} catch (Exception e) {
 			throw e;
 		}
-		ApplicationCache.notify( CategoryInfo.class );
-		ApplicationCache.notify( Document.class );
+		CacheManager.notify( CategoryInfo.class );
+		CacheManager.notify( Document.class );
 	}
 
 	/**
@@ -530,8 +580,8 @@ public class CmsBatchOperationProcessService {
 		} catch (Exception e) {
 			throw e;
 		}
-		ApplicationCache.notify( Document.class );
-		ApplicationCache.notify( CategoryInfo.class );
+		CacheManager.notify( Document.class );
+		CacheManager.notify( CategoryInfo.class );
 	}
 
 	/**

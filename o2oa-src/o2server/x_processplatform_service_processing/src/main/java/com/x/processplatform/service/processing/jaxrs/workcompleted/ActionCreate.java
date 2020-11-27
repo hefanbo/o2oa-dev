@@ -3,6 +3,7 @@ package com.x.processplatform.service.processing.jaxrs.workcompleted;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -76,7 +77,6 @@ class ActionCreate extends BaseAction {
 					workCompleted.setExpired(false);
 					workCompleted.setExpireTime(null);
 					workCompleted.setForm(wi.getForm());
-					workCompleted.setFormData(wi.getFormData());
 					workCompleted.setJob(StringTools.uniqueToken());
 					workCompleted.setProcess(process.getId());
 					workCompleted.setProcessAlias(process.getAlias());
@@ -103,7 +103,7 @@ class ActionCreate extends BaseAction {
 				}
 			}
 		};
-		ActionResult<Wo> result = ProcessPlatformExecutorFactory.get(executorSeed).submit(callable).get();
+		ActionResult<Wo> result = ProcessPlatformExecutorFactory.get(executorSeed).submit(callable).get(300, TimeUnit.SECONDS);
 		return result;
 	}
 
@@ -120,9 +120,6 @@ class ActionCreate extends BaseAction {
 
 		@FieldDescribe("指定表单.")
 		private String form;
-
-		@FieldDescribe("指定表单数据.")
-		private String formData;
 
 		@FieldDescribe("启动人员身份.")
 		private String identity;
@@ -174,14 +171,6 @@ class ActionCreate extends BaseAction {
 
 		public void setForm(String form) {
 			this.form = form;
-		}
-
-		public String getFormData() {
-			return formData;
-		}
-
-		public void setFormData(String formData) {
-			this.formData = formData;
 		}
 
 		public String getSerial() {

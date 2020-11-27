@@ -15,6 +15,7 @@ import com.x.processplatform.service.processing.jaxrs.readcompleted.ReadComplete
 import com.x.processplatform.service.processing.jaxrs.record.RecordAction;
 import com.x.processplatform.service.processing.jaxrs.review.ReviewAction;
 import com.x.processplatform.service.processing.jaxrs.service.ServiceAction;
+import com.x.processplatform.service.processing.jaxrs.snap.SnapAction;
 import com.x.processplatform.service.processing.jaxrs.task.TaskAction;
 import com.x.processplatform.service.processing.jaxrs.taskcompleted.TaskCompletedAction;
 import com.x.processplatform.service.processing.jaxrs.test.TestAction;
@@ -40,6 +41,7 @@ public class ActionApplication extends AbstractActionApplication {
 		classes.add(TestAction.class);
 		classes.add(RecordAction.class);
 		classes.add(ServiceAction.class);
+		classes.add(SnapAction.class);
 		return classes;
 	}
 

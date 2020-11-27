@@ -77,6 +77,10 @@ MWF.xApplication.process.Xform.Orgfield = MWF.APPOrgfield =  new Class({
 	_loadNodeRead: function(){
 		this.node.empty();
 		this.node.setStyle("overflow" , "hidden");
+        this.node.set({
+            "nodeId": this.json.id,
+            "MWFType": this.json.type
+        });
         var node = new Element("div").inject(this.node);
 	},
     _searchConfirmPerson: function(item){
@@ -311,7 +315,7 @@ MWF.xApplication.process.Xform.Orgfield = MWF.APPOrgfield =  new Class({
             var vtype = typeOf(v);
             if (vtype==="string"){
                 var data;
-                this.getOrgAction()[this.getValueMethod(v)](function(json){ data = json.data }.bind(this), null, v, false);
+                this.getOrgAction()[this.getValueMethod(v)](function(json){ data = MWF.org.parseOrgData(json.data, true); }.bind(this), null, v, false);
                 if (data) this.combox.addNewValue(this.getDataText(data), data);
             }
             if (vtype==="object"){
@@ -337,7 +341,7 @@ MWF.xApplication.process.Xform.Orgfield = MWF.APPOrgfield =  new Class({
                 if (fdd){
                     if (typeOf(fdd)==="string"){
                         var data;
-                        this.getOrgAction()[this.getValueMethod(fdd)](function(json){ data = json.data }.bind(this), null, fdd, false);
+                        this.getOrgAction()[this.getValueMethod(fdd)](function(json){ data = MWF.org.parseOrgData(json.data, true); }.bind(this), null, fdd, false);
                         values.push(data);
                     }else{
                         values.push(fdd);
@@ -418,7 +422,7 @@ MWF.xApplication.process.Xform.Orgfield = MWF.APPOrgfield =  new Class({
                 var vtype = typeOf(v);
                 if (vtype==="string"){
                     var error = (this.json.isInput) ? function(){ comboxValues.push(v); } : null;
-                    this.getOrgAction()[this.getValueMethod(v)](function(json){ data = json.data }.bind(this), error, v, false);
+                    this.getOrgAction()[this.getValueMethod(v)](function(json){ data = MWF.org.parseOrgData(json.data, true); }.bind(this), error, v, false);
                 }
                 if (vtype==="object") data = v;
                 if (data){
@@ -430,7 +434,7 @@ MWF.xApplication.process.Xform.Orgfield = MWF.APPOrgfield =  new Class({
         if (type==="string"){
             var vData;
             var error = (this.json.isInput) ? function(){ comboxValues.push(value); } : null;
-            this.getOrgAction()[this.getValueMethod(value)](function(json){ vData = json.data }.bind(this), error, value, false);
+            this.getOrgAction()[this.getValueMethod(value)](function(json){ vData = MWF.org.parseOrgData(json.data, true); }.bind(this), error, value, false);
             if (vData){
                 values.push(vData);
                 comboxValues.push({"text": this.getDataText(vData),"value": vData});
@@ -470,6 +474,7 @@ MWF.xApplication.process.Xform.Orgfield = MWF.APPOrgfield =  new Class({
 	},
 	loadOrgWidget: function(value, node){
         var disableInfor = layout.mobile ? true : false;
+        if( this.json.showCard === "no" )disableInfor = true;
 		var options = {"style": "xform", "canRemove":false , "onRemove" : this.removeItem,"disableInfor" : disableInfor};
 		value.each(function(data){
 			if( data.distinguishedName ){
@@ -519,7 +524,7 @@ MWF.xApplication.process.Xform.Orgfield = MWF.APPOrgfield =  new Class({
 		this._setValue(this.getValue());
 	},
 	clickSelect: function( ev ){
-        debugger;
+
         this.validationMode();
 		var count = (this.json.count) ? this.json.count : 0;
 

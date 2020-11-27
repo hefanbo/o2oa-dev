@@ -13,6 +13,7 @@ import com.x.base.core.project.logger.LoggerFactory;
 import com.x.processplatform.core.entity.content.Work;
 import com.x.processplatform.core.entity.element.Merge;
 import com.x.processplatform.core.entity.element.Route;
+import com.x.processplatform.core.entity.log.Signal;
 import com.x.processplatform.service.processing.processor.AeiObjects;
 
 public class MergeProcessor extends AbstractMergeProcessor {
@@ -25,6 +26,8 @@ public class MergeProcessor extends AbstractMergeProcessor {
 
 	@Override
 	protected Work arriving(AeiObjects aeiObjects, Merge merge) throws Exception {
+		// 发送ProcessingSignal
+		aeiObjects.getProcessingAttributes().push(Signal.mergeArrive(aeiObjects.getWork().getActivityToken(), merge));
 		return aeiObjects.getWork();
 	}
 
@@ -34,6 +37,8 @@ public class MergeProcessor extends AbstractMergeProcessor {
 
 	@Override
 	protected List<Work> executing(AeiObjects aeiObjects, Merge merge) throws Exception {
+		// 发送ProcessingSignal
+		aeiObjects.getProcessingAttributes().push(Signal.mergeExecute(aeiObjects.getWork().getActivityToken(), merge));
 		List<Work> results = new ArrayList<>();
 		if (BooleanUtils.isNotTrue(aeiObjects.getWork().getSplitting())) {
 			/* 如果不是一个拆分文档,直接通过 */
@@ -61,11 +66,24 @@ public class MergeProcessor extends AbstractMergeProcessor {
 			Work branch = this.findWorkBranch(aeiObjects);
 			if (null != branch) {
 				aeiObjects.getWork().setSplitting(true);
+				// 回滚splitTokenList
 				aeiObjects.getWork().setSplitTokenList(ListUtils.longestCommonSubsequence(
 						aeiObjects.getWork().getSplitTokenList(), branch.getSplitTokenList()));
+				// 回滚splitToken
 				aeiObjects.getWork().setSplitToken(aeiObjects.getWork().getSplitTokenList()
 						.get(aeiObjects.getWork().getSplitTokenList().size() - 1));
-				aeiObjects.getWork().setSplitValue("");
+				// 回滚splitValueList
+				if (aeiObjects.getWork().getSplitValueList().size() > aeiObjects.getWork().getSplitTokenList().size()) {
+					aeiObjects.getWork().setSplitValueList(aeiObjects.getWork().getSplitValueList().subList(0,
+							aeiObjects.getWork().getSplitTokenList().size()));
+				}
+				// 回滚splitValue
+				if (aeiObjects.getWork().getSplitValueList().size() > 0) {
+					aeiObjects.getWork().setSplitValue(aeiObjects.getWork().getSplitValueList()
+							.get(aeiObjects.getWork().getSplitValueList().size() - 1));
+				} else {
+					aeiObjects.getWork().setSplitValue("");
+				}
 				results.add(aeiObjects.getWork());
 			} else {
 				// 完全找不到合并的文档,唯一一份
@@ -214,6 +232,8 @@ public class MergeProcessor extends AbstractMergeProcessor {
 
 	@Override
 	protected List<Route> inquiring(AeiObjects aeiObjects, Merge merge) throws Exception {
+		// 发送ProcessingSignal
+		aeiObjects.getProcessingAttributes().push(Signal.mergeInquire(aeiObjects.getWork().getActivityToken(), merge));
 		List<Route> results = new ArrayList<>();
 		results.add(aeiObjects.getRoutes().get(0));
 		return results;

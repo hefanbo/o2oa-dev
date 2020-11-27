@@ -22,6 +22,7 @@ public class WebServer extends ConfigObject {
 		this.statEnable = DEFAULT_STATENABLE;
 		this.statExclusions = DEFAULT_STATEXCLUSIONS;
 		this.cacheControlMaxAge = DEFAULT_CACHECONTROLMAXAGE;
+		this.persistentConnectionsEnable = DEFAULT_PERSISTENTCONNECTIONSENABLE;
 	}
 
 	private static final Integer DEFAULT_HTTP_PORT = 80;
@@ -31,6 +32,9 @@ public class WebServer extends ConfigObject {
 	private static final Boolean DEFAULT_STATENABLE = false;
 	private static final String DEFAULT_STATEXCLUSIONS = "*.gif,*.jpg,*.png,*.ico";
 	private static final Integer DEFAULT_CACHECONTROLMAXAGE = 0;
+	private static final Boolean DEFAULT_PROXYCENTERENABLE = true;
+	private static final Boolean DEFAULT_PROXYAPPLICATIONENABLE = true;
+	private static final Boolean DEFAULT_PERSISTENTCONNECTIONSENABLE = true;
 
 	@FieldDescribe("是否启用")
 	private Boolean enable;
@@ -52,6 +56,28 @@ public class WebServer extends ConfigObject {
 	private String statExclusions;
 	@FieldDescribe("服务器max-age缓存时间(秒)")
 	private Integer cacheControlMaxAge;
+
+	@FieldDescribe("是否启用center服务器代理.")
+	private Boolean proxyCenterEnable;
+
+	@FieldDescribe("是否启用application服务器代理")
+	private Boolean proxyApplicationEnable;
+
+	@FieldDescribe("是否启用长连接,默认true.")
+	private Boolean persistentConnectionsEnable;
+
+	public Boolean getPersistentConnectionsEnable() {
+		return persistentConnectionsEnable == null ? DEFAULT_PERSISTENTCONNECTIONSENABLE
+				: this.persistentConnectionsEnable;
+	}
+
+	public Boolean getProxyCenterEnable() {
+		return proxyCenterEnable == null ? DEFAULT_PROXYCENTERENABLE : this.proxyCenterEnable;
+	}
+
+	public Boolean getProxyApplicationEnable() {
+		return proxyApplicationEnable == null ? DEFAULT_PROXYAPPLICATIONENABLE : this.proxyApplicationEnable;
+	}
 
 	public Integer getCacheControlMaxAge() {
 		if (cacheControlMaxAge == null || cacheControlMaxAge < 0) {
@@ -134,6 +160,14 @@ public class WebServer extends ConfigObject {
 
 	public void setWeight(Integer weight) {
 		this.weight = weight;
+	}
+
+	public void setProxyApplicationEnable(Boolean proxyApplicationEnable) {
+		this.proxyApplicationEnable = proxyApplicationEnable;
+	}
+
+	public void setProxyCenterEnable(Boolean proxyCenterEnable) {
+		this.proxyCenterEnable = proxyCenterEnable;
 	}
 
 }

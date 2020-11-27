@@ -3,6 +3,7 @@ package com.x.processplatform.service.processing.jaxrs.work;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import com.google.gson.JsonElement;
 import com.x.base.core.container.EntityManagerContainer;
@@ -67,8 +68,10 @@ class V2Reroute extends BaseAction {
 				emc.beginTransaction(Task.class);
 				emc.beginTransaction(Read.class);
 				emc.beginTransaction(WorkLog.class);
-				/** 重新设置表单 */
+				// 重新设置表单
 				setForm(business, work, activity);
+				// 调度强制把这个标志设置为true,这样可以避免在拟稿状态就调度,系统认为是拟稿状态,默认不创建待办.
+				work.setWorkThroughManual(true);
 				work.setDestinationActivity(activity.getId());
 				work.setDestinationActivityType(activity.getActivityType());
 				work.setDestinationRoute("");
@@ -98,7 +101,7 @@ class V2Reroute extends BaseAction {
 			result.setData(wo);
 			return result;
 		};
-		return ProcessPlatformExecutorFactory.get(job).submit(callable).get();
+		return ProcessPlatformExecutorFactory.get(job).submit(callable).get(300, TimeUnit.SECONDS);
 
 	}
 

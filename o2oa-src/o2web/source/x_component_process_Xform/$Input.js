@@ -1,4 +1,5 @@
 MWF.xDesktop.requireApp("process.Xform", "$Module", null, false);
+/** Class Input组件 */
 MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
 	Implements: [Events],
 	Extends: MWF.APP$Module,
@@ -67,6 +68,10 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
     },
     _loadNodeRead: function(){
         this.node.empty();
+        this.node.set({
+            "nodeId": this.json.id,
+            "MWFType": this.json.type
+        });
     },
     loadDescription: function(){
         if (this.readonly || this.json.isReadonly)return;
@@ -183,15 +188,49 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
         return (this.json.defaultValue && this.json.defaultValue.code) ? this.form.Macro.exec(this.json.defaultValue.code, this): (value || "");
     },
 	getValue: function(){
+        if (this.moduleValueAG) return this.moduleValueAG;
         var value = this._getBusinessData();
         if (!value) value = this._computeValue();
 		return value || "";
 	},
     _setValue: function(value){
+	    // if (value && value.isAG){
+	    //     var ag = o2.AG.all(value).then(function(v){
+	    //         if (o2.typeOf(v)=="array") v = v[0];
+        //         this.__setValue(v);
+        //     }.bind(this));
+        //     this.moduleValueAG = ag;
+	    //     ag.then(function(){
+        //         this.moduleValueAG = null;
+        //     }.bind(this));
+        // }else {
+        if (!!value && o2.typeOf(value.then)=="function"){
+            var p = o2.promiseAll(value).then(function(v){
+                this.__setValue(v);
+            }.bind(this), function(){});
+            this.moduleValueAG = p;
+            p.then(function(){
+                this.moduleValueAG = null;
+            }.bind(this), function(){
+                this.moduleValueAG = null;
+            }.bind(this));
+        }else{
+            this.moduleValueAG = null;
+            this.__setValue(value);
+        }
+
+            //this.__setValue(value);
+        // }
+
+    },
+    __setValue: function(value){
         this._setBusinessData(value);
         if (this.node.getFirst()) this.node.getFirst().set("value", value || "");
         if (this.readonly || this.json.isReadonly) this.node.set("text", value);
+        this.moduleValueAG = null;
+        return value;
     },
+
 	_loadValue: function(){
         this._setValue(this.getValue());
 	},
@@ -222,13 +261,21 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
         var text = (this.node.getFirst()) ? this.node.getFirst().get("text") : this.node.get("text");
 		return {"value": [value || ""] , "text": [text || value || ""]};
 	},
+    /**
+     * 判断组件值是否为空.
+     * @return {boolean}.
+     */
     isEmpty : function(){
 	    var data = this.getData();
 	    return !data || !data.trim();
     },
+    /**
+     * 获取组件值.
+     * @return {object/string}.
+     */
 	getData: function(when){
         if (this.json.compute == "save") this._setValue(this._computeValue());
-		return this.getInputData();
+        return this.getInputData();
 	},
     getInputData: function(){
         if (this.node.getFirst()){
@@ -237,19 +284,56 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
             return this._getBusinessData();
         }
     },
+    /**
+     * 重置组件的值，如果设置了默认值，则设置为默认值，否则置空。
+     */
     resetData: function(){
         this.setData(this.getValue());
     },
+    /**
+     * 为控件赋值。
+     *  @param {string/number/jsonObject} .
+     */
 	setData: function(data){
+        // if (data && data.isAG){
+        //     var ag = o2.AG.all(data).then(function(v){
+        //         if (o2.typeOf(v)=="array") v = v[0];
+        //         this.__setData(v);
+        //     }.bind(this));
+        //     this.moduleValueAG = ag;
+        //     ag.then(function(){
+        //         this.moduleValueAG = null;
+        //     }.bind(this));
+        // }else{
+        if (!!data && o2.typeOf(data.then)=="function"){
+            var p = o2.promiseAll(data).then(function(v){
+                this.__setValue(v);
+            }.bind(this), function(){});
+            this.moduleValueAG = p;
+            p.then(function(){
+                this.moduleValueAG = null;
+            }.bind(this), function(){
+                this.moduleValueAG = null;
+            }.bind(this));
+        }else{
+            this.moduleValueAG = null;
+            this.__setValue(data);
+        }
+            //this.__setData(data);
+        //}
+	},
+    __setData: function(data){
         this._setBusinessData(data);
-		if (this.node.getFirst()){
+        if (this.node.getFirst()){
             this.node.getFirst().set("value", data);
             this.checkDescription();
             this.validationMode();
         }else{
             this.node.set("text", data);
         }
-	},
+        this.moduleValueAG = null;
+    },
+
 
     createErrorNode: function(text){
 
@@ -315,7 +399,6 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
     },
     notValidationMode: function(text){
         if (!this.isNotValidationMode){
-            debugger;
             this.isNotValidationMode = true;
             this.node.store("borderStyle", this.node.getStyles("border-left", "border-right", "border-top", "border-bottom"));
             this.node.setStyle("border-color", "red");
@@ -433,13 +516,22 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
         }
         return true;
     },
+    /**
+     * 根据组件的校验设置进行校验。
+     *  @param {string} routeName-路由名称.
+     *  @return {boolean} 是否通过校验
+     */
     validation: function(routeName, opinion){
         if (!this.readonly && !this.json.isReadonly){
             if (!this.validationConfig(routeName, opinion))  return false;
 
             if (!this.json.validation) return true;
             if (!this.json.validation.code) return true;
+
+            this.currentRouteName = routeName;
             var flag = this.form.Macro.exec(this.json.validation.code, this);
+            this.currentRouteName = "";
+
             if (!flag) flag = MWF.xApplication.process.Xform.LP.notValidation;
             if (flag.toString()!="true"){
                 this.notValidationMode(flag);

@@ -72,6 +72,13 @@ interface ProcessAssembleSurfaceService {
     fun deleteWorkForm(@Path("workId") workId: String): Observable<ApiResponse<IdData>>
 
     /**
+     * 获取工作对象
+     * 如果返回500错误就是工作已经结束了
+     */
+    @GET("jaxrs/work/{workId}")
+    fun getWorkInfo(@Path("workId") workId: String): Observable<ApiResponse<WorkInfoResData>>
+
+    /**
      * 已阅列表
      * @param lastId
      * *
@@ -229,7 +236,7 @@ interface ProcessAssembleSurfaceService {
      */
     @Headers("Content-Type:application/json;charset=UTF-8")
     @POST("jaxrs/task/{taskId}/processing")
-    fun postTask(@Body taskBody: RequestBody, @Path("taskId") taskId: String): Observable<ApiResponse<List<WorkLog>>>
+    fun postTask(@Body taskBody: RequestBody, @Path("taskId") taskId: String): Observable<ApiResponse<WorkPostResult>>
 
 
     /**

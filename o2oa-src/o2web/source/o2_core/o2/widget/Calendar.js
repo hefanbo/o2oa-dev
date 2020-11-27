@@ -260,7 +260,9 @@ o2.widget.Calendar = o2.Calendar = new Class({
 			this.container.setStyle("height","auto");
 			this.clearButton_month = new Element("div", {"text": "清除"}).inject(this.buttonArea);
 			this.clearButton_month.addEvent("click", function(){
+				var t = this.node.get("value");
 				this.node.set("value", "");
+				if( t )this.fireEvent("change");
 				this.fireEvent("clear");
 				this.hide();
 			}.bind(this));
@@ -429,7 +431,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		}
 	},
 	show: function(){
-		debugger;
+		;
 		if (!this.visible){
 			var dStr = this.node.get("value");
 			if (dStr && Date.isValid(dStr)){
@@ -872,7 +874,9 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		if (!this.clearButton){
 			this.clearButton = new Element("button", {"text": "清除"}).inject(this.showActionNode);
 			this.clearButton.addEvent("click", function(){
+				var t = this.node.get("value");
 				this.node.set("value", "");
+				if( t )this.fireEvent("change");
 				this.fireEvent("clear");
 				this.hide();
 			}.bind(this));
@@ -880,7 +884,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		}
 	},
 	_setTimeDate: function(node, h, m, s){
-		debugger;
+		;
 		if( !this.options.secondEnable ){
 			var div = this.contentTimeTable.getElement(".MWF_calendar_time_s");
 			if( div )div.hide();
@@ -1003,7 +1007,9 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		if (!this.clearButton){
 			this.clearButton = new Element("button", {"text": "清除"}).inject(this.showActionNode);
 			this.clearButton.addEvent("click", function(){
+				var t = this.node.get("value");
 				this.node.set("value", "");
+				if( t )this.fireEvent("change");
 				this.fireEvent("clear");
 				this.hide();
 			}.bind(this));

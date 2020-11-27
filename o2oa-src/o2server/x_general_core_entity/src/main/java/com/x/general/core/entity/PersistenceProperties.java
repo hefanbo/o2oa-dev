@@ -7,8 +7,13 @@ public final class PersistenceProperties extends AbstractPersistenceProperties {
 	public static class Area {
 
 		public static class District {
-			public static final String table = "ARA_DISTRICT";
+			public static final String table = "GEN_ARA_DISTRICT";
 		}
+
+	}
+
+	public static class GeneralFile {
+		public static final String table = "GEN_GENERAL_FILE";
 
 	}
 }

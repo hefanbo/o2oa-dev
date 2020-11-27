@@ -16,6 +16,7 @@ import net.zoneland.x.bpm.mobile.v1.zoneXBPM.app.base.BaseMVPActivity
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.app.bbs.main.BBSMainActivity
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.app.calendar.CalendarMainActivity
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.app.clouddrive.CloudDriveActivity
+import net.zoneland.x.bpm.mobile.v1.zoneXBPM.app.clouddrive.v2.CloudDiskActivity
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.app.cms.index.CMSIndexActivity
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.app.meeting.main.MeetingMainActivity
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.app.o2.webview.TaskWebViewActivity
@@ -25,6 +26,7 @@ import net.zoneland.x.bpm.mobile.v1.zoneXBPM.core.component.enums.ApplicationEnu
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.flutter.FlutterConnectActivity
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.model.bo.api.InstantMessage
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.utils.DateHelper
+import net.zoneland.x.bpm.mobile.v1.zoneXBPM.utils.XToast
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.utils.extension.go
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.utils.extension.visible
 import net.zoneland.x.bpm.mobile.v1.zoneXBPM.widgets.CircleImageView
@@ -84,6 +86,15 @@ class O2InstantMessageActivity : BaseMVPActivity<O2InstantMessageContract.View, 
         }
     }
 
+    override fun workIsCompleted(flag: Boolean, workId: String) {
+        hideLoadingDialog()
+        if (!flag) {
+            go<TaskWebViewActivity>(TaskWebViewActivity.start(workId, "", ""))
+        }else {
+            XToast.toastShort(this, "工作已经结束！")
+        }
+    }
+
     private fun messageTypeEvent(textView: TextView, msg: InstantMessage) {
         val type = msg.type
         if (type.startsWith("task_")) {
@@ -92,9 +103,7 @@ class O2InstantMessageActivity : BaseMVPActivity<O2InstantMessageContract.View, 
             }
         }else if (type.startsWith("taskCompleted_")) {
             if (!type.contains("_delete")) {
-                setLinkStyle(textView) {
-
-                }
+                openWork(msg, textView)
             }
         }else if (type.startsWith("read_")) {
             if (!type.contains("_delete")) {
@@ -114,7 +123,8 @@ class O2InstantMessageActivity : BaseMVPActivity<O2InstantMessageContract.View, 
             }
         }else if (type.startsWith("attachment_")) {
             setLinkStyle(textView) {
-                go<CloudDriveActivity>()
+//                go<CloudDriveActivity>()
+                go<CloudDiskActivity>()
             }
         }else if (type.startsWith("calendar_")) {
             setLinkStyle(textView) {
@@ -140,10 +150,11 @@ class O2InstantMessageActivity : BaseMVPActivity<O2InstantMessageContract.View, 
         val json = JSONTokener(msg.body).nextValue()
         if (json is JSONObject) {
             val work = try {json.getString("work")}catch (e: Exception){null}
-            val workCompleted = try {json.getString("workCompleted")}catch (e: Exception){null}
-            if (!TextUtils.isEmpty(work) || !TextUtils.isEmpty(workCompleted)) {
+            if (!TextUtils.isEmpty(work)) {
                 setLinkStyle(textView) {
-                    go<TaskWebViewActivity>(TaskWebViewActivity.start(work, workCompleted, ""))
+                    //先查询work对象
+                    showLoadingDialog()
+                    mPresenter.getWorkInfo(work!!)
                 }
             }
         }

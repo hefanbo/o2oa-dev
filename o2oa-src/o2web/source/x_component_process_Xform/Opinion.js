@@ -22,6 +22,10 @@ MWF.xApplication.process.Xform.Opinion = MWF.APPOpinion =  new Class({
     },
     _loadNodeRead: function(){
         this.node.empty();
+        this.node.set({
+            "nodeId": this.json.id,
+            "MWFType": this.json.type
+        });
         this.node.setStyle("display", "none");
     },
     validationConfigItem: function(routeName, data){
@@ -364,21 +368,23 @@ MWF.xApplication.process.Xform.Opinion = MWF.APPOpinion =  new Class({
             this.searcheOpinionId = "";
         }
     },
-    searchOpinions: function(t){
+    searchOpinions: function(t) {
         var value = this.input.get("value");
         var arr = value.split(/[\n\r]/g);
         lines = arr.length;
-        value = arr[arr.length-1];
+        value = arr[arr.length - 1];
         var offsetValue = value;
         //var offsetValue = value.substr(0, value.length-t.length);
 
-        var ops = this.userOpinions.filter(function(v, i){
-            return v.contains(t) && (v!=t);
-        }.bind(this));
-        if (ops.length){
-            this.showSelectOpinionNode(ops, offsetValue, lines);
-        }else{
-            this.hideSelectOpinionNode(ops);
+        if (this.userOpinions){
+            var ops = this.userOpinions.filter(function (v, i) {
+                    return v.contains(t) && (v != t);
+                }.bind(this));
+            if (ops.length) {
+                this.showSelectOpinionNode(ops, offsetValue, lines);
+            } else {
+                this.hideSelectOpinionNode(ops);
+            }
         }
     },
     hideSelectOpinionNode: function(){

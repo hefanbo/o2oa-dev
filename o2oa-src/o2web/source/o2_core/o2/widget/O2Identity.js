@@ -12,7 +12,7 @@ o2.widget.O2Identity = new Class({
         "disableInfor" : false
 	},
 	initialize: function(data, container, options){
-	    debugger;
+
 		this.setOptions(options);
 		this.loadedInfor = false;
 
@@ -284,7 +284,7 @@ o2.widget.O2Duty = new Class({
     getPersonData: function(){
         if (!this.data.woUnit){
             this.action.actions = {"getUnitduty": {"uri": "/jaxrs/unitduty/{id}"}};
-            this.action.invoke({"name": "getUnitduty", "async": false, "parameter": {"id": (this.data.dutyId || this.data.name)}, "success": function(json){
+            this.action.invoke({"name": "getUnitduty", "async": false, "parameter": {"id": (this.data.id || this.data.name)}, "success": function(json){
                 this.data = json.data;
             }.bind(this)});
         }
@@ -468,6 +468,34 @@ o2.widget.O2QueryView = new Class({
         }
     }
 });
+
+o2.widget.O2QueryStatement = new Class({
+    Extends: o2.widget.O2View,
+    getPersonData: function(){
+        if (!this.data.query){
+            var data = null;
+            o2.Actions.load("x_query_assemble_designer").StatementAction.get(this.data.id, function(json){
+                data = json.data
+            }, null, false);
+            this.data = data;
+            return data;
+        }else{
+            return this.data;
+        }
+    },
+    open : function (e) {
+        if( this.data.id && this.data.query ){
+            var appId = "query.StatementDesigner" + this.data.id;
+            if (layout.desktop.apps[appId]){
+                layout.desktop.apps[appId].setCurrent();
+            }else {
+                var options = {"id": this.data.id, "application": this.data.query, "appId": appId};
+                layout.desktop.openApplication(e, "query.StatementDesigner", options);
+            }
+        }
+    }
+});
+
 o2.widget.O2QueryStat = new Class({
     Extends: o2.widget.O2View,
     getPersonData: function(){

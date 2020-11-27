@@ -1,4 +1,5 @@
 o2.widget = o2.widget || {};
+if( !o2.widget.UUID )o2.require("o2.widget.UUID", null, false);
 o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
     Extends: o2.widget.Common,
 	Implements: [Options, Events],
@@ -583,13 +584,16 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
     checkDownloadAction: function(){
         if (!this.options.isDownload){
             this.setActionDisabled(this.downloadAction);
+            this.setActionDisabled(this.min_downloadAction);
             this.setActionDisabled(this.downloadAllAction);
             this.setAttachmentsAction("download", false );
         }else{
             if (this.selectedAttachments.length){
                 this.setActionEnabled(this.downloadAction);
+                this.setActionEnabled(this.min_downloadAction);
             }else{
                 this.setActionDisabled(this.downloadAction);
+                this.setActionDisabled(this.min_downloadAction);
             }
             this.setActionEnabled(this.downloadAllAction);
             this.setAttachmentsAction("download", true );
@@ -935,7 +939,7 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
                                 };
                                 if (layout.desktop.message) layout.desktop.message.addTooltip(msg);
                                 if (layout.desktop.message) layout.desktop.message.addMessage(msg);
-                                if (o2 && o2.xDesktop && o2.xDesktop.notice) o2.xDesktop.notice("error", {"x": "right", "y": "top"}, "文件：“"+file.name+"”不符合允许上传类型", this.node);
+                                if (o2 && o2.xDesktop && o2.xDesktop.notice) o2.xDesktop.notice("info", {"x": "right", "y": "top"}, "文件：“"+file.name+"”不符合允许上传类型", this.node);
                             }else if (size && file.size> size*1024*1024){
                                 var msg = {
                                     "subject": o2.LP.widget.refuseUpload,
@@ -943,7 +947,7 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
                                 };
                                 if (layout.desktop.message) layout.desktop.message.addTooltip(msg);
                                 if (layout.desktop.message) layout.desktop.message.addMessage(msg);
-                                if (o2 && o2.xDesktop && o2.xDesktop.notice) o2.xDesktop.notice("error", {"x": "right", "y": "top"}, "文件：“"+file.name+"”超出允许的大小，（仅允许上传小于"+size+"M的文件）", this.node);
+                                if (o2 && o2.xDesktop && o2.xDesktop.notice) o2.xDesktop.notice("info", {"x": "right", "y": "top"}, "文件：“"+file.name+"”超出允许的大小，（仅允许上传小于"+size+"M的文件）", this.node);
                             }else{
                                 var formData = new FormData();
                                 Object.each(obj, function(v, k){
@@ -1153,11 +1157,11 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
         return names;
     },
 
-    addAttachment: function(data, messageId){
+    addAttachment: function(data, messageId, isCheckPosition){
         if (this.options.size=="min"){
-            this.attachments.push(new o2.widget.AttachmentController.AttachmentMin(data, this, messageId));
+            this.attachments.push(new o2.widget.AttachmentController.AttachmentMin(data, this, messageId, isCheckPosition));
         }else{
-            this.attachments.push(new o2.widget.AttachmentController.Attachment(data, this, messageId));
+            this.attachments.push(new o2.widget.AttachmentController.Attachment(data, this, messageId, isCheckPosition));
         }
         this.checkActions();
     },
@@ -1190,7 +1194,7 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
 
 o2.widget.AttachmentController.Attachment = new Class({
 	Implements: [Events],
-	initialize: function(data, controller, messageId){
+	initialize: function(data, controller, messageId, isCheckPosition){
 		this.data = data;
 
         if( !this.data.person && this.data.creatorUid )this.data.person = this.data.creatorUid;
@@ -1201,6 +1205,7 @@ o2.widget.AttachmentController.Attachment = new Class({
         this.content = this.controller.content;
         this.isSelected = false;
         this.seq = this.controller.attachments.length+1;
+        this.isCheckPosition = isCheckPosition;
         this.actions = [];
 
         if (messageId && this.controller.messageItemList) {
@@ -1216,6 +1221,9 @@ o2.widget.AttachmentController.Attachment = new Class({
             "par": "@url#"+url
         };
     },
+    isNumber : function( d ){
+        return parseFloat(d).toString() !== "NaN"
+    },
     load: function(){
 	    if (this.message){
             this.node = new Element("div").inject(this.message.node, "after");
@@ -1223,6 +1231,16 @@ o2.widget.AttachmentController.Attachment = new Class({
             delete this.controller.messageItemList[this.message.data.id];
         }else{
             this.node = new Element("div").inject(this.content);
+        }
+	    if( this.isCheckPosition && this.isNumber(this.data.orderNumber) ){
+	        var attList = this.controller.attachments;
+            for( var i=0; i<attList.length; i++ ){
+                var att = attList[i];
+                if( !this.isNumber(att.data.orderNumber) || this.data.orderNumber < att.data.orderNumber ){
+                    this.node.inject( att.node, "before" );
+                    break;
+                }
+            }
         }
 
         switch (this.controller.options.listStyle){
@@ -1485,7 +1503,8 @@ o2.widget.AttachmentController.Attachment = new Class({
         this.node.addEvents({
             "mouseover": function(){if (!this.isSelected) this.node.setStyles(this.css["attachmentNode_"+this.controller.options.listStyle+"_over"])}.bind(this),
             "mouseout": function(){if (!this.isSelected) this.node.setStyles(this.css["attachmentNode_"+this.controller.options.listStyle])}.bind(this),
-            "mousedown": function(e){this.selected(e);}.bind(this),
+            "mousedown": function(e){this.selected(e); e.stopPropagation();}.bind(this),
+            "click": function(e){e.stopPropagation();}.bind(this),
             "dblclick": function(e){this.openAttachment(e);}.bind(this)
         });
     },
@@ -1657,7 +1676,7 @@ o2.widget.AttachmentController.Attachment = new Class({
 o2.widget.AttachmentController.AttachmentMin = new Class({
     Extends: o2.widget.AttachmentController.Attachment,
 
-    initialize: function(data, controller, messageId){
+    initialize: function(data, controller, messageId, isCheckPosition){
         this.data = data;
 
         if( !this.data.person && this.data.creatorUid )this.data.person = this.data.creatorUid;
@@ -1666,6 +1685,7 @@ o2.widget.AttachmentController.AttachmentMin = new Class({
         this.css = this.controller.css;
         this.content = this.controller.minContent;
         this.isSelected = false;
+        this.isCheckPosition = isCheckPosition;
         this.seq = this.controller.attachments.length+1;
 
         if (messageId && this.controller.messageItemList) {
@@ -1681,6 +1701,17 @@ o2.widget.AttachmentController.AttachmentMin = new Class({
             delete this.controller.messageItemList[this.message.data.id];
         }else{
             this.node = new Element("div").inject(this.content);
+        }
+
+        if( this.isCheckPosition && this.isNumber(this.data.orderNumber) ){
+            var attList = this.controller.attachments;
+            for( var i=0; i<attList.length; i++ ){
+                var att = attList[i];
+                if( !this.isNumber(att.data.orderNumber) || this.data.orderNumber < att.data.orderNumber ){
+                    this.node.inject( att.node, "before" );
+                    break;
+                }
+            }
         }
 
         //this.node = new Element("div").inject(this.content);
@@ -1843,7 +1874,8 @@ o2.widget.AttachmentController.AttachmentMin = new Class({
                     }
                 }
             }.bind(this),
-            "mousedown": function(e){this.selected(e);}.bind(this),
+            "mousedown": function(e){this.selected(e);e.stopPropagation();}.bind(this),
+            "click": function(e){e.stopPropagation();}.bind(this),
             "dblclick": function(e){this.openAttachment(e);}.bind(this)
         });
     },

@@ -53,6 +53,7 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
 
 
         this.items = [];
+
         this.selectedItems = [];
         this.hideColumns = [];
         this.openColumns = [];
@@ -191,7 +192,7 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
             this.createExportNode();
         }
     },
-    createViewNode: function(data){
+    createViewNode: function(data, callback){
         this.viewAreaNode.empty();
 
         this.selectedItems = [];
@@ -232,6 +233,10 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
                 this.selectTitleCell.hide();
             }
 
+            if( this.getSelectFlag( true ) !== "multi" || !this.viewJson.allowSelectAll ){
+                this.expandTitleCell = this.selectTitleCell;
+            }
+
 
             //序号
             if (this.viewJson.isSequence==="yes"){
@@ -240,12 +245,13 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
                 }).inject(this.viewTitleLine);
                 this.sequenceTitleCell.setStyle("width", "10px");
                 if (this.json.titleStyles) this.sequenceTitleCell.setStyles(this.json.titleStyles);
+                if( !this.expandTitleCell )this.expandTitleCell = this.sequenceTitleCell;
             }
 
             this.entries = {};
+            debugger;
             this.viewJson.selectList.each(function(column){
                 this.entries[column.column] = column;
-
                 if (!column.hideColumn){
                     var viewCell = new Element("td", {
                         "styles": viewTitleCellNode,
@@ -254,6 +260,8 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
                     var size = MWF.getTextSize(column.displayName, viewTitleCellNode);
                     viewCell.setStyle("min-width", ""+size.x+"px");
                     if (this.json.titleStyles) viewCell.setStyles(this.json.titleStyles);
+
+                    if( column.groupEntry && !this.expandTitleCell )this.expandTitleCell = viewCell;
 
                     if( typeOf(column.titleStyles) === "object" )viewCell.setStyles(column.titleStyles);
                     if( typeOf(column.titleProperties) === "object" )viewCell.setProperties(column.titleProperties);
@@ -268,32 +276,69 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
 
                 if (column.allowOpen) this.openColumns.push(column.column);
             }.bind(this));
-            this.lookup(data);
+            this.lookup(data, callback);
         }else{
+            this.entries = {};
             this.viewJson.selectList.each(function(column){
+                this.entries[column.column] = column;
                 if (column.hideColumn) this.hideColumns.push(column.column);
                 if (!column.allowOpen) this.openColumns.push(column.column);
             }.bind(this));
-            this.lookup(data);
+            this.lookup(data, callback);
         }
+    },
+    getExpandFlag : function(){
+        if( this.options && this.options.isExpand )return this.options.isExpand;
+        if( this.json && this.json.isExpand )return this.json.isExpand;
+        if( this.viewJson && this.viewJson.isExpand )return this.viewJson.isExpand;
+        return "no";
+    },
+    getSelectFlag : function( ignoreSelectEnable ){
+        if( !ignoreSelectEnable && !this.viewSelectedEnable )return "none";
+        if( this.options && this.options.select )return this.options.select;
+        if( this.json && this.json.select )return this.json.select;
+        if( this.viewJson && this.viewJson.select )return this.viewJson.select;
+        // if( this.json.select === "single" || this.json.select === "multi" )return this.json.select;
+        // if( this.viewJson.select === "single" || this.viewJson.select === "multi" )return this.viewJson.select;
+        // if( this.options.select === "single" || this.options.select === "multi"  )return this.options.select;
+        return "none";
     },
     isSelectTdHidden :function(){
         if( !this.viewJson.firstTdHidden ){
             return false;
         }
-        if( this.json.select === "single" || this.json.select === "multi"  ){
-            return false;
-        }
-        if( this.viewJson.select === "single" || this.viewJson.select === "multi"  ){
-            return false;
-        }
-        if( this.options.select === "single" || this.options.select === "multi"  ){
-            return false;
-        }
         if( this.viewJson.group && this.viewJson.group.column ){
             return false;
         }
+        if( this.json.defaultSelectedScript || this.viewJson.defaultSelectedScript ){
+            return false;
+        }
+        // if( !this.viewSelectedEnable ){
+        //     return true;
+        // }
+        if( this.options && this.options.select ){
+            return  this.options.select === "none";
+        }
+        if( this.json && this.json.select ){
+            return  this.json.select === "none";
+        }
+        if( this.viewJson && this.viewJson.select ){
+            return  this.viewJson.select === "none";
+        }
         return true;
+        // if( this.json.select === "single" || this.json.select === "multi" || this.json.defaultSelectedScript || this.viewJson.defaultSelectedScript ){
+        //     return false;
+        // }
+        // if( this.options.select === "single" || this.options.select === "multi"  ){
+        //     return false;
+        // }
+        // if( this.viewJson.select === "single" || this.viewJson.select === "multi"  ){
+        //     return false;
+        // }
+        // if( this.viewJson.group && this.viewJson.group.column ){
+        //     return false;
+        // }
+        // return true;
     },
     // _loadPageCountNode: function(){
     //     this.viewPageContentNode.empty();
@@ -391,7 +436,9 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
         this.currentPage = this.options.defaultPage || 1;
         this.options.defaultPage = null;
     },
-    lookup: function(data){
+    lookup: function(data, callback){
+        if( this.lookuping )return;
+        this.lookuping = true;
         this.getLookupAction(function(){
             if (this.json.application){
 
@@ -405,6 +452,8 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
                         if( this.noDataTextNode )this.noDataTextNode.destroy();
                         this.loadCurrentPageData( function () {
                             this.fireEvent("postLoad"); //用户配置的事件
+                            this.lookuping = false;
+                            if(callback)callback(this);
                         }.bind(this));
                     }else{
                         //this._loadPageNode();
@@ -424,6 +473,8 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
                             this.loadingAreaNode = null;
                         }
                         this.fireEvent("postLoad"); //用户配置的事件
+                        this.lookuping = false;
+                        if(callback)callback(this);
                     }
                 }.bind(this));
             }
@@ -431,6 +482,10 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
     },
     loadCurrentPageData: function( callback, async ){
         //是否需要在翻页的时候清空之前的items ?
+
+        if( this.pageloading )return;
+        this.pageloading = true;
+
         this.items = [];
 
         var p = this.currentPage;
@@ -450,9 +505,11 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
 
             if (this.viewJson.group.column){
                 this.gridJson = json.data.groupGrid;
+                this.setSelectedableFlag();
                 this.loadGroupData();
             }else{
                 this.gridJson = json.data.grid;
+                this.setSelectedableFlag();
                 this.loadData();
             }
             if (this.gridJson.length) this._loadPageNode();
@@ -461,16 +518,84 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
                 this.loadingAreaNode = null;
             }
 
-            this.fireEvent("loadView"); //options 传入的事件
+            this.pageloading = false;
 
+            this.fireEvent("loadView"); //options 传入的事件
             this.fireEvent("postLoadPage");
 
             if(callback)callback();
         }.bind(this), null, async === false ? false : true );
     },
-
-
+    setSelectedableFlag : function(){
+        this.viewSelectedEnable = false;
+        var selectedAbleScript = this.json.selectedAbleScript || this.viewJson.selectedAbleScript;
+        if (this.viewJson.group.column){
+            this.gridJson.each( function( d ){
+                d.list.each( function( v ){
+                    if( selectedAbleScript ){
+                        v.$selectedEnable = this.Macro.exec( selectedAbleScript, { "data" : v, "groupData" : d ,"view": this });
+                    }else{
+                        v.$selectedEnable = true;
+                    }
+                    if( v.$selectedEnable ){
+                        d.$selectedEnable = true;
+                        this.viewSelectedEnable = true;
+                    }
+                }.bind(this))
+            }.bind(this))
+        }else{
+            this.gridJson.each( function( v ){
+                if( selectedAbleScript ){
+                    v.$selectedEnable = this.Macro.exec( selectedAbleScript, { "data" : v, "view": this });
+                }else{
+                    v.$selectedEnable = true;
+                }
+                if( v.$selectedEnable )this.viewSelectedEnable = true;
+            }.bind(this))
+        }
+    },
+    getMode: function(){
+        return this.viewJson.group.column ? "group" : "item";
+    },
+    createSelectAllNode: function(){
+        if( this.getSelectFlag() === "multi" && this.viewJson.allowSelectAll ){
+            if (this.selectTitleCell && !this.selectTitleCell.retrieve("selectAllLoaded") ){
+                if( this.viewJson.viewStyles && this.viewJson.viewStyles["checkboxNode"] ){
+                    this.selectAllNode = this.selectTitleCell;
+                    this.selectAllNode.setStyles( this.viewJson.viewStyles["checkboxNode"] );
+                    // this.selectAllNode = new Element("div", {
+                    //     styles : this.viewJson.viewStyles["checkboxNode"]
+                    // }).inject( this.selectTitleCell );
+                }else{
+                    this.selectAllNode.html( "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/checkbox.png'/>"+"</span>" )
+                    // this.selectAllNode = new Element("div",{
+                    //     html : "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/checkbox.png'/>"+"</span>",
+                    //     style : "font-family: Webdings"
+                    // }).inject( this.selectTitleCell );
+                }
+                this.selectTitleCell.setStyle("cursor", "pointer");
+                this.selectTitleCell.addEvent("click", function () {
+                    if( this.getSelectAllStatus() === "all" ){
+                        this.unSelectAll("view")
+                    }else{
+                        this.selectAll("view");
+                    }
+                }.bind(this));
+                this.selectTitleCell.store("selectAllLoaded", true);
+            }
+        }
+    },
     loadData: function(){
+        if( this.getSelectFlag() === "multi" && this.viewJson.allowSelectAll ) {
+            if(this.selectTitleCell && this.selectTitleCell.retrieve("selectAllLoaded")){
+                this.setUnSelectAllStyle();
+            }else{
+                this.createSelectAllNode();
+            }
+        }else if(this.selectAllNode){
+            this.clearSelectAllStyle();
+        }
+
         if (this.gridJson.length){
             // if( !this.options.paging ){
             this.gridJson.each(function(line, i){
@@ -522,20 +647,40 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
         }
     },
     loadGroupData: function(){
-        if (this.selectTitleCell && !this.selectTitleCell.retrieve("expandLoaded") ){
-            if( this.viewJson.viewStyles && this.viewJson.viewStyles["groupCollapseNode"] ){
-                this.expandAllNode = new Element("span", {
-                    styles : this.viewJson.viewStyles["groupCollapseNode"]
-                }).inject( this.selectTitleCell );
-                this.selectTitleCell.setStyle("cursor", "pointer");
+        if( this.getSelectFlag() === "multi" && this.viewJson.allowSelectAll ) {
+            if(this.selectTitleCell && this.selectTitleCell.retrieve("selectAllLoaded")){
+                this.setUnSelectAllStyle();
             }else{
-                this.selectTitleCell.set("html", "<span style='font-family: Webdings'>"+"<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/expand.png'/>"+"</span>");
+                this.createSelectAllNode();
             }
-            this.selectTitleCell.setStyle("cursor", "pointer");
-            this.selectTitleCell.addEvent("click", this.expandOrCollapseAll.bind(this));
-            this.selectTitleCell.store("expandLoaded", true);
+        }else if( this.selectAllNode ){
+            this.clearSelectAllStyle();
         }
-        this.expandAll = false;
+
+        if( this.expandTitleCell ){
+            if ( !this.expandTitleCell.retrieve("expandLoaded") ){
+                if( this.viewJson.viewStyles && this.viewJson.viewStyles["groupCollapseNode"] ){
+                    this.expandAllNode = new Element("span", {
+                        styles : this.viewJson.viewStyles["groupCollapseNode"]
+                    }).inject( this.expandTitleCell, "top" );
+                    // this.selectTitleCell.setStyle("cursor", "pointer");
+                }else{
+                    // this.selectTitleCell.set("html", "<span style='font-family: Webdings'>"+"<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/expand.png'/>"+"</span>");
+                    this.expandAllNode = new Element("span",{
+                        html : "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/expand.png'/>"+"</span>",
+                        style : "font-family: Webdings"
+                    }).inject( this.expandTitleCell, "top" );
+                }
+                this.expandTitleCell.setStyle("cursor", "pointer");
+                this.expandTitleCell.addEvent("click", this.expandOrCollapseAll.bind(this));
+                this.expandTitleCell.store("expandLoaded", true);
+            }else if( this.getExpandFlag() !=="yes" ){
+                this.setCollapseAllStyle();
+            }
+        }
+
+
+        // this.isAllExpanded = false;
 
         if (this.gridJson.length){
             var i = 0;
@@ -544,48 +689,9 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
                 i += data.list.length;
             }.bind(this));
 
-            if (this.json.isExpand=="yes") this.expandOrCollapseAll();
+            if (this.getExpandFlag()=="yes") this.expandOrCollapseAll();
         }else{
             if (this.viewPageAreaNode) this.viewPageAreaNode.empty();
-        }
-    },
-    expandOrCollapseAll: function(){
-        if( this.viewJson.viewStyles && this.viewJson.viewStyles["groupCollapseNode"] ){
-            var span = this.selectTitleCell.getElement("span");
-            if( this.expandAll ){
-                this.items.each(function(item){
-                    item.collapse();
-                    span.setStyles( this.viewJson.viewStyles["groupCollapseNode"] );
-                }.bind(this));
-                this.expandAll = false;
-            }else{
-                this.items.each(function(item, i){
-                    window.setTimeout(function(){
-                        item.expand();
-                    }.bind(this), 10*i+5);
-
-                    span.setStyles( this.viewJson.viewStyles["groupExpandNode"] );
-                    this.expandAll = true;
-                }.bind(this));
-            }
-        }else{
-            var icon = this.selectTitleCell.getElement("span");
-            if (icon.get("html").indexOf("expand.png")===-1){
-                this.items.each(function(item){
-                    item.collapse();
-                    icon.set("html", "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/expand.png'/>");
-                }.bind(this));
-                this.expandAll = false;
-            }else{
-                this.items.each(function(item, i){
-                    window.setTimeout(function(){
-                        item.expand();
-                    }.bind(this), 10*i+5);
-
-                    icon.set("html", "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/down.png'/>");
-                }.bind(this));
-                this.expandAll = true;
-            }
         }
     },
     getView: function(callback){
@@ -634,6 +740,7 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
         this.node.setStyle("display", "none");
     },
     reload: function(){
+        if( this.lookuping || this.pageloading )return;
         this.node.setStyle("display", "block");
         if (this.loadingAreaNode) this.loadingAreaNode.setStyle("display", "block");
 
@@ -795,10 +902,11 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
         });
     },
     searchView: function(){
+        debugger;
         if (this.viewJson.customFilterList) {
             var key = this.viewSearchInputNode.get("value");
             if (key && key !== this.lp.searchKeywork) {
-                var filterData = this.json.filter ? this.json.filter : [];
+                var filterData = this.json.filter ? this.json.filter.clone() : [];
                 this.filterItems = [];
                 this.viewJson.customFilterList.each(function (entry) {
                     if (entry.formatType === "textValue") {
@@ -831,7 +939,8 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
                 this.createViewNode({"filterList": filterData});
             }else{
                 this.filterItems = [];
-                this.createViewNode();
+                var filterData = this.json.filter ? this.json.filter.clone() : [];
+                this.createViewNode( {"filterList": filterData} );
             }
         }
     },
@@ -1213,45 +1322,208 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
     getSelectedData : function(){
         return this.getData();
     },
+    getSelectAllStatus : function(){
+        if( this.getSelectFlag()!=="multi")return;
+        if( !this.items.length )return "none";
+        var allFlag = true, noneFlag = true;
+        for( var i=0; i<this.items.length; i++ ){
+            var item = this.items[i];
+            if( item.clazzType === "item" ){
+                if( item.data.$selectedEnable ){
+                    item.isSelected ? ( noneFlag = false ) : (allFlag = false);
+                }
+            }else{
+                if( item.data.$selectedEnable ) {
+                    var f = item.getSelectAllStatus();
+                    if (f === "none") {
+                        allFlag = false;
+                    } else if (f === "all") {
+                        noneFlag = false;
+                    } else if (f === "some") {
+                        allFlag = false;
+                        noneFlag = false;
+                    }
+                }
+            }
+            if( !allFlag && !noneFlag )return "some"
+        }
+        if( noneFlag )return "none";
+        if( allFlag )return "all";
+        return "some";
+    },
+    checkSelectAllStatus : function(){
+        if(!this.selectAllNode)return;
+       var status = this.getSelectAllStatus();
+       if( status === "all" ){
+           this.setSelectAllStyle()
+       }else{
+           this.setUnSelectAllStyle()
+       }
+    },
+    setSelectAllStyle : function () {
+        if(!this.selectAllNode)return;
+        if( this.viewJson.viewStyles && this.viewJson.viewStyles["checkedCheckboxNode"] ){
+            this.selectAllNode.setStyles( this.viewJson.viewStyles["checkedCheckboxNode"] );
+        }else {
+            this.selectAllNode.getElement("img").set("src",
+                '../x_component_query_Query/$Viewer/" + this.options.style + "/icon/checkbox_checked.png' )
+        }
+    },
+    setUnSelectAllStyle : function () {
+        if(!this.selectAllNode)return;
+        if( this.viewJson.viewStyles && this.viewJson.viewStyles["checkboxNode"] ){
+            this.selectAllNode.setStyles( this.viewJson.viewStyles["checkboxNode"] );
+        }else {
+            this.selectAllNode.getElement("img").set("src",
+                '../x_component_query_Query/$Viewer/" + this.options.style + "/icon/checkbox.png' )
+        }
+    },
+    clearSelectAllStyle : function(){
+        debugger;
+        if(!this.selectAllNode)return;
+        var viewStyles = this.viewJson.viewStyles;
+        var viewTitleCellNode = (viewStyles && viewStyles["titleTd"]) ? viewStyles["titleTd"] : this.css.viewTitleCellNode;
+        if( !viewTitleCellNode["background"] || !viewTitleCellNode["background-image"] || !viewTitleCellNode["background-color"] ){
+            viewTitleCellNode["background"] = "inherit";
+        }
+        this.selectAllNode.setStyles( viewTitleCellNode );
+        var img = this.selectAllNode.getElement("img");
+        if( img )img.set("src", '../x_component_query_Query/$Viewer/" + this.options.style + "/icon/blank.png')
+    },
     selectAll : function(){
-        var flag = this.json.select || this.viewJson.select ||  "none";
-        if ( flag==="multi"){
+        // var flag = this.json.select || this.viewJson.select ||  "none";
+        if ( this.getSelectFlag()==="multi"){
             this.items.each( function (item) {
-                if( item.clazzType === "item" ){
-                    item.selected();
-                }else{
-                    item.expand();
-                    if( item.items ){
-                        item.items.each( function (it) {
-                            it.selected();
-                        })
+                if( item.data.$selectedEnable ){
+                    if( item.clazzType === "item" ){
+                        item.selected("view");
+                    }else{
+                        item.selectAll("view");
                     }
                 }
             })
+            if( this.viewJson.allowSelectAll ) {
+                this.setSelectAllStyle();
+            }
         }
     },
     unSelectAll : function(){
-        var flag = this.json.select || this.viewJson.select ||  "none";
-        if ( flag==="multi"){
+        // var flag = this.json.select || this.viewJson.select ||  "none";
+        if ( this.getSelectFlag()==="multi"){
             this.items.each( function (item) {
-                if( item.clazzType === "item" ){
-                    item.unSelected();
-                }else{
-                    if(item.items){
-                        item.items.each( function (it) {
-                            it.unSelected();
-                        })
+                if( item.data.$selectedEnable ) {
+                    if (item.clazzType === "item") {
+                        item.unSelected("view");
+                    } else {
+                        item.unSelectAll("view");
                     }
                 }
             })
+            if( this.viewJson.allowSelectAll ) {
+                this.setUnSelectAllStyle();
+            }
         }
     },
-    setFilter : function( filter ){
+
+    getExpandAllStatus: function(){
+        if( !this.items.length )return "none";
+        var allFlag = true, noneFlag = true;
+        for( var i=0; i<this.items.length; i++ ){
+            var item = this.items[i];
+            item.expanded ? ( noneFlag = false ) : (allFlag = false);
+            if( !allFlag && !noneFlag )return "some"
+        }
+        if( allFlag )return "all";
+        if( noneFlag )return "none";
+        return "some";
+    },
+    checkExpandAllStatus: function(){
+        if(!this.expandAllNode)return;
+        var status = this.getExpandAllStatus();
+        if( status === "all" ){
+            this.setExpandAllStyle()
+        }else{
+            this.setCollapseAllStyle()
+        }
+    },
+    setExpandAllStyle: function(){
+        if(!this.expandAllNode)return;
+        if( this.viewJson.viewStyles && this.viewJson.viewStyles["groupExpandNode"] ){
+            this.expandAllNode.setStyles( this.viewJson.viewStyles["groupExpandNode"] );
+        }else{
+            this.expandAllNode.set("html", "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/expand.png'/>");
+        }
+    },
+    setCollapseAllStyle : function(){
+        if(!this.expandAllNode)return;
+        if( this.viewJson.viewStyles && this.viewJson.viewStyles["groupCollapseNode"] ){
+            this.expandAllNode.setStyles( this.viewJson.viewStyles["groupCollapseNode"] );
+        }else{
+            this.expandAllNode.set("html", "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/down.png'/>");
+        }
+    },
+    expandAll: function(){
+        this.items.each(function(item, i){
+            window.setTimeout(function(){
+                item.expand( "view" );
+            }.bind(this), 10*i+5);
+        }.bind(this));
+        this.setExpandAllStyle();
+    },
+    collapseAll: function(){
+        this.items.each(function(item){
+            item.collapse( "view" );
+        }.bind(this));
+        this.setCollapseAllStyle();
+    },
+    expandOrCollapseAll: function(){
+        this.getExpandAllStatus() === "all" ? this.collapseAll() : this.expandAll();
+        // if( this.viewJson.viewStyles && this.viewJson.viewStyles["groupCollapseNode"] ){
+        //     var span = this.expandAllNode; //this.selectTitleCell.getElement("span");
+        //     if( this.isAllExpanded ){
+        //         this.items.each(function(item){
+        //             item.collapse();
+        //             span.setStyles( this.viewJson.viewStyles["groupCollapseNode"] );
+        //         }.bind(this));
+        //         this.isAllExpanded = false;
+        //     }else{
+        //         this.items.each(function(item, i){
+        //             window.setTimeout(function(){
+        //                 item.expand();
+        //             }.bind(this), 10*i+5);
+        //
+        //             span.setStyles( this.viewJson.viewStyles["groupExpandNode"] );
+        //             this.isAllExpanded = true;
+        //         }.bind(this));
+        //     }
+        // }else{
+        //     var icon = this.expandAllNode; //this.selectTitleCell.getElement("span");
+        //     if (icon.get("html").indexOf("expand.png")===-1){
+        //         this.items.each(function(item){
+        //             item.collapse();
+        //             icon.set("html", "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/expand.png'/>");
+        //         }.bind(this));
+        //         this.isAllExpanded = false;
+        //     }else{
+        //         this.items.each(function(item, i){
+        //             window.setTimeout(function(){
+        //                 item.expand();
+        //             }.bind(this), 10*i+5);
+        //
+        //             icon.set("html", "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/down.png'/>");
+        //         }.bind(this));
+        //         this.isAllExpanded = true;
+        //     }
+        // }
+    },
+
+    setFilter : function( filter, callback ){
+        if( this.lookuping || this.pageloading )return;
         if( !filter )filter = [];
         if( typeOf( filter ) === "object" )filter = [ filter ];
         this.json.filter = filter;
         if( this.viewAreaNode ){
-            this.createViewNode({"filterList": this.json.filter  ? this.json.filter.clone() : null});
+            this.createViewNode({"filterList": this.json.filter  ? this.json.filter.clone() : null}, callback);
         }
     },
     switchView : function( json ){
@@ -1289,11 +1561,12 @@ MWF.xApplication.query.Query.Viewer = MWF.QViewer = new Class({
 });
 
 MWF.xApplication.query.Query.Viewer.Item = new Class({
-    initialize: function(view, data, prev, i){
+    initialize: function(view, data, prev, i, category){
         this.view = view;
         this.data = data;
         this.css = this.view.css;
         this.isSelected = false;
+        this.category = category;
         this.prev = prev;
         this.idx = i;
         this.clazzType = "item";
@@ -1319,6 +1592,24 @@ MWF.xApplication.query.Query.Viewer.Item = new Class({
         this.selectTd = new Element("td", { "styles": viewContentTdNode }).inject(this.node);
         this.selectTd.setStyles({"cursor": "pointer"});
         if (this.view.json.itemStyles) this.selectTd.setStyles(this.view.json.itemStyles);
+
+        //var selectFlag = this.view.json.select || this.view.viewJson.select ||  "none";
+        var selectFlag = this.view.getSelectFlag();
+        if ( this.data.$selectedEnable && ["multi","single"].contains(selectFlag) && this.view.viewJson.selectBoxShow==="always") {
+            var viewStyles = this.view.viewJson.viewStyles;
+            if (viewStyles) {
+                if (selectFlag === "single") {
+                    this.selectTd.setStyles(viewStyles["radioNode"]);
+                } else {
+                    this.selectTd.setStyles(viewStyles["checkboxNode"]);
+                }
+            } else {
+                var iconName = "checkbox";
+                if (selectFlag === "single") iconName = "radiobox";
+                this.selectTd.setStyles({"background": "url(" + "../x_component_query_Query/$Viewer/default/icon/" + iconName + ".png) center center no-repeat"});
+            }
+        }
+
         if( this.view.isSelectTdHidden() ){
             this.selectTd.hide();
         }
@@ -1380,6 +1671,28 @@ MWF.xApplication.query.Query.Viewer.Item = new Class({
             }
             //}
         }.bind(this));
+
+
+        //默认选中
+        var defaultSelectedScript = this.view.json.defaultSelectedScript || this.view.viewJson.defaultSelectedScript;
+        if( !this.isSelected && defaultSelectedScript ){
+            // var flag = this.view.json.select || this.view.viewJson.select ||  "none";
+            // if ( flag ==="single" || flag==="multi"){
+            //
+            // }
+            var flag = this.view.Macro.exec( defaultSelectedScript,
+                {"node" : this.node, "data" : this.data, "view": this.view, "row" : this});
+            if( flag ){
+                if( flag === "multi" || flag === "single" ){
+                    this.select( flag );
+                }else if( flag.toString() === "true" ){
+                    var f = this.view.json.select || this.view.viewJson.select ||  "none";
+                    if ( f ==="single" || f==="multi"){
+                        this.select();
+                    }
+                }
+            }
+        }
 
         // Object.each(this.data.data, function(cell, k){
         //     if (this.view.hideColumns.indexOf(k)===-1){
@@ -1560,11 +1873,11 @@ MWF.xApplication.query.Query.Viewer.Item = new Class({
     },
 
     setEvent: function(){
-        var flag = this.view.json.select || this.view.viewJson.select ||  "none";
-        if ( flag ==="single" || flag==="multi"){
+        var flag = this.view.getSelectFlag();
+        if ( this.data.$selectedEnable && (flag ==="single" || flag==="multi")){
             this.node.addEvents({
                 "mouseover": function(){
-                    if (!this.isSelected){
+                    if (!this.isSelected && this.view.viewJson.selectBoxShow !=="always" ){
                         var viewStyles = this.view.viewJson.viewStyles;
                         if( viewStyles ){
                             if( flag === "single" ){
@@ -1580,15 +1893,16 @@ MWF.xApplication.query.Query.Viewer.Item = new Class({
                     }
                 }.bind(this),
                 "mouseout": function(){
-                    if (!this.isSelected) this.selectTd.setStyles({"background": "transparent"});
+                    if (!this.isSelected && this.view.viewJson.selectBoxShow !=="always") this.selectTd.setStyles({"background": "transparent"});
                 }.bind(this),
                 "click": function(){this.select();}.bind(this)
             });
         }
     },
 
-    select: function(){
-        var flag = this.view.json.select || this.view.viewJson.select ||  "none";
+    select: function(  force ){
+        // var flag = force || this.view.json.select || this.view.viewJson.select ||  "none";
+        var flag = force || this.view.getSelectFlag();
         if (this.isSelected){
             if (flag==="single"){
                 this.unSelectedSingle();
@@ -1605,7 +1919,7 @@ MWF.xApplication.query.Query.Viewer.Item = new Class({
         this.view.fireEvent("select"); //options 传入的事件
     },
 
-    selected: function(){
+    selected: function( from ){
         this.view.selectedItems.push(this);
         var viewStyles = this.view.viewJson.viewStyles;
         if( viewStyles ){
@@ -1616,18 +1930,34 @@ MWF.xApplication.query.Query.Viewer.Item = new Class({
             this.node.setStyles(this.css.viewContentTrNode_selected);
         }
         this.isSelected = true;
+        if( from !== "view" && from !=="category" && this.view.viewJson.allowSelectAll ){
+            this.view.checkSelectAllStatus();
+            if( this.category )this.category.checkSelectAllStatus();
+        }
         this.view.fireEvent("selectRow", [this]);
     },
-    unSelected: function(){
+    unSelected: function( from ){
         this.view.selectedItems.erase(this);
-        this.selectTd.setStyles({"background": "transparent"});
         var viewStyles = this.view.viewJson.viewStyles;
+        if( this.view.viewJson.selectBoxShow !=="always" ){
+            this.selectTd.setStyles({"background": "transparent"});
+        }else{
+            if (viewStyles) {
+                this.selectTd.setStyles(viewStyles["checkboxNode"]);
+            }else{
+                this.selectTd.setStyles({"background": "url(" + "../x_component_query_Query/$Viewer/default/icon/checkbox.png) center center no-repeat"});
+            }
+        }
         if( viewStyles ){
             this.node.setStyles( viewStyles["contentTr"] );
         }else{
             this.node.setStyles(this.css.viewContentTrNode);
         }
         this.isSelected = false;
+        if( from !== "view" && from !=="category" && this.view.viewJson.allowSelectAll ){
+            this.view.checkSelectAllStatus();
+            if( this.category )this.category.checkSelectAllStatus();
+        }
         this.view.fireEvent("unselectRow", [this]);
     },
     selectedSingle: function(){
@@ -1648,8 +1978,16 @@ MWF.xApplication.query.Query.Viewer.Item = new Class({
     unSelectedSingle: function(){
         this.view.selectedItems = [];
         this.view.currentSelectedItem = null;
-        this.selectTd.setStyles({"background": "transparent"});
         var viewStyles = this.view.viewJson.viewStyles;
+        if( this.view.viewJson.selectBoxShow !=="always" ){
+            this.selectTd.setStyles({"background": "transparent"});
+        }else{
+            if (viewStyles) {
+                this.selectTd.setStyles(viewStyles["radioNode"]);
+            }else{
+                this.selectTd.setStyles({"background": "url(" + "../x_component_query_Query/$Viewer/default/icon/radiobox.png) center center no-repeat"});
+            }
+        }
         if( viewStyles ){
             this.node.setStyles( viewStyles["contentTr"] );
         }else{
@@ -1684,6 +2022,32 @@ MWF.xApplication.query.Query.Viewer.ItemCategory = new Class({
         //if (this.view.json.select==="single" || this.view.json.select==="multi"){
         this.selectTd = new Element("td", {"styles": viewContentCategoryTdNode}).inject(this.node);
         if (this.view.json.itemStyles) this.selectTd.setStyles(this.view.json.itemStyles);
+
+        if( this.data.$selectedEnable && this.view.getSelectFlag() === "multi" && this.view.viewJson.allowSelectAll ){
+            this.selectAllNode = this.selectTd;
+            if( viewStyles && viewStyles["checkboxNode"] ){
+                this.selectAllNode.setStyles( viewStyles["checkboxNode"] )
+                // this.selectAllNode = new Element("span", {
+                //     styles : viewStyles["checkboxNode"]
+                // }).inject( this.selectTd );
+            }else{
+                this.selectAllNode.set( "html", "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/checkbox.png'/>"+"</span>" )
+                // this.selectAllNode = new Element("span",{
+                //     html : "<img src='../x_component_query_Query/$Viewer/"+this.options.style+"/icon/checkbox.png'/>"+"</span>",
+                //     style : "font-family: Webdings"
+                // }).inject( this.selectTd );
+            }
+            this.selectAllNode.setStyle("cursor", "pointer");
+            this.selectAllNode.addEvent("click", function (ev) {
+                if( this.getSelectAllStatus() === "all" ){
+                    this.unSelectAll("category")
+                }else{
+                    this.selectAll("category");
+                }
+                ev.stopPropagation();
+            }.bind(this));
+        }
+
         // if( this.view.isSelectTdHidden() ){
         //     this.selectTd.hide();
         // }
@@ -1750,6 +2114,83 @@ MWF.xApplication.query.Query.Viewer.ItemCategory = new Class({
 
         this.view.fireEvent("postLoadCategoryRow", [null, this]);
     },
+    getSelectAllStatus : function(){
+        if ( this.view.getSelectFlag()!=="multi")return;
+        if( !this.items.length )return "none";
+        var flag = "all";
+        var allFlag = true, noneFlag = true;
+        for( var i=0; i<this.items.length; i++ ){
+            var item = this.items[i];
+            if( item.data.$selectedEnable ){
+                item.isSelected ? ( noneFlag = false ) : (allFlag = false);
+                if( !allFlag && !noneFlag )return "some"
+            }
+        }
+        if( allFlag )return "all";
+        if( noneFlag )return "none";
+        return "some";
+    },
+    checkSelectAllStatus : function(){
+        if( !this.selectAllNode )return;
+        var status = this.getSelectAllStatus();
+        if( status === "all" ){
+            this.setSelectAllStyle()
+        }else{
+            this.setUnSelectAllStyle()
+        }
+    },
+    setSelectAllStyle : function () {
+        if( !this.selectAllNode )return;
+        if( this.view.viewJson.viewStyles && this.view.viewJson.viewStyles["checkedCheckboxNode"] ){
+            this.selectAllNode.setStyles( this.view.viewJson.viewStyles["checkedCheckboxNode"] );
+        }else {
+            this.selectAllNode.getElement("img").set("src",
+                '../x_component_query_Query/$Viewer/" + this.options.style + "/icon/checkbox_checked.png' )
+        }
+    },
+    setUnSelectAllStyle : function () {
+        if( !this.selectAllNode )return;
+        if( this.view.viewJson.viewStyles && this.view.viewJson.viewStyles["checkboxNode"] ){
+            this.selectAllNode.setStyles( this.view.viewJson.viewStyles["checkboxNode"] );
+        }else {
+            this.selectAllNode.getElement("img").set("src",
+                '../x_component_query_Query/$Viewer/" + this.options.style + "/icon/checkbox.png' )
+        }
+    },
+    selectAll : function( from ){
+        // var flag = this.json.select || this.viewJson.select ||  "none";
+        if ( this.view.getSelectFlag()==="multi"){
+            this.expand();
+            this.items.each( function (item) {
+                if( item.data.$selectedEnable ){
+                    item.selected( from );
+                }
+            })
+            if( this.view.viewJson.allowSelectAll ){
+                this.setSelectAllStyle();
+                if( from !== "view" ){
+                    this.view.checkSelectAllStatus();
+                }
+            }
+        }
+
+    },
+    unSelectAll : function( from ){
+        // var flag = this.json.select || this.viewJson.select ||  "none";
+        if ( this.view.getSelectFlag()==="multi"){
+            this.items.each( function (item) {
+                if( item.data.$selectedEnable ) {
+                    item.unSelected(from);
+                }
+            })
+            if( this.view.viewJson.allowSelectAll ) {
+                this.setUnSelectAllStyle();
+                if (from !== "view") {
+                    this.view.checkSelectAllStatus();
+                }
+            }
+        }
+    },
     setEvent: function(){
         //if (this.selectTd){
         this.node.addEvents({
@@ -1770,7 +2211,7 @@ MWF.xApplication.query.Query.Viewer.ItemCategory = new Class({
             this.expand();
         }
     },
-    collapse: function(){
+    collapse: function( from ){
         this.items.each(function(item){
             item.node.setStyle("display", "none");
         }.bind(this));
@@ -1780,8 +2221,11 @@ MWF.xApplication.query.Query.Viewer.ItemCategory = new Class({
             this.node.getElement("span").set("html", "<img src='../x_component_query_Query/$Viewer/"+this.view.options.style+"/icon/expand.png'/>");
         }
         this.expanded = false;
+        if( from !== "view" ){
+            this.view.checkExpandAllStatus();
+        }
     },
-    expand: function(){
+    expand: function( from ){
         this.items.each(function(item){
             item.node.setStyle("display", "table-row");
         }.bind(this));
@@ -1795,11 +2239,14 @@ MWF.xApplication.query.Query.Viewer.ItemCategory = new Class({
             //window.setTimeout(function(){
             this.data.list.each(function(line, i){
                 var s = this.idx+i;
-                this.lastItem = new MWF.xApplication.query.Query.Viewer.Item(this.view, line, (this.lastItem || this), s);
+                this.lastItem = new MWF.xApplication.query.Query.Viewer.Item(this.view, line, (this.lastItem || this), s, this);
                 this.items.push(this.lastItem);
             }.bind(this));
             this.loadChild = true;
             //}.bind(this), 10);
+        }
+        if( from !== "view" ){
+            this.view.checkExpandAllStatus();
         }
     }
 });
@@ -1932,6 +2379,7 @@ MWF.xApplication.query.Query.Viewer.Actionbar = new Class({
                 }else if (value.indexOf("x_cms_assemble_control")!==-1){
                     value = value.replace("x_cms_assemble_control", host3+"/x_cms_assemble_control");
                 }
+                value = o2.filterUrl(value);
             }
             this.node.setStyle(key, value);
         }.bind(this));
@@ -2012,20 +2460,33 @@ MWF.xApplication.query.Query.Viewer.Actionbar = new Class({
             if (this.json.actionStyles) this.toolbarWidget.css = this.json.actionStyles;
             //alert(this.readonly)
 
-            if (this.json.hideSystemTools){
-                this.setCustomToolbars(this.json.tools, this.toolbarNode);
+            if( this.json.multiTools ){
+                this.json.multiTools.each( function (tool) {
+                    if( tool.system ){
+                        if( !this.json.hideSystemTools ){
+                            this.setToolbars([tool], this.toolbarNode, this.readonly);
+                        }
+                    }else{
+                        this.setCustomToolbars([tool], this.toolbarNode);
+                    }
+                }.bind(this));
                 this.toolbarWidget.load();
             }else{
-                if (this.json.defaultTools){
-                    this.setToolbars(this.json.defaultTools, this.toolbarNode, this.readonly);
+                if (this.json.hideSystemTools){
                     this.setCustomToolbars(this.json.tools, this.toolbarNode);
                     this.toolbarWidget.load();
                 }else{
-                    MWF.getJSON(this.form.path+"toolbars.json", function(json){
-                        this.setToolbars(json, this.toolbarNode, this.readonly, true);
+                    if (this.json.defaultTools){
+                        this.setToolbars(this.json.defaultTools, this.toolbarNode, this.readonly);
                         this.setCustomToolbars(this.json.tools, this.toolbarNode);
                         this.toolbarWidget.load();
-                    }.bind(this), null);
+                    }else{
+                        MWF.getJSON(this.form.path+"toolbars.json", function(json){
+                            this.setToolbars(json, this.toolbarNode, this.readonly, true);
+                            this.setCustomToolbars(this.json.tools, this.toolbarNode);
+                            this.toolbarWidget.load();
+                        }.bind(this), null);
+                    }
                 }
             }
 
@@ -2193,6 +2654,7 @@ MWF.xApplication.query.Query.Viewer.Paging = new Class({
                 }else if (value.indexOf("x_cms_assemble_control")!==-1){
                     value = value.replace("x_cms_assemble_control", host3+"/x_cms_assemble_control");
                 }
+                value = o2.filterUrl(value);
             }
             this.node.setStyle(key, value);
         }.bind(this));

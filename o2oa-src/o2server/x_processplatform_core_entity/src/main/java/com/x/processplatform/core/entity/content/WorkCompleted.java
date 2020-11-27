@@ -16,6 +16,11 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.openjpa.persistence.Persistent;
+import org.apache.openjpa.persistence.jdbc.Index;
+import org.apache.openjpa.persistence.jdbc.Strategy;
+
 import com.x.base.core.entity.JpaObject;
 import com.x.base.core.entity.SliceJpaObject;
 import com.x.base.core.entity.annotation.CheckPersist;
@@ -26,14 +31,8 @@ import com.x.base.core.project.tools.DateTools;
 import com.x.base.core.project.tools.StringTools;
 import com.x.processplatform.core.entity.PersistenceProperties;
 
-import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.openjpa.persistence.Persistent;
-import org.apache.openjpa.persistence.jdbc.Index;
-import org.apache.openjpa.persistence.jdbc.Strategy;
-
 @Entity
-@ContainerEntity(dumpSize = 1000, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
+@ContainerEntity(dumpSize = 100, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
 @Table(name = PersistenceProperties.Content.WorkCompleted.table, uniqueConstraints = {
 		@UniqueConstraint(name = PersistenceProperties.Content.WorkCompleted.table + JpaObject.IndexNameMiddle
 				+ JpaObject.DefaultUniqueConstraintSuffix, columnNames = { JpaObject.IDCOLUMN,
@@ -99,7 +98,7 @@ public class WorkCompleted extends SliceJpaObject implements ProjectionInterface
 	/**
 	 * 通过Work创建WorkCompleted
 	 */
-	public WorkCompleted(Work work, Date completedTime, Long duration, String formData, String formMobileData) {
+	public WorkCompleted(Work work, Date completedTime, Long duration) {
 		this();
 		this.job = work.getJob();
 		this.setTitle(work.getTitle());
@@ -118,8 +117,8 @@ public class WorkCompleted extends SliceJpaObject implements ProjectionInterface
 		this.processAlias = work.getProcessAlias();
 		this.serial = work.getSerial();
 		this.form = work.getForm();
-		this.formData = formData;
-		this.formMobileData = formMobileData;
+//		this.formData = formData;
+//		this.formMobileData = formMobileData;
 		this.work = work.getId();
 		this.expireTime = work.getExpireTime();
 		if ((null != expireTime) && (completedTime.after(expireTime))) {
@@ -138,6 +137,10 @@ public class WorkCompleted extends SliceJpaObject implements ProjectionInterface
 		return this.properties;
 	}
 
+	public void setProperties(WorkCompletedProperties properties) {
+		this.properties = properties;
+	}
+
 	public void setTitle(String title) {
 		this.title = title;
 		this.getProperties().setTitle(title);
@@ -149,10 +152,6 @@ public class WorkCompleted extends SliceJpaObject implements ProjectionInterface
 		} else {
 			return this.title;
 		}
-	}
-
-	public Boolean getMerged() {
-		return BooleanUtils.isTrue(merged);
 	}
 
 	public static final String job_FIELDNAME = "job";
@@ -245,7 +244,6 @@ public class WorkCompleted extends SliceJpaObject implements ProjectionInterface
 	public static final String applicationAlias_FIELDNAME = "applicationAlias";
 	@FieldDescribe("应用别名.")
 	@Column(length = length_255B, name = ColumnNamePrefix + applicationAlias_FIELDNAME)
-	@Index(name = TABLE + IndexNameMiddle + applicationAlias_FIELDNAME)
 	@CheckPersist(allowEmpty = true)
 	private String applicationAlias;
 
@@ -266,7 +264,6 @@ public class WorkCompleted extends SliceJpaObject implements ProjectionInterface
 	public static final String processAlias_FIELDNAME = "processAlias";
 	@FieldDescribe("流程别名.")
 	@Column(length = length_255B, name = ColumnNamePrefix + processAlias_FIELDNAME)
-	@Index(name = TABLE + IndexNameMiddle + processAlias_FIELDNAME)
 	@CheckPersist(allowEmpty = true)
 	private String processAlias;
 
@@ -284,21 +281,21 @@ public class WorkCompleted extends SliceJpaObject implements ProjectionInterface
 	@CheckPersist(allowEmpty = true)
 	private String form;
 
-	public static final String formData_FIELDNAME = "formData";
-	@FieldDescribe("文本内容.")
-	@Lob
-	@Basic(fetch = FetchType.EAGER)
-	@Column(length = JpaObject.length_10M, name = ColumnNamePrefix + formData_FIELDNAME)
-	@CheckPersist(allowEmpty = true)
-	private String formData;
+//	public static final String formData_FIELDNAME = "formData";
+//	@FieldDescribe("文本内容.")
+//	@Lob
+//	@Basic(fetch = FetchType.EAGER)
+//	@Column(length = JpaObject.length_10M, name = ColumnNamePrefix + formData_FIELDNAME)
+//	@CheckPersist(allowEmpty = true)
+//	private String formData;
 
-	public static final String formMobileData_FIELDNAME = "formMobileData";
-	@FieldDescribe("移动端文本内容.")
-	@Lob
-	@Basic(fetch = FetchType.EAGER)
-	@Column(length = JpaObject.length_10M, name = ColumnNamePrefix + formMobileData_FIELDNAME)
-	@CheckPersist(allowEmpty = true)
-	private String formMobileData;
+//	public static final String formMobileData_FIELDNAME = "formMobileData";
+//	@FieldDescribe("移动端文本内容.")
+//	@Lob
+//	@Basic(fetch = FetchType.EAGER)
+//	@Column(length = JpaObject.length_10M, name = ColumnNamePrefix + formMobileData_FIELDNAME)
+//	@CheckPersist(allowEmpty = true)
+//	private String formMobileData;
 
 	public static final String work_FIELDNAME = "work";
 	@Flag
@@ -373,7 +370,7 @@ public class WorkCompleted extends SliceJpaObject implements ProjectionInterface
 	private WorkCompletedProperties properties;
 
 	public static final String merged_FIELDNAME = "merged";
-	@FieldDescribe("业务数据是否从item表中合并至data字段")
+	@FieldDescribe("合并数据")
 	@Column(name = ColumnNamePrefix + merged_FIELDNAME)
 	@Index(name = TABLE + IndexNameMiddle + merged_FIELDNAME)
 	@CheckPersist(allowEmpty = true)
@@ -717,21 +714,21 @@ public class WorkCompleted extends SliceJpaObject implements ProjectionInterface
 		this.completedTimeMonth = completedTimeMonth;
 	}
 
-	public String getFormData() {
-		return formData;
-	}
-
-	public void setFormData(String formData) {
-		this.formData = formData;
-	}
-
-	public String getFormMobileData() {
-		return formMobileData;
-	}
-
-	public void setFormMobileData(String formMobileData) {
-		this.formMobileData = formMobileData;
-	}
+//	public String getFormData() {
+//		return formData;
+//	}
+//
+//	public void setFormData(String formData) {
+//		this.formData = formData;
+//	}
+//
+//	public String getFormMobileData() {
+//		return formMobileData;
+//	}
+//
+//	public void setFormMobileData(String formMobileData) {
+//		this.formMobileData = formMobileData;
+//	}
 
 	public Long getDuration() {
 		return duration;
@@ -1045,12 +1042,12 @@ public class WorkCompleted extends SliceJpaObject implements ProjectionInterface
 		this.timeValue02 = timeValue02;
 	}
 
-	public void setMerged(Boolean merged) {
-		this.merged = merged;
+	public Boolean getMerged() {
+		return merged;
 	}
 
-	public void setProperties(WorkCompletedProperties properties) {
-		this.properties = properties;
+	public void setMerged(Boolean merged) {
+		this.merged = merged;
 	}
 
 	public String getActivity() {

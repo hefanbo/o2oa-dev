@@ -45,7 +45,7 @@ import com.x.processplatform.core.entity.PersistenceProperties;
 import com.x.processplatform.core.entity.element.ActivityType;
 
 @Entity
-@ContainerEntity(dumpSize = 1000, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
+@ContainerEntity(dumpSize = 200, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
 @Table(name = PersistenceProperties.Content.Work.table, uniqueConstraints = {
 		@UniqueConstraint(name = PersistenceProperties.Content.Work.table + JpaObject.IndexNameMiddle
 				+ JpaObject.DefaultUniqueConstraintSuffix, columnNames = { JpaObject.IDCOLUMN,
@@ -97,8 +97,8 @@ public class Work extends SliceJpaObject implements ProjectionInterface {
 	public void postLoad() {
 		if ((null != this.properties) && StringUtils.isNotEmpty(this.getProperties().getTitle())) {
 			this.title = this.getProperties().getTitle();
-			this.splitValueList = this.getProperties().getSplitValueList();
 		}
+		this.splitValueList = this.getProperties().getSplitValueList();
 	}
 
 	/* 更新运行方法 */
@@ -127,6 +127,10 @@ public class Work extends SliceJpaObject implements ProjectionInterface {
 			this.properties = new WorkProperties();
 		}
 		return this.properties;
+	}
+
+	public void setProperties(WorkProperties properties) {
+		this.properties = properties;
 	}
 
 	public void setTitle(String title) {
@@ -236,7 +240,6 @@ public class Work extends SliceJpaObject implements ProjectionInterface {
 	public static final String applicationAlias_FIELDNAME = "applicationAlias";
 	@FieldDescribe("应用别名.")
 	@Column(length = length_255B, name = ColumnNamePrefix + applicationAlias_FIELDNAME)
-	@Index(name = TABLE + IndexNameMiddle + applicationAlias_FIELDNAME)
 	@CheckPersist(allowEmpty = true)
 	private String applicationAlias;
 
@@ -257,7 +260,6 @@ public class Work extends SliceJpaObject implements ProjectionInterface {
 	public static final String processAlias_FIELDNAME = "processAlias";
 	@FieldDescribe("流程别名.")
 	@Column(length = length_255B, name = ColumnNamePrefix + processAlias_FIELDNAME)
-	@Index(name = TABLE + IndexNameMiddle + processAlias_FIELDNAME)
 	@CheckPersist(allowEmpty = true)
 	private String processAlias;
 
@@ -848,14 +850,6 @@ public class Work extends SliceJpaObject implements ProjectionInterface {
 		this.form = form;
 	}
 
-	// public Integer getErrorRetry() {
-	// return errorRetry;
-	// }
-	//
-	// public void setErrorRetry(Integer errorRetry) {
-	// this.errorRetry = errorRetry;
-	// }
-
 	public String getDestinationRoute() {
 		return destinationRoute;
 	}
@@ -1274,10 +1268,6 @@ public class Work extends SliceJpaObject implements ProjectionInterface {
 
 	public void setWorkCreateType(String workCreateType) {
 		this.workCreateType = workCreateType;
-	}
-
-	public void setProperties(WorkProperties properties) {
-		this.properties = properties;
 	}
 
 	public void setManualTaskIdentityList(List<String> manualTaskIdentityList) {

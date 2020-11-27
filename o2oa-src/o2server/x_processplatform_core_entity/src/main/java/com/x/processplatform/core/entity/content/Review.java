@@ -13,6 +13,11 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.openjpa.persistence.Persistent;
+import org.apache.openjpa.persistence.jdbc.Index;
+import org.apache.openjpa.persistence.jdbc.Strategy;
+
 import com.x.base.core.entity.AbstractPersistenceProperties;
 import com.x.base.core.entity.JpaObject;
 import com.x.base.core.entity.SliceJpaObject;
@@ -23,13 +28,8 @@ import com.x.base.core.project.tools.DateTools;
 import com.x.base.core.project.tools.StringTools;
 import com.x.processplatform.core.entity.PersistenceProperties;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.openjpa.persistence.Persistent;
-import org.apache.openjpa.persistence.jdbc.Index;
-import org.apache.openjpa.persistence.jdbc.Strategy;
-
 @Entity
-@ContainerEntity(dumpSize = 1000, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
+@ContainerEntity(dumpSize = 200, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
 @Table(name = PersistenceProperties.Content.Review.table, uniqueConstraints = {
 		@UniqueConstraint(name = PersistenceProperties.Content.Review.table + JpaObject.IndexNameMiddle
 				+ JpaObject.DefaultUniqueConstraintSuffix, columnNames = { JpaObject.IDCOLUMN,
@@ -152,6 +152,10 @@ public class Review extends SliceJpaObject implements ProjectionInterface {
 		return this.properties;
 	}
 
+	public void setProperties(ReviewProperties properties) {
+		this.properties = properties;
+	}
+
 	public static final String job_FIELDNAME = "job";
 	@FieldDescribe("任务.")
 	@Column(length = JpaObject.length_id, name = ColumnNamePrefix + job_FIELDNAME)
@@ -245,7 +249,6 @@ public class Review extends SliceJpaObject implements ProjectionInterface {
 	@FieldDescribe("应用别名.")
 	@Column(length = AbstractPersistenceProperties.processPlatform_name_length, name = ColumnNamePrefix
 			+ applicationAlias_FIELDNAME)
-	@Index(name = TABLE + IndexNameMiddle + applicationAlias_FIELDNAME)
 	@CheckPersist(allowEmpty = true)
 	private String applicationAlias;
 
@@ -268,7 +271,6 @@ public class Review extends SliceJpaObject implements ProjectionInterface {
 	@FieldDescribe("流程别名.")
 	@Column(length = AbstractPersistenceProperties.processPlatform_name_length, name = ColumnNamePrefix
 			+ processAlias_FIELDNAME)
-	@Index(name = TABLE + IndexNameMiddle + processAlias_FIELDNAME)
 	@CheckPersist(allowEmpty = true)
 	private String processAlias;
 
@@ -954,10 +956,6 @@ public class Review extends SliceJpaObject implements ProjectionInterface {
 
 	public static String getStringvalue01Fieldname() {
 		return stringValue01_FIELDNAME;
-	}
-
-	public void setProperties(ReviewProperties properties) {
-		this.properties = properties;
 	}
 
 }

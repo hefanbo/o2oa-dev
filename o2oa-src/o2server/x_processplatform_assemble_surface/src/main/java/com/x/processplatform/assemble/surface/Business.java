@@ -16,10 +16,12 @@ import org.apache.commons.lang3.StringUtils;
 import com.x.base.core.container.EntityManagerContainer;
 import com.x.base.core.project.config.StorageMapping;
 import com.x.base.core.project.exception.PromptException;
+import com.x.base.core.project.gson.GsonPropertyObject;
 import com.x.base.core.project.http.EffectivePerson;
 import com.x.base.core.project.organization.OrganizationDefinition;
 import com.x.base.core.project.tools.ListTools;
 import com.x.organization.core.express.Organization;
+import com.x.processplatform.assemble.surface.factory.cms.CmsFactory;
 import com.x.processplatform.assemble.surface.factory.content.AttachmentFactory;
 import com.x.processplatform.assemble.surface.factory.content.ItemFactory;
 import com.x.processplatform.assemble.surface.factory.content.JobFactory;
@@ -54,6 +56,7 @@ import com.x.processplatform.assemble.surface.factory.element.RouteFactory;
 import com.x.processplatform.assemble.surface.factory.element.ScriptFactory;
 import com.x.processplatform.assemble.surface.factory.element.ServiceFactory;
 import com.x.processplatform.assemble.surface.factory.element.SplitFactory;
+import com.x.processplatform.assemble.surface.factory.portal.PortalFactory;
 import com.x.processplatform.core.entity.content.Attachment;
 import com.x.processplatform.core.entity.content.Read;
 import com.x.processplatform.core.entity.content.ReadCompleted;
@@ -387,24 +390,6 @@ public class Business {
 		return script;
 	}
 
-//	private QueryViewFactory queryView;
-//
-//	public QueryViewFactory queryView() throws Exception {
-//		if (null == this.queryView) {
-//			this.queryView = new QueryViewFactory(this);
-//		}
-//		return queryView;
-//	}
-//
-//	private QueryStatFactory queryStat;
-//
-//	public QueryStatFactory queryStat() throws Exception {
-//		if (null == this.queryStat) {
-//			this.queryStat = new QueryStatFactory(this);
-//		}
-//		return queryStat;
-//	}
-
 	private FileFactory file;
 
 	public FileFactory file() throws Exception {
@@ -412,6 +397,24 @@ public class Business {
 			this.file = new FileFactory(this);
 		}
 		return file;
+	}
+
+	private CmsFactory cms;
+
+	public CmsFactory cms() throws Exception {
+		if (null == this.cms) {
+			this.cms = new CmsFactory(this);
+		}
+		return cms;
+	}
+
+	private PortalFactory portal;
+
+	public PortalFactory portal() throws Exception {
+		if (null == this.portal) {
+			this.portal = new PortalFactory(this);
+		}
+		return portal;
 	}
 
 	public Activity getActivity(Work work) throws Exception {
@@ -422,50 +425,50 @@ public class Business {
 		Activity o = null;
 		if (null != activityType) {
 			switch (activityType) {
-				case agent:
-					o = agent().pick(id);
-					break;
-				case begin:
-					o = begin().pick(id);
-					break;
-				case cancel:
-					o = cancel().pick(id);
-					break;
-				case choice:
-					o = choice().pick(id);
-					break;
-				case delay:
-					o = delay().pick(id);
-					break;
-				case embed:
-					o = embed().pick(id);
-					break;
-				case end:
-					o = end().pick(id);
-					break;
-				case invoke:
-					o = invoke().pick(id);
-					break;
-				case manual:
-					o = manual().pick(id);
-					break;
-				case merge:
-					o = merge().pick(id);
-					break;
-				case message:
-					o = message().pick(id);
-					break;
-				case parallel:
-					o = parallel().pick(id);
-					break;
-				case service:
-					o = service().pick(id);
-					break;
-				case split:
-					o = service().pick(id);
-					break;
-				default:
-					break;
+			case agent:
+				o = agent().pick(id);
+				break;
+			case begin:
+				o = begin().pick(id);
+				break;
+			case cancel:
+				o = cancel().pick(id);
+				break;
+			case choice:
+				o = choice().pick(id);
+				break;
+			case delay:
+				o = delay().pick(id);
+				break;
+			case embed:
+				o = embed().pick(id);
+				break;
+			case end:
+				o = end().pick(id);
+				break;
+			case invoke:
+				o = invoke().pick(id);
+				break;
+			case manual:
+				o = manual().pick(id);
+				break;
+			case merge:
+				o = merge().pick(id);
+				break;
+			case message:
+				o = message().pick(id);
+				break;
+			case parallel:
+				o = parallel().pick(id);
+				break;
+			case service:
+				o = service().pick(id);
+				break;
+			case split:
+				o = service().pick(id);
+				break;
+			default:
+				break;
 			}
 		}
 		return o;
@@ -1094,16 +1097,16 @@ public class Business {
 		if (effectivePerson.isPerson(creatorPerson)) {
 			return true;
 		}
-		if (emc.countEqualAndEqual(TaskCompleted.class, TaskCompleted.person_FIELDNAME,
-				effectivePerson.getDistinguishedName(), TaskCompleted.job_FIELDNAME, job) == 0) {
-			if (emc.countEqualAndEqual(ReadCompleted.class, ReadCompleted.person_FIELDNAME,
-					effectivePerson.getDistinguishedName(), ReadCompleted.job_FIELDNAME, job) == 0) {
-				if (emc.countEqualAndEqual(Task.class, Task.person_FIELDNAME, effectivePerson.getDistinguishedName(),
-						Task.job_FIELDNAME, job) == 0) {
-					if (emc.countEqualAndEqual(Read.class, Read.person_FIELDNAME,
-							effectivePerson.getDistinguishedName(), Read.job_FIELDNAME, job) == 0) {
-						if (emc.countEqualAndEqual(Review.class, Review.person_FIELDNAME,
-								effectivePerson.getDistinguishedName(), Review.job_FIELDNAME, job) == 0) {
+		if (emc.countEqualAndEqual(Review.class, Review.person_FIELDNAME, effectivePerson.getDistinguishedName(),
+				Review.job_FIELDNAME, job) == 0) {
+			if (emc.countEqualAndEqual(Task.class, Task.person_FIELDNAME, effectivePerson.getDistinguishedName(),
+					Task.job_FIELDNAME, job) == 0) {
+				if (emc.countEqualAndEqual(Read.class, Read.person_FIELDNAME, effectivePerson.getDistinguishedName(),
+						Read.job_FIELDNAME, job) == 0) {
+					if (emc.countEqualAndEqual(TaskCompleted.class, TaskCompleted.person_FIELDNAME,
+							effectivePerson.getDistinguishedName(), TaskCompleted.job_FIELDNAME, job) == 0) {
+						if (emc.countEqualAndEqual(ReadCompleted.class, ReadCompleted.person_FIELDNAME,
+								effectivePerson.getDistinguishedName(), ReadCompleted.job_FIELDNAME, job) == 0) {
 							Application application = application().pick(applicationId);
 							Process process = process().pick(processId);
 							if (!canManageApplicationOrProcess(effectivePerson, application, process)) {
@@ -1226,7 +1229,9 @@ public class Business {
 		}
 		try (ZipOutputStream zos = new ZipOutputStream(os)) {
 			for (Map.Entry<String, Attachment> entry : filePathMap.entrySet()) {
-				zos.putNextEntry(new ZipEntry(entry.getKey()));
+				zos.putNextEntry(new ZipEntry(StringUtils.replaceEach(entry.getKey(),
+						new String[] { "/", ":", "*", "?", "<<", ">>", "|", "<", ">", "\\" },
+						new String[] { "", "", "", "", "", "", "", "", "", "" })));
 				StorageMapping mapping = ThisApplication.context().storageMappings().get(Attachment.class,
 						entry.getValue().getStorage());
 				try (ByteArrayOutputStream os1 = new ByteArrayOutputStream()) {
@@ -1239,7 +1244,9 @@ public class Business {
 
 			if (otherAttMap != null) {
 				for (Map.Entry<String, byte[]> entry : otherAttMap.entrySet()) {
-					zos.putNextEntry(new ZipEntry(entry.getKey()));
+					zos.putNextEntry(new ZipEntry(StringUtils.replaceEach(entry.getKey(),
+							new String[] { "/", ":", "*", "?", "<<", ">>", "|", "<", ">", "\\" },
+							new String[] { "", "", "", "", "", "", "", "", "", "" })));
 					zos.write(entry.getValue());
 				}
 			}

@@ -894,6 +894,18 @@ MWF.xApplication.process.FormDesigner.Module.Form = MWF.FCForm = new Class({
 		debugger;
 		var data = this._copyFormJson(this.data);
 
+		if (data.json.styleConfig && data.json.styleConfig.extendFile){
+			var stylesUrl = "../x_component_process_FormDesigner/Module/Form/skin/" + this.json.styleConfig.extendFile;
+			MWF.getJSON(stylesUrl, function (responseJSON) {
+					if (responseJSON && responseJSON.form) {
+						data.json = Object.merge(data.json, responseJSON.form);
+					}
+					if (callback) callback();
+				}.bind(this), false
+			);
+		}
+		data.json["$version"] = "5.2";
+
 		this._recoveryModuleData();
 
 		//@todo 预先整理表单样式
@@ -1253,6 +1265,7 @@ MWF.xApplication.process.FormDesigner.Module.Form = MWF.FCForm = new Class({
                 }else if (pic.indexOf("x_portal_assemble_surface")!==-1){
                     pic = pic.replace("x_portal_assemble_surface", host2+"/x_portal_assemble_surface");
                 }
+				pic = o2.filterUrl(pic);
             }
             pic = "url('"+pic+"')";
             var len2 = pic.length;
@@ -1263,7 +1276,7 @@ MWF.xApplication.process.FormDesigner.Module.Form = MWF.FCForm = new Class({
         return css;
     },
     reloadCss: function(){
-        cssText = (this.json.css) ? this.json.css.code : "";
+        var cssText = (this.json.css) ? this.json.css.code : "";
         //var head = (document.head || document.getElementsByTagName("head")[0] || document.documentElement);
 
         var styleNode = $("style"+this.json.id);

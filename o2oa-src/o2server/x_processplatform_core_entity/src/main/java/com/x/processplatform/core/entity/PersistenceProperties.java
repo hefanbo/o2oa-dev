@@ -6,7 +6,14 @@ public final class PersistenceProperties extends AbstractPersistenceProperties {
 
 	public static class Content {
 
+		private Content() {
+		}
+
 		public static class Draft {
+
+			private Draft() {
+			}
+
 			public static final String table = "PP_C_DRAFT";
 		}
 
@@ -68,6 +75,10 @@ public final class PersistenceProperties extends AbstractPersistenceProperties {
 
 		public static class DocumentVersion {
 			public static final String table = "PP_C_DOCUMENTVERSION";
+		}
+
+		public static class Snap {
+			public static final String table = "PP_C_SNAP";
 		}
 	}
 
@@ -203,8 +214,17 @@ public final class PersistenceProperties extends AbstractPersistenceProperties {
 	}
 
 	public static class Log {
-		public static class ProcessingError {
-			public static final String table = "PP_L_PROCESSINGERROR";
+
+		private Log() {
+		}
+
+		public static class SignalStackLog {
+
+			private SignalStackLog() {
+			}
+
+			public static final String table = "PP_L_SIGNALSTACKLOG";
+
 		}
 	}
 

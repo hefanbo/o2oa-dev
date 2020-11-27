@@ -11,7 +11,8 @@ object O2 {
 
 
     val O2_COLLECT_URL = "http://collect.o2oa.net:20080/o2_collect_assemble/"
-    val O2_DOWNLOAD_URL = "https://sample.o2oa.net/app/download.html"
+//    val O2_DOWNLOAD_URL = "https://sample.o2oa.net/app/download.html"
+    val O2_DOWNLOAD_URL = "https://app.o2oa.net/download/download.html"
 
     const val O2_Process_start_mode_draft = "draft"
 
@@ -113,6 +114,8 @@ object O2 {
     //////////////////////////////////SharedPreferences KEY /////////////////////////////////////////////////
 
     val PREFERENCE_FILE = "API_DISTRIBUTE_FILE"
+    val SECURITY_PREFERENCE_FILE = "API_DIST_FILE_SECURITY"
+    val SECURITY_IS_UPDATE = "SECURITY_IS_UPDATE"
     val PRE_ASSEMBLESJSON_KEY = "ASSEMBLESJSON_KEY"
     val PRE_WEBSERVERJSON_KEY = "WEBSERVERJSON_KEY"
     val PRE_CENTER_HOST_KEY = "PRE_CENTER_HOST_KEY"//中心服务器地址

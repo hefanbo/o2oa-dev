@@ -1,7 +1,7 @@
 MWF.xApplication.Selector = MWF.xApplication.Selector || {};
 MWF.xDesktop.requireApp("Selector", "lp."+MWF.language, null, false);
 //MWF.xDesktop.requireApp("Selector", "Actions.RestActions", null, false);
-MWF.O2Selector = new Class({
+o2.xApplication.Selector.package = MWF.O2Selector = new Class({
     Implements: [Options],
     options: {
         "count": 0,
@@ -43,7 +43,7 @@ MWF.O2Selector = new Class({
                         this.selector.load();
                         this.loading = false;
                     }.bind(this));
-                }else if ((type.toLowerCase()==="identity") && ((this.options.dutys) && this.options.dutys.length) && this.options.categoryType.toLowerCase()==="unit"){
+                }else if ((type.toLowerCase()==="identity") && ((this.options.dutys) && this.options.dutys.length) ){ //&& this.options.categoryType.toLowerCase()==="unit"
                     MWF.xDesktop.requireApp("Selector", "IdentityWidthDutyCategoryByUnit", function(){
                         this.selector = new MWF.xApplication.Selector.IdentityWidthDutyCategoryByUnit(this.container, options);
                         this.selector.load();
@@ -95,7 +95,7 @@ MWF.O2SelectorFilter = new Class({
                     MWF.xDesktop.requireApp("Selector", "IdentityWidthDuty", function(){
                         this.selectFilter = new MWF.xApplication.Selector.IdentityWidthDuty.Filter(this.value, options);
                     }.bind(this), false);
-                }else if ((type.toLowerCase()==="identity") && ((this.options.dutys) && this.options.dutys.length) && this.options.categoryType.toLowerCase()==="unit"){
+                }else if ((type.toLowerCase()==="identity") && ((this.options.dutys) && this.options.dutys.length) ){ //&& this.options.categoryType.toLowerCase()==="unit"
                     MWF.xDesktop.requireApp("Selector", "IdentityWidthDutyCategoryByUnit", function(){
                         this.selectFilter = new MWF.xApplication.Selector.IdentityWidthDutyCategoryByUnit.Filter(this.value, options);
                     }.bind(this));

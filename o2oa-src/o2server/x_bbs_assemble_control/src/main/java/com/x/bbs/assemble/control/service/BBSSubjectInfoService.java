@@ -399,7 +399,7 @@ public class BBSSubjectInfoService {
 	 * @return
 	 * @throws Exception 
 	 */
-	public List<BBSSubjectInfo> listAllTopSubject( EntityManagerContainer emc, BBSSectionInfo sectionInfo, String creatorName, List<String> viewSectionIds ) throws Exception {
+	public List<BBSSubjectInfo> listAllTopSubject( EntityManagerContainer emc, BBSSectionInfo sectionInfo, String creatorName, List<String> viewSectionIds ,Date startTime , Date endTime  ) throws Exception {
 		String forumId = null;
 		String mainSectionId = null;
 		String sectionId = null;
@@ -417,7 +417,7 @@ public class BBSSubjectInfoService {
 		Business business = null;
 		List<String> ids = null;
 		business = new Business( emc );
-		ids = business.subjectInfoFactory().listAllTopSubject( forumId, mainSectionId, sectionId, creatorName );
+		ids = business.subjectInfoFactory().listAllTopSubject( forumId, mainSectionId, sectionId, creatorName , startTime ,  endTime );
 		if( ListTools.isNotEmpty( ids ) ){
 			return business.subjectInfoFactory().list( ids );
 		}
@@ -651,7 +651,7 @@ public class BBSSubjectInfoService {
 		Business business = null;
 		try ( EntityManagerContainer emc = EntityManagerContainerFactory.instance().create() ) {
 			business = new Business(emc);
-			return business.subjectInfoFactory().listSubjectInSectionForPage( searchTitle, forumId, mainSectionId, sectionId, creatorName, needPicture, isTopSubject, maxRecordCount, viewSectionIds );
+			return business.subjectInfoFactory().listSubjectInSectionForPage( searchTitle, forumId, mainSectionId, sectionId, creatorName, needPicture, isTopSubject, maxRecordCount, viewSectionIds,null,null );
 		}catch( Exception e ){
 			throw e;
 		}
@@ -664,7 +664,7 @@ public class BBSSubjectInfoService {
 		Business business = null;
 		try ( EntityManagerContainer emc = EntityManagerContainerFactory.instance().create() ) {
 			business = new Business(emc);
-			return business.subjectInfoFactory().countSubjectInSectionForPage( searchTitle, forumId, mainSectionId, sectionId, creatorName, needPicture, isTopSubject, viewSectionIds );
+			return business.subjectInfoFactory().countSubjectInSectionForPage( searchTitle, forumId, mainSectionId, sectionId, creatorName, needPicture, isTopSubject, viewSectionIds ,null,null );
 		}catch( Exception e ){
 			throw e;
 		}

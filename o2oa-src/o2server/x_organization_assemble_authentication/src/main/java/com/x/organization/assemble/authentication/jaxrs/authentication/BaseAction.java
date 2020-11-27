@@ -1,9 +1,8 @@
 package com.x.organization.assemble.authentication.jaxrs.authentication;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -72,6 +71,13 @@ abstract class BaseAction extends StandardJaxrsAction {
 		EffectivePerson effectivePerson = new EffectivePerson(person.getDistinguishedName(), tokenType,
 				Config.token().getCipher());
 		if ((null != request) && (null != response)) {
+			if(!isMoaTerminal(request)) {
+				String clientIp = HttpToken.remoteAddress(request);
+				logger.debug("{} client ip is : {}", person.getDistinguishedName(), clientIp);
+				if (!this.checkIp(clientIp, person.getIpAddress())) {
+					throw new ExceptionInvalidIpAddress(clientIp);
+				}
+			}
 			httpToken.setToken(request, response, effectivePerson);
 		}
 		t.setToken(effectivePerson.getToken());
@@ -281,6 +287,63 @@ abstract class BaseAction extends StandardJaxrsAction {
 			person.setFailureCount(1);
 			person.setFailureTime(new Date());
 		}
+	}
+
+	protected boolean checkIp(String clientIp, String ipAddress){
+		boolean returnValue = true;
+		if(StringUtils.isNotEmpty(clientIp) && StringUtils.isNotEmpty(ipAddress)){
+			try {
+				String[] ipAddressArr = StringUtils.split(ipAddress, ",");
+				for (String regIp : ipAddressArr) {
+					if(StringUtils.isNotEmpty(regIp)) {
+						Pattern pattern = Pattern.compile(regIp.trim());
+						Matcher matcher = pattern.matcher(clientIp);
+						returnValue = matcher.find();
+						if(returnValue){
+							break;
+						}
+					}
+				}
+			} catch (Exception e) {
+			}
+		}
+		return returnValue;
+	}
+
+	protected boolean isMoaTerminal(HttpServletRequest request){
+		String xClient = request.getHeader("x-client");
+		if(StringUtils.isNotBlank(xClient)){
+			xClient = xClient.toLowerCase();
+			if (xClient.indexOf("android") != -1) {
+				//安卓
+				return true;
+			}
+			if (xClient.indexOf("ios") != -1) {
+				//安卓
+				return true;
+			}
+		}
+		String userAgent = request.getHeader("User-Agent");
+		if(StringUtils.isNotBlank(userAgent)) {
+			userAgent = userAgent.toLowerCase();
+			if (userAgent.indexOf("micromessenger") != -1) {
+				//微信
+				return true;
+			}
+			if (userAgent.indexOf("dingtalk") != -1) {
+				//钉钉
+				return true;
+			}
+			if (userAgent.indexOf("android") != -1) {
+				//安卓
+				return true;
+			}
+			if (userAgent.indexOf("iphone") != -1 || userAgent.indexOf("ipad") != -1 || userAgent.indexOf("ipod") != -1) {
+				//苹果
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

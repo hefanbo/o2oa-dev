@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>o2oa</groupId>
 		<artifactId>o2server</artifactId>
-		<version>5</version>
+		<version>5.3</version>
 	</parent>
 	<artifactId>x_mind_assemble_control</artifactId>
 	<packaging>war</packaging>
@@ -23,6 +23,10 @@
 		<dependency>
 			<groupId>o2oa</groupId>
 			<artifactId>x_mind_core_entity</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>o2oa</groupId>
+			<artifactId>x_general_core_entity</artifactId>
 		</dependency>
 	</dependencies>
 	<build>
@@ -119,6 +123,12 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

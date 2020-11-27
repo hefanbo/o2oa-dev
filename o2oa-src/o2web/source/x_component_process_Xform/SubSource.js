@@ -1,5 +1,5 @@
 MWF.xDesktop.requireApp("process.Xform", "$Module", null, false);
-COMMON.AjaxModule.load("JSONTemplate", null, false);
+//COMMON.AjaxModule.load("JSONTemplate", null, false);
 MWF.xApplication.process.Xform.SubSource = MWF.APPSubSource =  new Class({
     Extends: MWF.APP$Module,
     options: {
@@ -106,11 +106,12 @@ MWF.xApplication.process.Xform.SubSource = MWF.APPSubSource =  new Class({
             if (this.source.data){
                 this._getSourceData(this.source.data);
                 this.fireEvent("postLoadData");
+                if (typeOf(this.data)!=="array") this.data = [this.data];
                 if (typeOf(this.data)=="array"){
                     this._loopData();
                     this.fireEvent("loadData");
                 }else{
-                    this._loadModules(this.node);
+                    this.form._loadModules(this.node);
                 }
 
                 //this.tmpDiv = new Element("div");

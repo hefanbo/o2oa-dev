@@ -1,6 +1,8 @@
 package com.x.bbs.assemble.control.jaxrs.subjectinfo;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -137,7 +139,7 @@ public class ActionSubjectListForPage extends BaseAction {
 		//查询出所有的置顶贴
 		if ( check && wrapIn != null && wrapIn.getWithTopSubject() != null && wrapIn.getWithTopSubject() ) {
 			try {
-				subjectInfoList_top = subjectInfoServiceAdv.listAllTopSubject( sectionInfo, wrapIn.getCreatorName(), viewSectionIds );
+				subjectInfoList_top = subjectInfoServiceAdv.listAllTopSubject( sectionInfo, wrapIn.getCreatorName(), viewSectionIds ,wrapIn.getStartTime() ,  wrapIn.getEndTime());
 				if( subjectInfoList_top != null ){
 					topTotal = subjectInfoList_top.size();
 					try {
@@ -172,7 +174,8 @@ public class ActionSubjectListForPage extends BaseAction {
 			selectTopInSection = false; //置顶贴的处理已经在前面处理过了，置顶贴已经放到一个List里，不需要再次查询出来了，后续的查询过滤置顶贴
 			if( selectTotal > 0 ){
 				try{
-					total = subjectInfoServiceAdv.countSubjectInSectionForPage( wrapIn.getSearchContent(), wrapIn.getForumId(), wrapIn.getMainSectionId(), wrapIn.getSectionId(), wrapIn.getCreatorName(), wrapIn.getNeedPicture(), selectTopInSection, viewSectionIds );
+					total = subjectInfoServiceAdv.countSubjectInSectionForPage( wrapIn.getSearchContent(), wrapIn.getForumId(), wrapIn.getMainSectionId(), wrapIn.getSectionId(),
+							wrapIn.getCreatorName(), wrapIn.getNeedPicture(), selectTopInSection, viewSectionIds ,wrapIn.getStartTime() ,  wrapIn.getEndTime());
 				} catch (Exception e) {
 					check = false;
 					Exception exception = new ExceptionSubjectFilter( e );
@@ -185,7 +188,7 @@ public class ActionSubjectListForPage extends BaseAction {
 		if( check ){
 			if( selectTotal > 0 && total > 0 ){
 				try{
-					subjectInfoList = subjectInfoServiceAdv.listSubjectInSectionForPage( wrapIn.getSearchContent(), wrapIn.getForumId(), wrapIn.getMainSectionId(), wrapIn.getSectionId(), wrapIn.getCreatorName(), wrapIn.getNeedPicture(), selectTopInSection, selectTotal, viewSectionIds );
+					subjectInfoList = subjectInfoServiceAdv.listSubjectInSectionForPage( wrapIn.getSearchContent(), wrapIn.getForumId(), wrapIn.getMainSectionId(), wrapIn.getSectionId(), wrapIn.getCreatorName(), wrapIn.getNeedPicture(), selectTopInSection, selectTotal, viewSectionIds ,  wrapIn.getStartTime() ,  wrapIn.getEndTime() );
 					if( subjectInfoList != null ){
 						try {
 							wraps_nonTop = Wo.copier.copy( subjectInfoList );
@@ -308,6 +311,12 @@ public class ActionSubjectListForPage extends BaseAction {
 		@FieldDescribe( "是否包含置顶贴." )
 		private Boolean withTopSubject = false; // 是否包含置顶贴
 		
+		@FieldDescribe( "创建日期开始." )
+		private Date startTime = null; 
+		
+		@FieldDescribe( "创建日期结束." )
+		private Date endTime = null; 
+		
 		public static List<String> Excludes = new ArrayList<String>( JpaObject.FieldsUnmodify );
 	
 		
@@ -371,6 +380,8 @@ public class ActionSubjectListForPage extends BaseAction {
 		
 		public String getCacheKey(EffectivePerson effectivePerson, Boolean isBBSManager) {
 			StringBuffer sb = new StringBuffer();
+			String pattern = "yyyy-MM-dd HH:mm:ss";
+			SimpleDateFormat formatter = new SimpleDateFormat(pattern);
 			if( StringUtils.isNotEmpty( effectivePerson.getDistinguishedName() )) {
 				sb.append( effectivePerson.getDistinguishedName() );
 			}
@@ -406,12 +417,37 @@ public class ActionSubjectListForPage extends BaseAction {
 				sb.append( "#" );
 				sb.append( creatorName );
 			}
+			
+			if(  startTime != null ) {
+				sb.append( "#" );
+				sb.append( formatter.format(startTime));
+			}
+			if(  endTime != null ) {
+				sb.append( "#" );
+				sb.append( formatter.format(endTime));
+			}
+			
 			sb.append( "#" );
 			sb.append( needPicture );
 			sb.append( "#" );
 			sb.append( withTopSubject );
 			return sb.toString();
 		}
+		
+		public Date getStartTime() {
+			return startTime;
+		}
+		public void setStartTime(Date startTime) {
+			this.startTime = startTime;
+		}
+		public Date getEndTime() {
+			return endTime;
+		}
+		public void setEndTime(Date endTime) {
+			this.endTime = endTime;
+		}
+		
+		
 		
 	}
 	

@@ -13,6 +13,13 @@
 				<td class="editTableTitle">描述:</td>
 				<td class="editTableValue"><input type="text" name="description" value="text{$.description}" class="editTableInput"/></td>
 			</tr>
+			<tr>
+				<td class="editTableTitle">延时加载:</td>
+				<td class="editTableValue">
+					<input type="radio" name="isDelay" value="true" text{($.isDelay)?'checked':''}/>是
+					<input type="radio" name="isDelay" value="false" text{(!$.isDelay)?'checked':''}/>否
+				</td>
+			</tr>
 		</table>
 
 		<table width="100%" border="0" cellpadding="5" cellspacing="0" class="editTable" style="display:block">
@@ -110,6 +117,16 @@
 					<input class="editTableRadio" name="textIndent" text{($.textIndent!=='n')?'checked':''} type="radio" value="y"/>是
 					<input class="editTableRadio" name="textIndent" text{($.textIndent=='n')?'checked':''} type="radio" value="n"/>否
 					<div>选择“是”每段首行自动缩进</div>
+				</td>
+			</tr>
+		</table>
+		<table width="100%" border="0" cellpadding="5" cellspacing="0" class="editTable">
+			<tr>
+				<td class="editTableTitle">双页显示:</td>
+				<td class="editTableValue">
+					<input class="editTableRadio" name="canDoublePage" text{($.canDoublePage!=='n')?'checked':''} type="radio" value="y"/>是
+					<input class="editTableRadio" name="canDoublePage" text{($.canDoublePage=='n')?'checked':''} type="radio" value="n"/>否
+					<div>是否允许双页显示</div>
 				</td>
 			</tr>
 		</table>

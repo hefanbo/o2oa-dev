@@ -175,7 +175,8 @@ MWF.xApplication.TeamWork.Task = new Class({
                                 if(rd.act == "remove"){
                                     this.close(rd);
                                     if(this.data.projectObj){ //reload project
-                                        this.data.projectObj.createTaskGroup()
+                                        this.data.projectObj.createTaskGroup();
+                                        //this.data.projectObj.reloadTaskCountInfor()
                                     }
                                 }
                             }.bind(this)
@@ -362,10 +363,12 @@ MWF.xApplication.TeamWork.Task = new Class({
             this.participateTitleIcon = new Element("div.participateTitleIcon",{styles:this.css.participateTitleIcon,title:this.lp.taskReaderAdd}).inject(this.participateTitle);
             this.participateTitleIcon.addEvents({
                 click:function(){
-                    this.selectPerson(this.participateTitleIcon,null,["identity","unit"],0,
+                    this.selectPerson(this.participateTitleIcon,null,["identity","unit"],1,
                         function(json){
                             if(json.length>0){
-                                this.taskData.participantList = this.taskData.participantList.concat(json);
+                                if(this.taskData.participantList.indexOf(json) == -1){
+                                    this.taskData.participantList = this.taskData.participantList.concat(json);
+                                }
                                 //this.actions.updateParticipantList(this.taskData.id,{participantList:this.taskData.participantList},function(json){
                                 this.actions.updateParticipant(this.taskData.id,{participantList:this.taskData.participantList},function(json){
                                     if(json.data.dynamics){

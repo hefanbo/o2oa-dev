@@ -1,5 +1,6 @@
 package com.x.processplatform.core.entity.element;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Basic;
@@ -14,6 +15,12 @@ import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.apache.openjpa.persistence.PersistentCollection;
+import org.apache.openjpa.persistence.jdbc.ContainerTable;
+import org.apache.openjpa.persistence.jdbc.ElementColumn;
+import org.apache.openjpa.persistence.jdbc.ElementIndex;
+import org.apache.openjpa.persistence.jdbc.Index;
+
 import com.x.base.core.entity.JpaObject;
 import com.x.base.core.entity.annotation.CheckPersist;
 import com.x.base.core.entity.annotation.ContainerEntity;
@@ -21,12 +28,6 @@ import com.x.base.core.entity.annotation.Flag;
 import com.x.base.core.entity.annotation.IdReference;
 import com.x.base.core.project.annotation.FieldDescribe;
 import com.x.processplatform.core.entity.PersistenceProperties;
-
-import org.apache.openjpa.persistence.PersistentCollection;
-import org.apache.openjpa.persistence.jdbc.ContainerTable;
-import org.apache.openjpa.persistence.jdbc.ElementColumn;
-import org.apache.openjpa.persistence.jdbc.ElementIndex;
-import org.apache.openjpa.persistence.jdbc.Index;
 
 @Entity
 @ContainerEntity(dumpSize = 5, type = ContainerEntity.Type.element, reference = ContainerEntity.Reference.strong)
@@ -56,13 +57,13 @@ public class End extends Activity {
 	/* 以上为 JpaObject 默认字段 */
 
 	public void onPersist() throws Exception {
-		//nothing
+		// nothing
 	}
 
-	/* 更新运行方法 */
-
-	/* flag标志位 */
-	/* Entity 默认字段结束 */
+	@Override
+	public List<String> getRouteList() {
+		return new ArrayList<>();
+	}
 
 	@FieldDescribe("分组")
 	@CheckPersist(allowEmpty = true)
@@ -330,6 +331,11 @@ public class End extends Activity {
 	@Index(name = TABLE + IndexNameMiddle + allowRerouteTo_FIELDNAME)
 	private Boolean allowRerouteTo;
 
+	@FieldDescribe("允许挂起")
+	@CheckPersist(allowEmpty = true)
+	@Column(name = ColumnNamePrefix + allowSuspend_FIELDNAME)
+	private Boolean allowSuspend;
+
 	public static final String allowRollback_FIELDNAME = "allowRollback";
 	@FieldDescribe("允许回滚")
 	@CheckPersist(allowEmpty = true)
@@ -412,6 +418,14 @@ public class End extends Activity {
 
 	public String getExtension() {
 		return extension;
+	}
+
+	public Boolean getAllowSuspend() {
+		return allowSuspend;
+	}
+
+	public void setAllowSuspend(Boolean allowSuspend) {
+		this.allowSuspend = allowSuspend;
 	}
 
 	public void setExtension(String extension) {

@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>o2oa</groupId>
 		<artifactId>o2server</artifactId>
-		<version>5</version>
+		<version>5.3</version>
 	</parent>
 	<artifactId>x_attendance_assemble_control</artifactId>
 	<packaging>war</packaging>
@@ -28,6 +28,10 @@
             <groupId>o2oa</groupId>
             <artifactId>x_processplatform_core_entity</artifactId>
         </dependency>
+		<dependency>
+			<groupId>o2oa</groupId>
+			<artifactId>x_general_core_entity</artifactId>
+		</dependency>
     </dependencies>
 	<build>
 		<plugins>
@@ -123,6 +127,12 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

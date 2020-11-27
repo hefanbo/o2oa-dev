@@ -8,9 +8,17 @@ object AccountSecurityContract {
     interface View : BaseView {
 
         fun logoutSuccess()
+        fun updateMyPasswordFail(message: String)
+        fun updateMyPasswordSuccess()
     }
 
     interface Presenter : BasePresenter<View> {
         fun logout(deviceId:String)
+        fun updateMyPassword(old: String, newPwd: String, newPwdConfirm: String)
+        /**
+         *
+         */
+        fun getRSAPublicKey()
+
     }
 }

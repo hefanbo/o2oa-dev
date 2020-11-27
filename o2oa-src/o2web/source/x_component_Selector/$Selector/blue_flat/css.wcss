@@ -120,7 +120,7 @@
 	},
   "contentNode_embedded": {
 	"overflow": "hidden",
-	"padding" : "5px 0px 0px 0px"
+	"padding" : "4px 0px 0px 0px"
   },
 	"selectNode": {
 		//"width": "200px",
@@ -484,6 +484,12 @@
 	  "height": "26px",
 	  "float": "left",
 	  "background": "url(../x_component_Selector/$Selector/blue_flat/icon/checked2.png) no-repeat left center"
+	},
+	"selectorItemCategoryActionNode_selectsome_selected": {
+		"width": "26px",
+		"height": "26px",
+		"float": "left",
+		"background": "url(../x_component_Selector/$Selector/blue_flat/icon/checked_some.png) no-repeat left center"
 	},
 
 	"selectorItemTextNode": {

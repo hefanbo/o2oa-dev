@@ -40,7 +40,7 @@ import org.apache.openjpa.persistence.jdbc.Strategy;
  *
  */
 @Entity
-@ContainerEntity(dumpSize = 1000, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
+@ContainerEntity(dumpSize = 200, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
 @Table(name = PersistenceProperties.Content.ReadCompleted.table, uniqueConstraints = {
 		@UniqueConstraint(name = PersistenceProperties.Content.ReadCompleted.table + JpaObject.IndexNameMiddle
 				+ JpaObject.DefaultUniqueConstraintSuffix, columnNames = { JpaObject.IDCOLUMN,
@@ -170,6 +170,10 @@ public class ReadCompleted extends SliceJpaObject implements ProjectionInterface
 		return this.properties;
 	}
 
+	public void setProperties(ReadCompletedProperties properties) {
+		this.properties = properties;
+	}
+
 	public static final String job_FIELDNAME = "job";
 	@FieldDescribe("任务.")
 	@Column(length = JpaObject.length_id, name = ColumnNamePrefix + job_FIELDNAME)
@@ -229,7 +233,6 @@ public class ReadCompleted extends SliceJpaObject implements ProjectionInterface
 	public static final String applicationAlias_FIELDNAME = "applicationAlias";
 	@FieldDescribe("应用别名.")
 	@Column(length = length_255B, name = ColumnNamePrefix + applicationAlias_FIELDNAME)
-	@Index(name = TABLE + IndexNameMiddle + applicationAlias_FIELDNAME)
 	@CheckPersist(allowEmpty = true)
 	private String applicationAlias;
 
@@ -250,7 +253,6 @@ public class ReadCompleted extends SliceJpaObject implements ProjectionInterface
 	public static final String processAlias_FIELDNAME = "processAlias";
 	@FieldDescribe("流程别名.")
 	@Column(length = length_255B, name = ColumnNamePrefix + processAlias_FIELDNAME)
-	@Index(name = TABLE + IndexNameMiddle + processAlias_FIELDNAME)
 	@CheckPersist(allowEmpty = true)
 	private String processAlias;
 
@@ -1140,10 +1142,6 @@ public class ReadCompleted extends SliceJpaObject implements ProjectionInterface
 
 	public void setCurrentActivityName(String currentActivityName) {
 		this.currentActivityName = currentActivityName;
-	}
-
-	public void setProperties(ReadCompletedProperties properties) {
-		this.properties = properties;
 	}
 
 }

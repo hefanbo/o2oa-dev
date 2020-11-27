@@ -21,6 +21,9 @@ fi
 
 SRC_DIR="o2oa-src"
 BUILD_DIR="o2oa-build"
+BUILD_IMAGE_NAME="local/o2oa-build"
+BUILD_CONTAINER_NAME="o2oa-build"
+RUN_CONTAINER_NAME="o2oa-test"
 
 if [ $1 = "update" ]; then
   rsync -r "$SRC_DIR"/ "$BUILD_DIR"/
@@ -36,28 +39,28 @@ elif [ $1 = "update_deps" ]; then
     tar xzf deps/node_modules.tar.gz -C $BUILD_DIR
   fi
 elif [ $1 = "init" ]; then
-  docker run -it --name $BUILD_DIR \
+  docker run -it --name $BUILD_CONTAINER_NAME \
     --volume $PWD/$BUILD_DIR:/o2oa \
     --volume $PWD/tools:/tools \
     --workdir /o2oa \
     --env JAVA_HOME=/o2oa/o2server/jvm/linux \
     phusion/baseimage:master-amd64 \
     /tools/init.sh
-  if [ -n "$(docker images -q $BUILD_DIR)" ]; then
-    docker image rm $BUILD_DIR
+  if [ -n "$(docker images -q $BUILD_IMAGE_NAME)" ]; then
+    docker image rm $BUILD_IMAGE_NAME
   fi
-  docker commit $BUILD_DIR $BUILD_DIR
-  docker rm $BUILD_DIR
+  docker commit $BUILD_CONTAINER_NAME $BUILD_IMAGE_NAME
+  docker rm $BUILD_CONTAINER_NAME
 elif [ $1 = "build" ]; then
   docker run -it --rm \
-    --volume $PWD/o2oa-build:/o2oa \
+    --volume $PWD/$BUILD_DIR:/o2oa \
     --volume $PWD/tools:/tools \
     --workdir /o2oa \
     --env JAVA_HOME=/o2oa/o2server/jvm/linux \
-    $BUILD_DIR \
+    $BUILD_IMAGE_NAME \
     /tools/build.sh
 elif [ $1 = "run" ]; then
-  docker run -it --rm --name o2oa \
+  docker run -it --rm --name $RUN_CONTAINER_NAME \
     --volume $PWD/$BUILD_DIR/target/o2server:/opt/o2server \
     --workdir /opt/o2server \
     --publish 127.0.0.1:80:80 \
@@ -68,7 +71,7 @@ elif [ $1 = "run" ]; then
 elif [ $1 = "rm" ]; then
   rm -r $BUILD_DIR
 elif [ $1 = "clear_src" ]; then
-  for f in $(git status -s --ignored | grep '^!! o2oa-src' | sed 's/!! //g'); do
+  for f in $(git status -s --ignored | grep "^\!\! $SRC_DIR/" | sed 's/!! //g'); do
     rm -rf $f;
   done
 else

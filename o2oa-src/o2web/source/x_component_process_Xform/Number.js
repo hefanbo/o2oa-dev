@@ -22,7 +22,7 @@ MWF.xApplication.process.Xform.Number = MWF.APPNumber =  new Class({
     //     return (isNaN(n)) ? 0 : n;
     // },
     validationFormat: function(){
-        debugger;
+
         if( !this.node.getElement("input") )return true;
         var n = this.node.getElement("input").get("value");
         if (isNaN(n)) {
@@ -127,7 +127,9 @@ MWF.xApplication.process.Xform.Number = MWF.APPNumber =  new Class({
 
             if (!this.json.validation) return true;
             if (!this.json.validation.code) return true;
+            this.currentRouteName = routeName;
             var flag = this.form.Macro.exec(this.json.validation.code, this);
+            this.currentRouteName = "";
             if (!flag) flag = MWF.xApplication.process.Xform.LP.notValidation;
             if (flag.toString() != "true") {
                 this.notValidationMode(flag);
@@ -194,8 +196,16 @@ MWF.xApplication.process.Xform.Number = MWF.APPNumber =  new Class({
         return (this.json.defaultValue && this.json.defaultValue.code) ? this.form.Macro.exec(this.json.defaultValue.code, this): (value || "0");
     },
     getValue: function(){
+        if (this.moduleValueAG) return this.moduleValueAG;
         var value = this._getBusinessData();
         if (!value) value = this._computeValue();
         return value || "0";
+    },
+    __setValue: function(value){
+        this._setBusinessData(value);
+        if (this.node.getFirst()) this.node.getFirst().set("value", value || "0");
+        if (this.readonly || this.json.isReadonly) this.node.set("text", value);
+        this.moduleValueAG = null;
+        return value;
     }
 });

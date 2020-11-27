@@ -1,3 +1,5 @@
+MWF.xApplication.process = MWF.xApplication.process || {};
+MWF.xApplication.process.Xform = MWF.xApplication.process.Xform || {};
 MWF.xApplication.process.Xform.LP = {
     "ok": "确定",
 	"deleteDatagridLineTitle":"删除条目确认",
@@ -17,6 +19,7 @@ MWF.xApplication.process.Xform.LP = {
     "arrivedActivitys": "到达活动",
     "arrivedUsers": "到达处理人",
     "replace": "代",
+    "next_etc": "等{count}人",
 
     "processStarted": "文件已启动",
     "processStartedMessage": "您启动了一个新的工作：",
@@ -34,6 +37,8 @@ MWF.xApplication.process.Xform.LP = {
     "rollback": "流程回溯",
     "rollbackTo": "流程回溯到",
     "in": "在",
+
+    "andSoForth" : "等",
 
     "noIdentitySelectRange" : "无法确定身份的选择范围",
     "noIdentityDutySelectRange" : "无法确定职务的选择范围",
@@ -232,6 +237,9 @@ MWF.xApplication.process.Xform.LP = {
         "original": "原始版本",
         "nodiff": "目前还没有历史修改信息"
     },
+    "subjectEmpty": "标题不能为空",
+    "issuanceUnitEmpty": "发文单位不能为空",
     "fullWidth": "已启用半角空格自动转换为全角空格，如需输入半角空格，请使用：SHIFT+空格"
 
 };
+MWF.xApplication.process.Xform["lp."+o2.language] = MWF.xApplication.process.Xform.LP;

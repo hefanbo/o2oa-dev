@@ -50,7 +50,7 @@ MWF.xApplication.AppMarketV2.ApplicationsContent = new Class({
         }else{
             this.searchAppClearNode.removeClass("icon_clear");
         }
-        if (e.keyCode===13) this.doSearch();
+        if (e.keyCode===13) this.doAppSearch();
     },
     clearAppSearch: function(){
         this.searchAppInputNode.set("value", "");
@@ -68,6 +68,8 @@ MWF.xApplication.AppMarketV2.ApplicationsContent = new Class({
             }else{
                 this.applicationsContentV.load();
             }
+        }else{
+            this.clearSearchResult();
         }
     },
     clearSearchResult: function(){
@@ -99,12 +101,10 @@ MWF.xApplication.AppMarketV2.ApplicationsContent.Applications= new Class({
         
     },
     load: function(){
-        debugger;
         this.loadAppCategorys();
         this.loadApplications();
     },
     loadAppCategorys: function(){
-        debugger;
         this.actions.MarketAction.listCategory(function(json){
             if (json.data && json.data.valueList){
                 this.showCategorys(json.data.valueList);
@@ -113,11 +113,9 @@ MWF.xApplication.AppMarketV2.ApplicationsContent.Applications= new Class({
         }.bind(this));
     },
     loadApplications: function(){
-        debugger;
         this.emptyLoadContent();
         this.actions.MarketAction.listPaging(this.page, this.pageSize, this.content.querydata,function(json){
             if (json.data && json.data.length){
-                debugger;
                 this.content.currentcategory["name"] = this.content.querydata.category==""||!(this.content.querydata.category)?"全部":this.content.querydata.category;
                 this.content.currentcategory["count"] = json.count;
                 this.showApplications(json.data);
@@ -141,7 +139,6 @@ MWF.xApplication.AppMarketV2.ApplicationsContent.Applications= new Class({
         this.content.isLoading = false;
     },
     showCategorys:function(data){
-        debugger;
         var categorysdiv = this.content.appCategory;
         categorysdiv.empty();
         this.loadCertainCategory(categorysdiv,"全部")
@@ -151,14 +148,17 @@ MWF.xApplication.AppMarketV2.ApplicationsContent.Applications= new Class({
 
     },
     loadCertainCategory:function(categorysdiv,d){
-        debugger;
         var _self = this;
         
         var categorydiv = new Element("span",{"text":d,"class":"o2_appmarket_appcategory"}).inject(categorysdiv);
         categorydiv.store("data",d);
+        if (_self.content.querydata["category"]){
+            if ((_self.content.querydata["category"]=="" && d=="全部")||(_self.content.querydata["category"]==d)){
+                categorydiv.removeClass("o2_appmarket_appcategory").addClass("mainColor_color").addClass("o2_appmarket_appcategory_current");
+            }
+        }
         categorydiv.addEvents({
             "mouseover":function(){
-                debugger;
                 this.addClass("o2_appmarket_appcategory_tab_over");
             },
             "mouseout":function(){
@@ -174,26 +174,27 @@ MWF.xApplication.AppMarketV2.ApplicationsContent.Applications= new Class({
                     }else{
                         _self.content.querydata["category"]=d;
                     }
+                    var key = _self.content.searchAppInputNode.get("value");
+                    if (key==undefined) key="";
+                    _self.content.querydata["name"]=key;     
                     _self.loadApplications();
                 }
             }
         })
     },
     showApplications: function(data){
-        debugger;
         //show category count
-        this.content.appCategory_count.empty();
-        new Element("div",{"text":this.content.currentcategory.name+"("+this.content.currentcategory.count+")"}).inject(this.content.appCategory_count);        
+        //this.content.appCategory_count.empty();
+        //new Element("div",{"text":this.content.currentcategory.name+"("+this.content.currentcategory.count+")"}).inject(this.content.appCategory_count);        
         var appsdiv = this.content.appList;
-        var appsdivwidth= appsdiv.clientWidth-80;
+        var appsdivwidth= appsdiv.clientWidth-40;
         //appwidth = (appsdivwidth-200)/7;
-        rowappnum = parseInt(appsdivwidth/285);
-        rowappmargin = (appsdivwidth/285-rowappnum)  * 285  / (rowappnum-1);
+        rowappnum = parseInt(appsdivwidth/240);
+        rowappmargin = (appsdivwidth/240-rowappnum)  * 240  / (rowappnum-1);
         if (rowappmargin<10){
             rowappnum = rowappnum -1;
-            rowappmargin = (appsdivwidth/285-rowappnum)  * 285  / (rowappnum-1)
+            rowappmargin = (appsdivwidth/240-rowappnum)  * 240  / (rowappnum-1)
         }
-        debugger;
         //appsdiv.setStyle("width","calc("+appwidth+"px)");
         //appsdiv.setStyle("margin-left","10px");
         data.each(function(d, i){
@@ -201,14 +202,13 @@ MWF.xApplication.AppMarketV2.ApplicationsContent.Applications= new Class({
         }.bind(this));
     },
     loadCertainApplication: function(appsdiv, d, i,rowappnum,rowappmargin){
-        debugger;
         //app 排列 begin
        var applicationdiv = new Element("div",{"class":"o2_appmarket_application"}).inject(appsdiv);
  
        if ((i+1)%rowappnum!=0){
             applicationdiv.setStyle("margin-right",rowappmargin+"px");
        }else{
-            applicationdiv.setStyle("margin-right","40px");
+            applicationdiv.setStyle("margin-right","30px");
        }
        var applicationicon = new Element("div",{"class":"o2_appmarket_application_icon"}).inject(applicationdiv);
        applicationicon.setStyle("background-image", "url(data:image/png;base64,"+d.icon+")");
@@ -274,7 +274,7 @@ MWF.xApplication.AppMarketV2.ApplicationsContent.Applications= new Class({
             var confirmtitle = d.installedVersion==""?this.app.lp.confirmsetupTitle:this.app.lp.confirmupdateTitle;
             var confirmcontent = d.installedVersion==""?this.app.lp.confirmsetupContent:this.app.lp.confirmupdateContent;
             var _self = this;
-            MWF.xDesktop.confirm("warn", tmpe, confirmtitle, confirmcontent, 300, 120, function(){
+            _self.app.confirm("warn", tmpe, confirmtitle, confirmcontent, 300, 120, function(){
                 _self.app.mask();
                 //this.createLoading(this.container,true);  
                 //alert("after createLoading")          
@@ -288,7 +288,6 @@ MWF.xApplication.AppMarketV2.ApplicationsContent.Applications= new Class({
                 }.bind(_self),
                 function( json ){ 
                     data = json.data; 
-                    debugger;
                     _self.app.unmask();
                     //this.clearLoading()
                 }.bind(_self),
@@ -302,10 +301,10 @@ MWF.xApplication.AppMarketV2.ApplicationsContent.Applications= new Class({
     open: function(e, d){
         var apppar = {};
         apppar["appid"] = d.id;
+        apppar["appname"] = d.name;
         layout.openApplication(e, "AppMarketV2.Application", apppar);
     },
     createLoading: function(node,mask){
-        debugger;
         //alert("createloading")
         this.app.content.mask({
             "destroyOnHide": true,

@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
 
+import com.x.base.core.project.tools.BaseTools;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -30,7 +31,7 @@ public class Dingding extends ConfigObject {
 	@FieldDescribe("应用的密钥")
 	private String appSecret;
 
-	@FieldDescribe("组织同步cron,默认每10分钟同步一次.")
+	@FieldDescribe("回调信号触发同步检查,默认每10分钟运行一次,如果期间内有钉钉回调信号接收到,那么触发同步任务进行人员同步.")
 	private String syncCron;
 
 	@FieldDescribe("强制拉入同步cron,默认在每天的8点和12点强制进行同步.")
@@ -38,6 +39,12 @@ public class Dingding extends ConfigObject {
 
 	@FieldDescribe("oapi服务器地址")
 	private String oapiAddress;
+
+	@FieldDescribe("回调token")
+	private String token = "";
+
+	@FieldDescribe("回调encodingAesKey")
+	private String encodingAesKey = "";
 
 	@FieldDescribe("钉钉消息打开工作的url地址，如：http://dev.o2oa.net/x_desktop/")
 	private String workUrl = "";
@@ -223,6 +230,7 @@ public class Dingding extends ConfigObject {
 	public void save() throws Exception {
 		File file = new File(Config.base(), Config.PATH_CONFIG_DINGDING);
 		FileUtils.write(file, XGsonBuilder.toJson(this), DefaultCharset.charset);
+		BaseTools.executeSyncFile(Config.PATH_CONFIG_DINGDING);
 	}
 
 	public void setEnable(Boolean enable) {
@@ -309,5 +317,19 @@ public class Dingding extends ConfigObject {
 		this.attendanceSyncEnable = attendanceSyncEnable;
 	}
 
+	public String getToken() {
+		return token;
+	}
 
+	public void setToken(String token) {
+		this.token = token;
+	}
+
+	public String getEncodingAesKey() {
+		return encodingAesKey;
+	}
+
+	public void setEncodingAesKey(String encodingAesKey) {
+		this.encodingAesKey = encodingAesKey;
+	}
 }

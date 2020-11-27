@@ -1,5 +1,6 @@
 package com.x.processplatform.core.entity.element;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Basic;
@@ -16,6 +17,7 @@ import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.openjpa.persistence.PersistentCollection;
 import org.apache.openjpa.persistence.jdbc.ContainerTable;
 import org.apache.openjpa.persistence.jdbc.ElementColumn;
@@ -29,6 +31,7 @@ import com.x.base.core.entity.annotation.ContainerEntity;
 import com.x.base.core.entity.annotation.Flag;
 import com.x.base.core.entity.annotation.IdReference;
 import com.x.base.core.project.annotation.FieldDescribe;
+import com.x.base.core.project.tools.ListTools;
 import com.x.processplatform.core.entity.PersistenceProperties;
 
 @Entity
@@ -62,7 +65,14 @@ public class Invoke extends Activity {
 		// nothing
 	}
 
-	/* 更新运行方法 */
+	@Override
+	public List<String> getRouteList() {
+		if (StringUtils.isNotEmpty(this.getRoute())) {
+			return ListTools.toList(this.getRoute());
+		} else {
+			return new ArrayList<>();
+		}
+	}
 
 	@FieldDescribe("分组")
 	@CheckPersist(allowEmpty = true)
@@ -329,6 +339,11 @@ public class Invoke extends Activity {
 	@Column(name = ColumnNamePrefix + allowRerouteTo_FIELDNAME)
 	@Index(name = TABLE + IndexNameMiddle + allowRerouteTo_FIELDNAME)
 	private Boolean allowRerouteTo;
+	
+	@FieldDescribe("允许挂起")
+	@CheckPersist(allowEmpty = true)
+	@Column(name = ColumnNamePrefix + allowSuspend_FIELDNAME)
+	private Boolean allowSuspend;
 
 	public static final String route_FIELDNAME = "route";
 	@IdReference(Route.class)
@@ -554,6 +569,14 @@ public class Invoke extends Activity {
 
 	public String getProcess() {
 		return process;
+	}
+
+	public Boolean getAllowSuspend() {
+		return allowSuspend;
+	}
+
+	public void setAllowSuspend(Boolean allowSuspend) {
+		this.allowSuspend = allowSuspend;
 	}
 
 	public void setProcess(String process) {

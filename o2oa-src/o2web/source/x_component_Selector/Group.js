@@ -9,7 +9,12 @@ MWF.xApplication.Selector.Group = new Class({
         "roles": [],
         "values": [],
         "names": [],
-        "include" : []
+        "include" : [],
+        "selectType" : "group"
+    },
+    _init : function(){
+        this.selectType = "group";
+        this.className = "Group";
     },
     checkLoadSelectItems: function(){
         if( this.options.include && this.options.include.length ){

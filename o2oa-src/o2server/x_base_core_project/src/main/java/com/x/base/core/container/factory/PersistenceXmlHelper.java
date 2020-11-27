@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Properties;
 
 import com.x.base.core.container.FactorDistributionPolicy;
+import com.x.base.core.entity.dynamic.DynamicBaseEntity;
 import com.x.base.core.entity.JpaObject;
+import com.x.base.core.entity.dynamic.DynamicEntity;
 import com.x.base.core.entity.tools.JpaObjectTools;
 import com.x.base.core.project.config.Config;
 import com.x.base.core.project.config.Node;
@@ -62,7 +64,7 @@ public class PersistenceXmlHelper {
 			throw new Exception("registContainerEntity error.className:" + ListTools.toStringJoin(classNames), e);
 		}
 	}
-	
+
 	public static void writeForDdl(String path) throws Exception {
 		try {
 			Document document = DocumentHelper.createDocument();
@@ -145,7 +147,7 @@ public class PersistenceXmlHelper {
 		property.addAttribute("value", "false");
 	}
 
-	public static List<String> write(String path, List<String> entities) throws Exception {
+	public static List<String> write(String path, List<String> entities, boolean dynamicFlag) throws Exception {
 		List<String> names = new ArrayList<>();
 		String name = "";
 		try {
@@ -156,6 +158,7 @@ public class PersistenceXmlHelper {
 			persistence.addAttribute(QName.get("schemaLocation", "xsi", "http://www.w3.org/2001/XMLSchema-instance"),
 					"http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd");
 			persistence.addAttribute("version", "2.0");
+			List<String> dyClasses = new ArrayList<>();
 			for (String className : names) {
 				name = className;
 				Class<? extends JpaObject> clazz = (Class<JpaObject>) Class.forName(className);
@@ -167,6 +170,33 @@ public class PersistenceXmlHelper {
 				for (Class<?> o : JpaObjectTools.scanMappedSuperclass(clazz)) {
 					Element mapped_element = unit.addElement("class");
 					mapped_element.addText(o.getName());
+				}
+			}
+			if (dynamicFlag) {
+				for (String className : names) {
+					if (className.startsWith(DynamicEntity.CLASS_PACKAGE)) {
+						dyClasses.add(className);
+					}
+				}
+				if (!dyClasses.isEmpty()) {
+					String dyClassName = DynamicBaseEntity.class.getName();
+					names.add(dyClassName);
+
+					Element unit = persistence.addElement("persistence-unit");
+					unit.addAttribute("name", dyClassName);
+					unit.addAttribute("transaction-type", "RESOURCE_LOCAL");
+					Element provider = unit.addElement("provider");
+					provider.addText(PersistenceProviderImpl.class.getName());
+					for (String dyClass : dyClasses) {
+						Element mapped_element = unit.addElement("class");
+						mapped_element.addText(dyClass);
+					}
+					for (Class<?> o : JpaObjectTools.scanMappedSuperclass(DynamicBaseEntity.class)) {
+						if (!o.getName().equals(DynamicBaseEntity.class.getName())) {
+							Element mapped_element = unit.addElement("class");
+							mapped_element.addText(o.getName());
+						}
+					}
 				}
 			}
 			OutputFormat format = OutputFormat.createPrettyPrint();
@@ -252,7 +282,8 @@ public class PersistenceXmlHelper {
 		properties.put("openjpa.QueryCompilationCache", "false");
 		properties.put("openjpa.LockManager", "none");
 		properties.put("openjpa.jdbc.ResultSetType", "scroll-insensitive");
-		properties.put("openjpa.Multithreaded", "true");
+		//使用false,使用ture支持多线程访问,但是是通过lock同步执行的.
+		properties.put("openjpa.Multithreaded", "false");
 		/* 如果启用本地初始化会导致classLoad的问题 */
 		properties.put("openjpa.DynamicEnhancementAgent", "false");
 		properties.put("openjpa.jdbc.SynchronizeMappings", "buildSchema(ForeignKeys=false)");
@@ -265,6 +296,9 @@ public class PersistenceXmlHelper {
 		/* 如果是DB2 添加 Schema,mysql 不需要Schema 如果用了Schema H2数据库就会报错说没有Schema */
 		if (Config.externalDataSources().hasSchema()) {
 			properties.put("openjpa.jdbc.Schema", JpaObject.default_schema);
+		}
+		if (StringUtils.isNotEmpty(Config.externalDataSources().getTransactionIsolation())) {
+			properties.put("openjpa.jdbc.TransactionIsolation", Config.externalDataSources().getTransactionIsolation());
 		}
 		for (String name : Config.externalDataSources().findNamesOfContainerEntity(className)) {
 			properties.put("openjpa.ConnectionFactoryName", Config.RESOURCE_JDBC_PREFIX + name);

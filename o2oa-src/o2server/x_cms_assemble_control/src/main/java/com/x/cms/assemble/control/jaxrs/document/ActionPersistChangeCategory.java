@@ -4,6 +4,8 @@ import com.google.gson.JsonElement;
 import com.x.base.core.project.annotation.AuditLog;
 import com.x.base.core.project.annotation.FieldDescribe;
 import com.x.base.core.project.cache.ApplicationCache;
+import com.x.base.core.project.cache.CacheManager;
+import com.x.base.core.project.gson.GsonPropertyObject;
 import com.x.base.core.project.http.ActionResult;
 import com.x.base.core.project.http.EffectivePerson;
 import com.x.base.core.project.logger.Logger;
@@ -122,7 +124,7 @@ public class ActionPersistChangeCategory extends BaseAction {
 				}
 				wo.setFailtureList( failture );
 				wo.setSuccessList( success );
-				ApplicationCache.notify(Document.class);
+				CacheManager.notify(Document.class);
 			}
 		}
 		result.setCount(Long.parseLong(  wo.getTotal().toString() ) );
@@ -155,7 +157,7 @@ public class ActionPersistChangeCategory extends BaseAction {
 		}
 	}
 
-	public static class Wo {
+	public static class Wo extends GsonPropertyObject {
 		
 		@FieldDescribe( "需要调整分类的文档ID总数量." )
 		private Integer total =0;

@@ -3,6 +3,7 @@ package com.x.processplatform.service.processing.jaxrs.task;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import javax.script.Bindings;
 import javax.script.CompiledScript;
@@ -80,7 +81,7 @@ class ActionAppend extends BaseAction {
 					if (ListTools.isNotEmpty(wi.getIdentityList())) {
 						identities.addAll(wi.getIdentityList());
 					}
-					if ((null != manual) && (route != null)) {
+					if (route != null) {
 						if (StringUtils.equals(route.getType(), Route.TYPE_APPENDTASK)
 								&& StringUtils.equals(manual.getId(), route.getActivity())) {
 							if (StringUtils.equals(route.getAppendTaskIdentityType(),
@@ -107,7 +108,7 @@ class ActionAppend extends BaseAction {
 					}
 					Process process = business.element().get(task.getProcess(), Process.class);
 					identities = business.organization().identity().list(ListTools.trim(identities, true, true));
-					TaskIdentities taskIdentities = empower(business,process, task, identities);
+					TaskIdentities taskIdentities = empower(business, process, task, identities);
 					identities = taskIdentities.identities();
 					if (ListTools.isNotEmpty(identities)) {
 						List<TaskCompleted> os = emc.listEqualAndInAndNotEqual(TaskCompleted.class,
@@ -118,23 +119,20 @@ class ActionAppend extends BaseAction {
 							emc.beginTransaction(TaskCompleted.class);
 							for (TaskCompleted o : os) {
 								o.setJoinInquire(false);
-								// o.setProcessingType(ProcessingType.beAppendedTask);
 								o.setProcessingType(TaskCompleted.PROCESSINGTYPE_BEAPPENDEDTASK);
 							}
 						}
-						/* 后面还要合并,clone一个新实例 */
+						// 后面还要合并,clone一个新实例
 						wo.getValueList().addAll(new ArrayList<>(identities));
 						identities = ListUtils.sum(ListUtils.subtract(work.getManualTaskIdentityList(),
 								ListTools.toList(task.getIdentity())), identities);
 						identities = business.organization().identity().list(ListTools.trim(identities, true, true));
 						emc.beginTransaction(Work.class);
-						for (TaskIdentity o : taskIdentities) {
-							if (StringUtils.isNotEmpty(o.getFromIdentity())) {
-								// work.properties().getManualEmpowerMap().put(o.getIdentity(),
-								// o.getFromIdentity());
-							}
-						}
 						work.setManualTaskIdentityList(identities);
+						// 转派后设置过期为空
+//						emc.beginTransaction(Task.class);
+//						task.setExpired(false);
+//						task.setExpireTime(null);
 						emc.commit();
 					}
 					result.setData(wo);
@@ -143,7 +141,7 @@ class ActionAppend extends BaseAction {
 			}
 		};
 
-		return ProcessPlatformExecutorFactory.get(executorSeed).submit(callable).get();
+		return ProcessPlatformExecutorFactory.get(executorSeed).submit(callable).get(300, TimeUnit.SECONDS);
 	}
 
 	public static ScriptContext scriptContext(Business business, Work work, Data data, Activity activity, Task task)
@@ -162,11 +160,12 @@ class ActionAppend extends BaseAction {
 		return scriptContext;
 	}
 
-	private TaskIdentities empower(Business business,Process process, Task task, List<String> identities) throws Exception {
+	private TaskIdentities empower(Business business, Process process, Task task, List<String> identities)
+			throws Exception {
 		TaskIdentities taskIdentities = new TaskIdentities();
 		taskIdentities.addIdentities(identities);
-		taskIdentities.empower(business.organization().empower().listWithIdentityObject(task.getApplication(),process.getEdition(),
-				task.getProcess(), task.getWork(), identities));
+		taskIdentities.empower(business.organization().empower().listWithIdentityObject(task.getApplication(),
+				process.getEdition(), task.getProcess(), task.getWork(), identities));
 		return taskIdentities;
 	}
 

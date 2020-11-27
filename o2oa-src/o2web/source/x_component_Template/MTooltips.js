@@ -129,7 +129,10 @@ var MTooltips = new Class({
                             }
                             e.stopPropagation();
                         }.bind(this);
-                        this.container.addEvent("mousedown", this.containerMousedownFun )
+                        this.container.addEvent("mousedown", this.containerMousedownFun );
+                        this.node.addEvent("mousedown", function (e) {
+                            e.stopPropagation();
+                        })
                     }
                 }
                 if( this.options.hideByClickBody ){
@@ -139,7 +142,10 @@ var MTooltips = new Class({
                         }
                         e.stopPropagation();
                     }.bind(this);
-                    $(document.body).addEvent("mousedown", this.bodyMousedownFun )
+                    $(document.body).addEvent("mousedown", this.bodyMousedownFun );
+                    this.node.addEvent("mousedown", function (e) {
+                        e.stopPropagation();
+                    })
                 }
             }
         }
@@ -175,6 +181,8 @@ var MTooltips = new Class({
         this.status = "display";
         this.fireEvent("queryCreate",[this]);
         this.loadStyle();
+
+        this.fireEvent("loadStyle",[this]);
 
         this.node = new Element("div.tooltipNode", {
             styles : this.nodeStyles
@@ -826,9 +834,9 @@ var MTooltips = new Class({
         }
 
         if( this.positionX === "left" ){
-            left = targetCoondinates.left - nodeSize.x;
+            left = targetCoondinates.right - nodeSize.x;
         }else if( this.positionX === "right" ){
-            left = targetCoondinates.right;
+            left = targetCoondinates.left;
         }else if( this.positionX === "center" ){
             left = targetCoondinates.left + (targetCoondinates.width/2) - ( nodeSize.x / 2 )
         }
@@ -904,3 +912,5 @@ var MTooltips = new Class({
         if(callback)callback();
     }
 });
+MWF.xApplication.Template = MWF.xApplication.Template || {};
+MWF.xApplication.Template.MTooltips = MTooltips;

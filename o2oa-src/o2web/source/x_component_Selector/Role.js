@@ -8,9 +8,13 @@ MWF.xApplication.Selector.Role = new Class({
         "groups": [],
         "roles": [],
         "values": [],
-        "names": []
+        "names": [],
+        "selectType" : "role"
     },
-
+    _init : function(){
+        this.selectType = "role";
+        this.className = "Role";
+    },
     _listItemByKey: function(callback, failure, key){
         if (this.options.units.length || this.options.roles.length) key = this.getLikeKey(key);
         this.orgAction.listRoleByKey(function(json){

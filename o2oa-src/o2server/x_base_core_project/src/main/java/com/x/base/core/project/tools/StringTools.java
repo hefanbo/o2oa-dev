@@ -1,5 +1,7 @@
 package com.x.base.core.project.tools;
 
+import static java.util.Locale.ENGLISH;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
@@ -29,7 +31,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.helpers.MessageFormatter;
 
+import com.alibaba.druid.sql.visitor.functions.Char;
+
 public class StringTools {
+
+	// 脚本文本
+	public static final Pattern SCRIPTTEXT_REGEX = Pattern.compile("^\\((.+?)\\)$");
 	public static final Pattern MOBILE_REGEX = Pattern.compile(
 			"(^(\\+)?0{0,2}852\\d{8}$)|(^(\\+)?0{0,2}853\\d{8}$)|(^(\\+)?0{0,2}886\\d{9}$)|(^1(3|4|5|6|7|8|9)\\d{9}$)");
 	/** 中文,英文,数字,-,.· 【】（） */
@@ -362,28 +369,6 @@ public class StringTools {
 
 	public static boolean matchWildcard(String str, String pattern) {
 		return Objects.toString(str, "").matches(Objects.toString(pattern, "").replace("?", ".?").replace("*", ".*?"));
-		// if (StringUtils.isNotEmpty(str) && StringUtils.isNotEmpty(pattern) &&
-		// StringUtils.contains(pattern, "*")) {
-		// if (StringUtils.equals(pattern, "*")) {
-		// return true;
-		// }
-		// if (StringUtils.startsWith(pattern, "*")) {
-		// return StringUtils.endsWith(str, StringUtils.substringAfter(pattern, "*"));
-		// }
-		// if (StringUtils.endsWith(pattern, "*")) {
-		// return StringUtils.startsWith(str, StringUtils.substringBeforeLast(pattern,
-		// "*"));
-		// }
-		// String[] parts = StringUtils.split(pattern, "*", 2);
-		// if (StringUtils.startsWith(str, parts[0]) && StringUtils.endsWith(str,
-		// parts[1])) {
-		// return true;
-		// } else {
-		// return false;
-		// }
-		// } else {
-		// return StringUtils.equals(str, pattern);
-		// }
 	}
 
 	public static List<String> includesExcludesWithWildcard(List<String> list, Collection<String> includes,
@@ -541,4 +526,26 @@ public class StringTools {
 		return result.toArray(new String[result.size()]);
 	}
 
+	public static String getMethodName(String name) {
+		return methodName("get", name);
+	}
+
+	public static String setMethodName(String name) {
+		return methodName("set", name);
+	}
+
+	private static String methodName(String getOrSet, String name) {
+		if (StringUtils.isEmpty(name) || StringUtils.isEmpty(getOrSet)) {
+			return name;
+		}
+		StringBuilder sb = new StringBuilder();
+		sb.append(getOrSet);
+		if ((name.length() > 1) && (StringUtils.isAllLowerCase(name.substring(0, 1))
+				&& StringUtils.isAllUpperCase(name.substring(1, 2)))) {
+			sb.append(name);
+		} else {
+			sb.append(StringUtils.capitalize(name));
+		}
+		return sb.toString();
+	}
 }

@@ -3,6 +3,7 @@ package com.x.organization.assemble.express.jaxrs.unit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -71,9 +72,10 @@ class ActionListWithLevelObject extends BaseAction {
 		CriteriaQuery<String> cq = cb.createQuery(String.class);
 		Root<Unit> root = cq.from(Unit.class);
 		Predicate p = root.get(Unit_.level).in(wi.getLevelList());
-		List<String> unitIds = em.createQuery(cq.select(root.get(Unit_.id)).where(p).distinct(true)).getResultList();
-		unitIds = ListTools.trim(unitIds, true, true);
-		for (Unit o : business.unit().pick(unitIds)) {
+		List<String> unitIds = em.createQuery(cq.select(root.get(Unit_.id)).where(p)).getResultList();
+		List<Unit> units = business.unit().pick(unitIds);
+		units = business.unit().sort(units);
+		for (Unit o : units) {
 			wos.add(this.convert(business, o, Wo.class));
 		}
 		return wos;

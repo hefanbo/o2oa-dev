@@ -15,34 +15,57 @@ MWF.xApplication.AppMarketV2.Main = new Class({
         "title": MWF.xApplication.AppMarketV2.LP.title,
         "minHeight": 700
     },
-    onQueryLoad: function(){
+    onQueryLoad: function(){		
         this.lp = MWF.xApplication.AppMarketV2.LP;
         this.actions = MWF.Actions.load("x_program_center");
 		this.viewPath = this.path+this.options.style+"/view.html";
-		this.iconPath = this.path+this.options.style+"/icon/";
+		this.iconPath = this.path+this.options.style+"/icon/";		
 	},
 	mask: function(){
         if (!this.maskNode){
+			this.marketnode.setStyle("overflow","hidden");
             this.maskNode = new MWF.widget.MaskNode(this.marketnode, {"style": "bam"});
-            this.maskNode.load();
+			this.maskNode.load();
         }
     },
     unmask: function(){
         if (this.maskNode) this.maskNode.hide(function(){
             MWF.release(this.maskNode);
-            this.maskNode = null;
+			this.maskNode = null;
+			this.marketnode.setStyle("overflow","auto");
         }.bind(this));
     },
     loadApplication: function(callback){
-		this.content.loadHtml(this.viewPath, {"bind": {"lp": this.lp}, "module": this}, function(){
-			if (!this.options.isRefresh){
-				this.maxSize(function(){
+		if (MWF.AC.isAdministrator()){	//this.checkO2Collect();
+		
+			this.content.loadHtml(this.viewPath, {"bind": {"lp": this.lp}, "module": this}, function(){
+				if (!this.options.isRefresh){
+					this.maxSize(function(){
+						//检查是否在云服务器上已注册
+						this.actions.CollectAction.login(//平台封装好的方法
+							function( json ){ //服务调用成功的回调函数, json为服务传回的数据
+								if (json.type && json.type=="success"){
+									this.loadApp(callback);
+								}
+							}.bind(this),
+							function( json ){ //服务调用成功的回调函数, json为服务传回的数据
+								errtype = JSON.parse(json.response).type;
+								if (errtype && errtype=="error"){
+									//o2.xDesktop.notice("error", {x: "right", y:"top"}, JSON.parse(json.response).message+"请至系统配置——云服务配置——连接配置注册并连接到O2云");
+									this.loadCloudConnectTip(callback);
+								}
+							}.bind(this)
+							,false //同步执行 
+						);
+						
+					}.bind(this));
+				}else{
 					this.loadApp(callback);
-				}.bind(this));
-			}else{
-				this.loadApp(callback);
-			}
-		}.bind(this));
+				}
+			}.bind(this));
+		}else{
+			o2.xDesktop.notice("error", {x: "right", y:"top"}, "应用市场需要管理员角色才能访问");
+		}
 	},
 	loadApp: function(callback){
 		//this.initNode();
@@ -53,6 +76,15 @@ MWF.xApplication.AppMarketV2.Main = new Class({
 
 		this.loadRecommondContent(function(){ this.recommondLoaded = true; this.checkAppLoaded(callback); }.bind(this));
 		this.loadApplicationsContent(function(){ this.applicationsLoaded = true; this.checkAppLoaded(callback); }.bind(this));
+	},
+	loadCloudConnectTip:function(callback){
+		this.initNodeSize();
+		o2.requireApp("AppMarketV2", "CloudConnectTip", function(){
+			this.cloudTip = new MWF.xApplication.AppMarketV2.CloudConnectTip(this, this.cloudConnectTipNode, {
+				"onLoad": function(){if (callback) callback();}
+			});
+		}.bind(this));
+		
 	},
 	checkAppLoaded: function(callback){
 		if (this.recommondLoaded && this.applicationsLoaded){

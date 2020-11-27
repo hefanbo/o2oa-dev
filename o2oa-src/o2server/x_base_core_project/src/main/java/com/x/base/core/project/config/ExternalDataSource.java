@@ -6,11 +6,14 @@ import java.util.List;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import com.x.base.core.container.LogLevel;
 import com.x.base.core.container.factory.SlicePropertiesBuilder;
 import com.x.base.core.project.annotation.FieldDescribe;
+import com.x.base.core.project.tools.Crypto;
 
 public class ExternalDataSource extends ConfigObject {
+
+	// 无需保存
+	private transient String _password;
 
 	public ExternalDataSource() {
 		this.enable = false;
@@ -23,10 +26,13 @@ public class ExternalDataSource extends ConfigObject {
 		this.dictionary = "";
 		this.maxTotal = DEFAULT_MAXTOTAL;
 		this.maxIdle = DEFAULT_MAXIDLE;
-		this.logLevel = LogLevel.WARN;
+		this.logLevel = DEFAULT_LOGLEVEL;
 		this.statEnable = DEFAULT_STATENABLE;
 		this.statFilter = DEFAULT_STATFILTER;
 		this.slowSqlMillis = DEFAULT_SLOWSQLMILLIS;
+		this.transactionIsolation = DEFAULT_TRANSACTIONISOLATION;
+		this.testConnectionOnCheckin = DEFAULT_TESTCONNECTIONONCHECKIN;
+		this.testConnectionOnCheckout = DEFAULT_TESTCONNECTIONONCHECKOUT;
 	}
 
 	public static ExternalDataSource defaultInstance() {
@@ -55,13 +61,20 @@ public class ExternalDataSource extends ConfigObject {
 	private String statFilter;
 	@FieldDescribe("执行缓慢sql毫秒数,默认2000毫秒,执行缓慢的sql将被单独记录.")
 	private Integer slowSqlMillis;
-
 	@FieldDescribe("设置此数据库存储的类,默认情况下存储所有类型,如果需要对每个类进行单独的控制以达到高性能,可以将不同的类存储到不同的节点上提高性能.可以使用通配符*")
 	private List<String> includes;
 	@FieldDescribe("在此节点上不存储的类,和includes一起设置实际存储的类,可以使用通配符*")
 	private List<String> excludes;
-	@FieldDescribe("默认日志级别")
-	private LogLevel logLevel = LogLevel.WARN;
+	@FieldDescribe("默认日志级别,FATAL, ERROR, WARN, INFO, TRACE. 完成的配置为DefaultLevel=WARN, Tool=TRACE, Enhance=TRACE, METADATA=TRACE, Runtime=TRACE, Query=TRACE, DataCache=TRACE, JDBC=TRACE, SQL=TRACE")
+	private String logLevel = DEFAULT_LOGLEVEL;
+	@FieldDescribe("事务隔离级别:default,none,read-committed,read-uncommitted,repeatable-read,serializable.默认使用default(数据库设置的事务级别).")
+	private String transactionIsolation;
+	@FieldDescribe("测试入池连接,默认false.")
+	private Boolean testConnectionOnCheckin;
+	@FieldDescribe("测试出池连接,默认false.")
+	private Boolean testConnectionOnCheckout;
+	@FieldDescribe("空闲阈值,默认300秒.")
+	private Integer maxIdleTime;
 
 	public static final Integer DEFAULT_MAXTOTAL = 50;
 
@@ -73,8 +86,35 @@ public class ExternalDataSource extends ConfigObject {
 
 	public static final Integer DEFAULT_SLOWSQLMILLIS = 2000;
 
-	public LogLevel getLogLevel() {
-		return this.logLevel == null ? LogLevel.WARN : this.logLevel;
+	public static final String DEFAULT_LOGLEVEL = "WARN";
+
+	public static final String DEFAULT_TRANSACTIONISOLATION = "default";
+
+	public static final Boolean DEFAULT_TESTCONNECTIONONCHECKIN = false;
+
+	public static final Boolean DEFAULT_TESTCONNECTIONONCHECKOUT = false;
+
+	public static final Integer DEFAULT_MAXIDLETIME = 300;
+
+	public Integer getMaxIdleTime() {
+		return maxIdleTime == null ? DEFAULT_MAXIDLETIME : this.maxIdleTime;
+	}
+
+	public Boolean getTestConnectionOnCheckin() {
+		return this.testConnectionOnCheckin == null ? DEFAULT_TESTCONNECTIONONCHECKIN : this.testConnectionOnCheckin;
+	}
+
+	public Boolean getTestConnectionOnCheckout() {
+		return this.testConnectionOnCheckout == null ? DEFAULT_TESTCONNECTIONONCHECKOUT : this.testConnectionOnCheckout;
+	}
+
+	public String getTransactionIsolation() {
+		return StringUtils.isEmpty(this.transactionIsolation) ? DEFAULT_TRANSACTIONISOLATION
+				: this.transactionIsolation;
+	}
+
+	public String getLogLevel() {
+		return StringUtils.isEmpty(this.logLevel) ? DEFAULT_LOGLEVEL : this.logLevel;
 	}
 
 	public String getDriverClassName() throws Exception {
@@ -136,7 +176,10 @@ public class ExternalDataSource extends ConfigObject {
 	}
 
 	public String getPassword() {
-		return password;
+		if (StringUtils.isEmpty(this._password)) {
+			this._password = Crypto.plainText(this.password);
+		}
+		return this._password;
 	}
 
 	public void setPassword(String password) {
@@ -175,7 +218,7 @@ public class ExternalDataSource extends ConfigObject {
 		this.maxTotal = maxTotal;
 	}
 
-	public void setLogLevel(LogLevel logLevel) {
+	public void setLogLevel(String logLevel) {
 		this.logLevel = logLevel;
 	}
 

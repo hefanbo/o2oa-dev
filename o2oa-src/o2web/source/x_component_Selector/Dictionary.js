@@ -12,6 +12,10 @@ MWF.xApplication.Selector.Dictionary = new Class({
         "expand": false,
         "forceSearchInItem" : true
     },
+    _init : function(){
+        this.selectType = "dictionary";
+        this.className = "Dictionary";
+    },
     loadSelectItems: function(addToNext){
         var json = {};
         this.options.appType.each( function (type) {
@@ -30,11 +34,13 @@ MWF.xApplication.Selector.Dictionary = new Class({
                 dictionaryJson.data.each(function (dictionary) {
                     var appName = dictionary.appName || dictionary.applicationName;
                     var appId = dictionary.appId || dictionary.application;
+                    var appAlias = dictionary.appAlias || dictionary.applicationAlias;
                     if (!json[appId]) {
                         json[appId] = {
                             name: appName,
                             applicationName: appName,
                             appName: appName,
+                            appAlias: appAlias,
                             application: appId,
                             appId: appId
                         };
@@ -42,6 +48,7 @@ MWF.xApplication.Selector.Dictionary = new Class({
                     }
                     dictionary.appName = appName;
                     dictionary.appId = appId;
+                    dictionary.appAlias = appAlias;
                     dictionary.appType = type;
                     dictionary.type = "dictionary";
                     json[appId].dictionaryList.push(dictionary)

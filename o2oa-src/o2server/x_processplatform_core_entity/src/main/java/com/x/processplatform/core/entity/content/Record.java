@@ -30,7 +30,7 @@ import com.x.processplatform.core.entity.PersistenceProperties;
 import com.x.processplatform.core.entity.element.ActivityType;
 
 @Entity
-@ContainerEntity(dumpSize = 1000, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
+@ContainerEntity(dumpSize = 100, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
 @Table(name = PersistenceProperties.Content.Record.table, uniqueConstraints = {
 		@UniqueConstraint(name = PersistenceProperties.Content.Record.table + JpaObject.IndexNameMiddle
 				+ JpaObject.DefaultUniqueConstraintSuffix, columnNames = { JpaObject.IDCOLUMN,
@@ -107,12 +107,12 @@ public class Record extends SliceJpaObject {
 
 	public void onPersist() throws Exception {
 		switch (Objects.toString(this.type)) {
-			case TYPE_URGE:
-			case TYPE_EXPIRE:
-				this.display = false;
-				break;
-			default:
-				this.display = true;
+		case TYPE_URGE:
+		case TYPE_EXPIRE:
+			this.display = false;
+			break;
+		default:
+			this.display = true;
 		}
 	}
 	/* 更新运行方法 */
@@ -160,6 +160,10 @@ public class Record extends SliceJpaObject {
 			this.properties = new RecordProperties();
 		}
 		return this.properties;
+	}
+
+	public void setProperties(RecordProperties properties) {
+		this.properties = properties;
 	}
 
 	public static final String application_FIELDNAME = "application";
@@ -465,10 +469,6 @@ public class Record extends SliceJpaObject {
 
 	public void setType(String type) {
 		this.type = type;
-	}
-
-	public void setProperties(RecordProperties properties) {
-		this.properties = properties;
 	}
 
 	public String getApplication() {

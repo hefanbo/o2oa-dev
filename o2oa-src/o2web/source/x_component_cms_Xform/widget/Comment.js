@@ -8,7 +8,8 @@ var O2CMSComment = MWF.xApplication.cms.Xform.widget.Comment = new Class({
         "style": "simple",
         "documentId" : "",
         "anonymousAccess" : false,
-        "countPerPage" : 10
+        "countPerPage" : 10,
+        "isAllowPublish" : true
     },
     initialize: function (app, node, options) {
         this.setOptions(options);
@@ -44,7 +45,9 @@ var O2CMSComment = MWF.xApplication.cms.Xform.widget.Comment = new Class({
         this.loadContent();
         //this.loadElementList();
         //this.loadBottom();
-        this.loadEditor();
+        if( this.options.isAllowPublish !== false ){
+            this.loadEditor();
+        }
     },
     loadTitle : function(){
         this.titleNode = new Element("div", {"styles": this.css.titleNode, "text": this.lp.commentTitle}).inject(this.container);
@@ -355,6 +358,30 @@ O2CMSComment.Editor = new Class({
         this.saveCommentAction.addEvent("click",function(){
             this.saveComment();
         }.bind(this));
+
+        var rtfConfig = {
+            //skin : "bootstrapck",
+            "resize_enabled": false,
+            isSetImageMaxWidth : true,
+            reference : this.advanceCommentId,
+            referenceType: "forumReply",
+            //uiColor : '#9AB8F3',
+            //toolbarCanCollapse : true,
+            toolbar : [
+                //{ name: 'document', items : [ 'Preview' ] },
+                //{ name: 'clipboard', items : [ 'Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo' ] },
+                //{ name: 'basicstyles', items : [ 'Bold','Italic','Underline','Strike','-','RemoveFormat' ] },
+                //{ name: 'paragraph', items : [ 'JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock' ] },
+                //{ name: 'styles', items : [ 'Font','FontSize' ] },
+                //{ name: 'colors', items : [ 'TextColor','BGColor' ] },
+                //{ name: 'links', items : [ 'Link','Unlink' ] },
+                { name: 'insert', items : [ 'Image' ] }
+                //{ name: 'tools', items : [ 'Maximize','-','About' ] }
+            ]
+        };
+        if( this.comment.options.editorProperties ){
+            rtfConfig = Object.merge( rtfConfig, this.comment.options.editorProperties )
+        }
         MWF.xDesktop.requireApp("Template", "MForm", function () {
             this.form = new MForm(this.node, this.data || {}, {
                 style: "forum",
@@ -368,26 +395,7 @@ O2CMSComment.Editor = new Class({
                         }
                     }.bind(this)},
                     creatorName: { type : "innerText", value : layout.session.user.name },
-                    content: { type : "rtf", RTFConfig : {
-                        //skin : "bootstrapck",
-                        "resize_enabled": false,
-                        isSetImageMaxWidth : true,
-                        reference : this.advanceCommentId,
-                        referenceType: "forumReply",
-                        //uiColor : '#9AB8F3',
-                        //toolbarCanCollapse : true,
-                        toolbar : [
-                            //{ name: 'document', items : [ 'Preview' ] },
-                            //{ name: 'clipboard', items : [ 'Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo' ] },
-                            //{ name: 'basicstyles', items : [ 'Bold','Italic','Underline','Strike','-','RemoveFormat' ] },
-                            //{ name: 'paragraph', items : [ 'JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock' ] },
-                            //{ name: 'styles', items : [ 'Font','FontSize' ] },
-                            //{ name: 'colors', items : [ 'TextColor','BGColor' ] },
-                            //{ name: 'links', items : [ 'Link','Unlink' ] },
-                            { name: 'insert', items : [ 'Image' ] }
-                            //{ name: 'tools', items : [ 'Maximize','-','About' ] }
-                        ]
-                    }}
+                    content: { type : "rtf", RTFConfig : rtfConfig }
                 }
             }, this, this.comment.css);
             this.form.load();

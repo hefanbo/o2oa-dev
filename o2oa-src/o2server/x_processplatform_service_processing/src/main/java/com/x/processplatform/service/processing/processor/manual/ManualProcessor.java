@@ -42,6 +42,7 @@ import com.x.processplatform.core.entity.element.Manual;
 import com.x.processplatform.core.entity.element.Route;
 import com.x.processplatform.core.entity.element.util.WorkLogTree;
 import com.x.processplatform.core.entity.element.util.WorkLogTree.Node;
+import com.x.processplatform.core.entity.log.Signal;
 import com.x.processplatform.service.processing.Business;
 import com.x.processplatform.service.processing.processor.AeiObjects;
 
@@ -58,6 +59,8 @@ public class ManualProcessor extends AbstractManualProcessor {
 
 	@Override
 	protected Work arriving(AeiObjects aeiObjects, Manual manual) throws Exception {
+		// 发送ProcessingSignal
+		aeiObjects.getProcessingAttributes().push(Signal.manualArrive(aeiObjects.getWork().getActivityToken(), manual));
 		// 根据manual计算出来的活动处理人
 		List<String> identities = calculateTaskIdentities(aeiObjects, manual);
 		// 启用同类工作相同活动节点合并,如果有合并的工作,那么直接返回这个工作.
@@ -66,7 +69,7 @@ public class ManualProcessor extends AbstractManualProcessor {
 			return merge;
 		}
 		this.arrivingPassSame(aeiObjects, identities);
-		aeiObjects.getWork().setManualTaskIdentityList(new ArrayList<String>(identities));
+		aeiObjects.getWork().setManualTaskIdentityList(new ArrayList<>(identities));
 		return aeiObjects.getWork();
 	}
 
@@ -280,19 +283,18 @@ public class ManualProcessor extends AbstractManualProcessor {
 	protected List<Work> executing(AeiObjects aeiObjects, Manual manual) throws Exception {
 		List<Work> results = new ArrayList<>();
 		boolean passThrough = false;
-
 		List<String> identities = aeiObjects.business().organization().identity()
 				.list(aeiObjects.getWork().getManualTaskIdentityList());
-		identities = aeiObjects.business().organization().identity().list(identities);
 		if (identities.isEmpty()) {
 			identities = calculateTaskIdentities(aeiObjects, manual);
-
 			logger.info("工作设置的处理人已经全部无效,重新计算当前环节所有处理人进行处理,标题:{}, id:{}, 设置的处理人:{}.", aeiObjects.getWork().getTitle(),
 					aeiObjects.getWork().getId(), identities);
 			// 后面进行了identitis.remove()这里必须用一个新对象包装
-			aeiObjects.getWork().setManualTaskIdentityList(new ArrayList<String>(identities));
+			aeiObjects.getWork().setManualTaskIdentityList(new ArrayList<>(identities));
 		}
-
+		// 发送ProcessingSignal
+		aeiObjects.getProcessingAttributes().push(Signal.manualExecute(aeiObjects.getWork().getActivityToken(), manual,
+				Objects.toString(manual.getManualMode(), ""), identities));
 		switch (manual.getManualMode()) {
 		case single:
 			passThrough = this.single(aeiObjects, manual, identities);
@@ -323,6 +325,9 @@ public class ManualProcessor extends AbstractManualProcessor {
 
 	@Override
 	protected List<Route> inquiring(AeiObjects aeiObjects, Manual manual) throws Exception {
+		// 发送ProcessingSignal
+		aeiObjects.getProcessingAttributes()
+				.push(Signal.manualInquire(aeiObjects.getWork().getActivityToken(), manual));
 		List<Route> results = new ArrayList<>();
 		// 仅有单条路由
 		if (aeiObjects.getRoutes().size() == 1) {
@@ -342,6 +347,7 @@ public class ManualProcessor extends AbstractManualProcessor {
 				}
 			}
 		}
+
 		if (!results.isEmpty()) {
 			// 清理掉强制的指定的处理人
 			aeiObjects.getWork().getProperties().setManualForceTaskIdentityList(new ArrayList<String>());
@@ -442,8 +448,9 @@ public class ManualProcessor extends AbstractManualProcessor {
 		boolean passThrough = false;
 		// 取得本环节已经处理的已办
 		List<TaskCompleted> taskCompleteds = this.listJoinInquireTaskCompleted(aeiObjects, identities);
-		// 存在优先路由,如果有人选择了优先路由那么直接流转.
-		Route soleRoute = aeiObjects.getRoutes().stream().filter(r -> BooleanUtils.isTrue(r.getSole())).findFirst()
+		// 存在优先路由,如果有人选择了优先路由那么直接流转.需要判断是否启用了soleDirect
+		Route soleRoute = aeiObjects.getRoutes().stream()
+				.filter(r -> BooleanUtils.isTrue(r.getSole()) && BooleanUtils.isTrue(r.getSoleDirect())).findFirst()
 				.orElse(null);
 		if (null != soleRoute) {
 			TaskCompleted soleTaskCompleted = taskCompleteds.stream()
