@@ -6,6 +6,12 @@ APT_SRC=http://mirrors.tuna.tsinghua.edu.cn/ubuntu
 #PROXY_PROTOCOL=http
 #PROXY_SERVER=192.168.20.20
 #PROXY_PORT=1080
+MAVEN_MIRROR="    <mirror>\\
+      <id>alimaven</id>\\
+      <name>aliyun maven</name>\\
+      <url>http://maven.aliyun.com/nexus/content/groups/public/</url>\\
+      <mirrorOf>central</mirrorOf>\\
+    </mirror>"
 
 sed -i 's/^deb-src/#deb-src/g' /etc/apt/sources.list
 
@@ -24,6 +30,11 @@ env DEBIAN_FRONTEND=noninteractive apt-get install -y npm maven
 if [ -n "$PROXY_PROTOCOL" ]; then
   npm config set proxy=$PROXY_PROTOCOL://$PROXY_SERVER:$PROXY_PORT
   sed -i 's/  <\/proxies>/    <proxy>\n      <id>proxy<\/id>\n      <active>true<\/active>\n      <protocol>'"$PROXY_PROTOCOL"'<\/protocol>\n      <host>'"$PROXY_SERVER"'<\/host>\n      <port>'"$PROXY_PORT"'<\/port>\n    <\/proxy>\n  <\/proxies>/g' /etc/maven/settings.xml
+fi
+
+if [ -n "$MAVEN_MIRROR" ]; then
+  sed -i "s|\([ \t]*\)</mirrors>|$MAVEN_MIRROR\\
+\1</mirrors>|g" /etc/maven/settings.xml
 fi
 
 npm install -g gulp-cli
