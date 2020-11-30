@@ -29,7 +29,15 @@ env DEBIAN_FRONTEND=noninteractive apt-get install -y npm maven
 
 if [ -n "$PROXY_PROTOCOL" ]; then
   npm config set proxy=$PROXY_PROTOCOL://$PROXY_SERVER:$PROXY_PORT
-  sed -i 's/  <\/proxies>/    <proxy>\n      <id>proxy<\/id>\n      <active>true<\/active>\n      <protocol>'"$PROXY_PROTOCOL"'<\/protocol>\n      <host>'"$PROXY_SERVER"'<\/host>\n      <port>'"$PROXY_PORT"'<\/port>\n    <\/proxy>\n  <\/proxies>/g' /etc/maven/settings.xml
+  MAVEN_PROXY="    <proxy>\\
+      <id>proxy</id>\\
+        <active>true</active>\\
+        <protocol>$PROXY_PROTOCOL</protocol>\\
+        <host>$PROXY_SERVER</host>\\
+        <port>$PROXY_PORT</port>\\
+    </proxy>"
+  sed -i "s|\([ \t]*\)</proxies>|$MAVEN_PROXY\\
+\1</proxies>|g" /etc/maven/settings.xml
 fi
 
 if [ -n "$MAVEN_MIRROR" ]; then
