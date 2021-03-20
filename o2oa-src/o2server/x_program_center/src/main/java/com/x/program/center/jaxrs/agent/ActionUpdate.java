@@ -1,5 +1,7 @@
 package com.x.program.center.jaxrs.agent;
 
+import com.x.base.core.project.exception.ExceptionAccessDenied;
+import com.x.program.center.Business;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
 import com.x.base.core.container.EntityManagerContainer;
@@ -15,6 +17,11 @@ class ActionUpdate extends BaseAction {
 	ActionResult<Wo> execute(EffectivePerson effectivePerson, String flag, byte[] bytes,
 			FormDataContentDisposition disposition) throws Exception {
 		try (EntityManagerContainer emc = EntityManagerContainerFactory.instance().create()) {
+			Business business = new Business(emc);
+			// 判断当前用户是否有权限访问
+			if (!business.serviceControlAble(effectivePerson)) {
+				throw new ExceptionAccessDenied(effectivePerson.getDistinguishedName());
+			}
 			ActionResult<Wo> result = new ActionResult<>();
 			Wo wo = new Wo();
 			Agent agent = emc.flag(flag, Agent.class);
@@ -24,7 +31,6 @@ class ActionUpdate extends BaseAction {
 			String text = new String(bytes, DefaultCharset.name);
 			emc.beginTransaction(Agent.class);
 			agent.setText(text);
-			// this.addComment(agent);
 			emc.commit();
 			wo.setId(agent.getId());
 			result.setData(wo);

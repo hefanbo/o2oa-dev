@@ -46,6 +46,7 @@ if [ -n "$MAVEN_MIRROR" ]; then
 fi
 
 npm install -g gulp-cli
+npm install -g jsdoc
 npm install
 
 set +e

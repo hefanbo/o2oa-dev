@@ -1,5 +1,19 @@
 MWF.xDesktop.requireApp("process.Xform", "$Module", null, false);
-MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
+/** @class Office Office控件。
+ * @example
+ * //可以在脚本中获取该组件
+ * //方法1：
+ * var attachment = this.form.get("name"); //获取组件
+ * //方法2
+ * var attachment = this.target; //在组件事件脚本中获取
+ * @extends MWF.xApplication.process.Xform.$Module
+ * @o2category FormComponents
+ * @o2range {Process|CMS}
+ * @hideconstructor
+ */
+MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class(
+    /** @lends MWF.xApplication.process.Xform.Office# */
+{
 	Extends: MWF.APP$Module,
 	isActive: false,
     options:{
@@ -20,7 +34,62 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
         "pdfCodeBase64": "../o2_lib/officecontrol/5040/ntkooledocall64.cab",
 
         "files": ["doc","docx","dotx","dot","xls","xlsx","xlsm","xlt","xltx","pptx","ppt","pot","potx","potm","pdf"],
-
+        /**
+         * @event MWF.xApplication.process.Xform.Office#queryLoad
+         * @ignore
+         */
+        /**
+         * @event MWF.xApplication.process.Xform.Office#postLoad
+         * @ignore
+         */
+        /**
+         * 点击套红按钮触发。
+         * @event MWF.xApplication.process.Xform.Office#redFile
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 点击盖章按钮触发。
+         * @event MWF.xApplication.process.Xform.Office#seal
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * Ntko控件执行AfterOpenFromURL事件（BeginOpenFromURL方法执行完毕之后被触发）时执行。</br>
+         * 本事件可以通过this.event获取当前打开的文档对象。比如，对于一个Word文档，第二个参数是一个Word.Document对象。
+         * @event MWF.xApplication.process.Xform.Office#afterOpen
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * Ntko控件执行OnDocumentOpened事件（Office文档打开完毕）时触发。<br/>
+         * 本事件可以通过this.event获取以下内容
+         * <pre><code>
+         {
+            url : url, //Office文档路径或者URL
+            doc : doc //Office文档的自动化接口，比如，对于一个Word文档，第二个参数是一个Word.Document对象。
+        }
+         </pre></code>
+         * @event MWF.xApplication.process.Xform.Office#afterOpenOffice
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 在新建Office文档后触发。
+         * @event MWF.xApplication.process.Xform.Office#afterCreate
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 在保存Office文档前触发。
+         * @event MWF.xApplication.process.Xform.Office#beforeSave
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 在保存Office文档后触发。
+         * @event MWF.xApplication.process.Xform.Office#afterSave
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 在关闭Office文档时执行。
+         * @event MWF.xApplication.process.Xform.Office#afterCloseOffice
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
         "moduleEvents": ["redFile",
             "afterOpen",
             "afterOpenOffice",
@@ -46,8 +115,9 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
 			"min-height": "100px"
 		});
         // this.isActive = true;
-        //if (Browser.name==="ie" || Browser.name==="chrome" || Browser.name==="firefox"){
-		if (Browser.name==="ie"){
+        debugger;
+        if (Browser.name==="ie" || Browser.name==="chrome" || Browser.name==="firefox"){
+		//if (Browser.name==="ie"){
             this.isActive = true;
             this.file = null;
             if (!this.form.officeList) this.form.officeList=[];
@@ -263,15 +333,30 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
             return this.getTempleteUrl();
         }
     },
-
+    /**
+     * @summary 允许编辑Office文档
+     * @example
+     * this.form.get("fieldId").editEnabled();
+     */
     editEnabled: function(){
         try {
             this.officeOCX.ActiveDocument.Unprotect();
         }catch(e){}
     },
+    /**
+     * @summary 设置Office文档为只读
+     * @example
+     * this.form.get("fieldId").docReadonly();
+     */
     docReadonly: function(){
         this.protect(3);
     },
+    /**
+     * @summary 设置Office文档状态
+     * @example
+     * this.form.get("fieldId").protect(1);
+     * @param {Number} type 1(批注),2(填写窗体),3(只读),0(修订),-1(限制编辑样式)
+     */
     protect: function(type){
         // wdAllowOnlyComments = 1         //批注
         // wdAllowOnlyFormFields = 2       //填写窗体
@@ -282,6 +367,9 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
             this.officeOCX.ActiveDocument.Protect(type);
         }catch(e){}
     },
+    /**
+     * @summary 设置Office文档保留痕迹
+     */
     startRevisions: function(){
         if (this.officeOCX && (this.officeOCX.DocType==1 || this.officeOCX.DocType==6)){
             this.officeOCX.ActiveDocument.Application.UserName = layout.desktop.session.user.name;
@@ -305,6 +393,9 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
         }
         //this.officeOCX.FullScreenMode = true;
     },
+    /**
+     * @summary 设置Office文档取消保留痕迹
+     */
     stopRevisions: function(accept){
         this.officeOCX.ActiveDocument.TrackRevisions = false;
         this.officeOCX.ActiveDocument.showRevisions = false;
@@ -607,9 +698,15 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
             button.setText(MWF.xApplication.process.Xform.LP.menu_hideHistory)
         }
     },
+    /**
+     * @summary 盖章
+     */
     seal: function(){
         this.fireEvent("seal");
     },
+    /**
+     * @summary 套红
+     */
     redFile: function(){
        // try {
         if (this.officeOCX.ActiveDocument.ActiveWindow.View.RevisionsFilter){
@@ -636,6 +733,9 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
         //     throw e;
         // }
     },
+    /**
+     * @summary 显示痕迹
+     */
     showRevisions: function(){
         try {
             if (this.officeOCX.ActiveDocument.ActiveWindow.View.RevisionsFilter) {
@@ -645,6 +745,9 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
             this.officeOCX.ActiveDocument.showRevisions = true;
         }catch(e){}
     },
+    /**
+     * @summary 隐藏痕迹
+     */
     hideRevisions: function(){
         try {
             if (this.officeOCX.ActiveDocument.ActiveWindow.View.RevisionsFilter) {
@@ -725,12 +828,29 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
             var version = this.json.version || this.options.version;
             var classid = this.json.clsid || this.options.clsid;
 
-            var objectHtml = "<form id='"+this.getFormId()+"' style='height:100%'><OBJECT id='"+this.getOfficeObjectId()+"' " +
-                "type='application/ntko-plug' " +
-                "style='HEIGHT: 99%; WIDTH: 100%' " +
-                "height='99%' width='100%' " +
-                "codeBase='"+codeBase+"#version="+version+"' " +
-                "classid='{"+classid+"}' ";
+            var objectHtml = "";
+            if (navigator.userAgent.indexOf("Linux") > -1) {
+                objectHtml = "<form id='"+this.getFormId()+"' style='height:100%'>" +
+                    "<OBJECT id='"+this.getOfficeObjectId()+"' " +
+                    "type='application/ntko-plug' height='99%' width='100%' style='HEIGHT: 99%; WIDTH: 100%' "
+            }else{
+                objectHtml = "<form id='"+this.getFormId()+"' style='height:100%'><OBJECT id='"+this.getOfficeObjectId()+"' " +
+                    "type='application/ntko-plug' " +
+                    "style='HEIGHT: 99%; WIDTH: 100%' " +
+                    "height='99%' width='100%' " +
+                    "codeBase='"+codeBase+"#version="+version+"' " +
+                    "clsid='{"+classid+"}' ";
+            }
+
+
+
+
+            // var objectHtml = "<form id='"+this.getFormId()+"' style='height:100%'><OBJECT id='"+this.getOfficeObjectId()+"' " +
+            //     "type='application/ntko-plug' " +
+            //     "style='HEIGHT: 99%; WIDTH: 100%' " +
+            //     "height='99%' width='100%' " +
+            //     "codeBase='"+codeBase+"#version="+version+"' " +
+            //     "clsid='{"+classid+"}' ";
 
             objectHtml += "ForOnSaveToURL='OnComplete2' ";
             objectHtml += "ForOnBeginOpenFromURL='OnComplete' ";
@@ -752,6 +872,12 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
             this.officeForm = this.officeNode.getFirst();
             this.officeOCX = this.officeNode.getFirst().getFirst();
 
+            if(window.navigator.platform=="Win64"){
+                this.officeOCX.AddDocTypePlugin(".pdf",pdfType,pdfVersion,pdfCodeBase64,51,true);
+            }
+            if(window.navigator.platform=="Win32"){
+                this.officeOCX.AddDocTypePlugin(".pdf",pdfType,pdfVersion,pdfCodeBase,51,true);
+            }
             this.doOfficeOCXEvents();
         }
 
@@ -780,17 +906,35 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
 
             var objectHtml = "";
 
-            if(window.navigator.platform=="Win64"){
-                objectHtml = "<form id='"+this.getFormId()+"' style='height:100%'><OBJECT id='"+this.getOfficeObjectId()+"' " +
-                    "style='HEIGHT: 99%; WIDTH: 100%' " +
-                    "codeBase='"+codeBase64+"#version="+version+"' " +
-                    "classid='{"+classid64+"}'>";
-            }else{
-                objectHtml = "<form id='"+this.getFormId()+"' style='height:100%'><OBJECT id='"+this.getOfficeObjectId()+"' " +
+            // if (navigator.userAgent.indexOf("Linux") > -1) {
+            //     objectHtml = "<form id='"+this.getFormId()+"' style='height:100%'><OBJECT id='"+this.getOfficeObjectId()+"' " +
+            //         "type='application/ntko-plug' height='99%' width='100%' style='HEIGHT: 99%; WIDTH: 100%' "
+            // }else{
+                objectHtml = "<form id='"+this.getFormId()+"' style='height:100%'><OBJECT type='application/ntko-plug' id='"+this.getOfficeObjectId()+"' " +
+                    "height='99%' width='100%' " +
                     "style='HEIGHT: 99%; WIDTH: 100%' " +
                     "codeBase='"+codeBase+"#version="+version+"' " +
-                    "classid='{"+classid+"}'";
-            }
+                    "clsid='{"+classid+"}'";
+            // }
+
+            // if(window.navigator.platform=="Win64"){
+            //     objectHtml = "<form id='"+this.getFormId()+"' style='height:100%'><OBJECT id='"+this.getOfficeObjectId()+"' " +
+            //         "style='HEIGHT: 99%; WIDTH: 100%' " +
+            //         "codeBase='"+codeBase64+"#version="+version+"' " +
+            //         "classid='{"+classid64+"}'>";
+            // }else{
+            //     objectHtml = "<form id='"+this.getFormId()+"' style='height:100%'><OBJECT id='"+this.getOfficeObjectId()+"' " +
+            //         "style='HEIGHT: 99%; WIDTH: 100%' " +
+            //         "codeBase='"+codeBase+"#version="+version+"' " +
+            //         "classid='{"+classid+"}'";
+            // }
+
+            // this.addOfficeEvent(id, "AfterOpenFromURL(doc, statusCode)", "if (layout.desktop.offices[\""+id+"\"]) layout.desktop.offices[\""+id+"\"].AfterOpenFromURL(doc, statusCode);");
+            // this.addOfficeEvent(id, "OnDocumentOpened(url, doc)", "if (layout.desktop.offices[\""+id+"\"]) layout.desktop.offices[\""+id+"\"].OnDocumentOpened(url, doc);");
+            // this.addOfficeEvent(id, "OnDocumentClosed()", "if (layout.desktop.offices[\""+id+"\"]) layout.desktop.offices[\""+id+"\"].OnDocumentClosed();");
+            // document.write('ForOnpublishAshtmltourl="ntkopublishashtml"');
+            // document.write('ForOnpublishAspdftourl="ntkopublishaspdf"');
+            // document.write('ForOnSaveAsOtherFormatToUrl="ntkosaveasotherurl"');
 
             objectHtml += "ForOnSaveToURL='OnComplete2' ";
             objectHtml += "ForOnBeginOpenFromURL='OnComplete' ";
@@ -814,22 +958,28 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
 
             if(window.navigator.platform=="Win64"){
                 this.officeOCX.AddDocTypePlugin(".pdf",pdfType,pdfVersion,pdfCodeBase64,51,true);
-            }else{
+            }
+            if(window.navigator.platform=="Win32"){
                 this.officeOCX.AddDocTypePlugin(".pdf",pdfType,pdfVersion,pdfCodeBase,51,true);
             }
 
-            //this.doOfficeOCXEvents();
+            this.doOfficeOCXEvents();
         }
 
         var url = this.getOfficeFileUrl();
         if (url){
             this.officeOCX.BeginOpenFromURL(url, true, this.readonly);
         }else{
-            this.officeOCX.CreateNew(this.getProgID());
+            window.setTimeout(function(){
+                this.officeOCX.CreateNew("WPS.Document");
+            }.bind(this), 5000);
+
+            //this.officeOCX.CreateNew(this.getProgID());
             this.fireEvent("afterCreate");
         }
     },
     loadOfficeEdit: function(file){
+        debugger;
         if (Browser.name==="chrome"){
             this.loadOfficeEditChrome(file);
         }else if (Browser.name==="firefox") {
@@ -1122,7 +1272,10 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
         this.afterOpen();
         this.loadMenu();
 
-        this.fireEvent("afterOpenOffice");
+        this.fireEvent("afterOpenOffice", {
+            url : url,
+            doc : doc
+        });
     },
     AfterOpenFromURL: function(doc, statusCode){
         this.fireEvent("afterOpen", [doc, statusCode]);
@@ -1179,6 +1332,13 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
 
         this.officeNode.set("html", objectHtml);
         this.officeForm = this.officeNode.getFirst();
+        /**
+        @summary Ntko Office 控件对象, 第三方控件
+        @see {@link http://ieoffice.ntko.com/pro/show/mid/1_8/pid/2731|NTKO官网 }
+         @example
+         var officeOCX = this.form.get("fieldId").officeOCX;
+         var activeDocument = officeOCX.ActiveDocument //返回一个Office Document 对象，该对象代表活动文档。
+         */
         this.officeOCX = this.officeNode.getFirst().getFirst();
 
         if(window.navigator.platform=="Win64"){
@@ -1218,6 +1378,10 @@ MWF.xApplication.process.Xform.Office = MWF.APPOffice =  new Class({
         }
     },
     setData: function(){},
+    /**
+     * @summary 保存Office文档到后台
+     * @param {Boolean} history - 是否生产保留痕迹文件
+     */
     save: function(history){
         //if (!this.uploadFileAreaNode) this.createUploadFileNode();
         if (!this.readonly){

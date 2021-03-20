@@ -14,13 +14,16 @@ var gulp = require('gulp'),
     changed = require('gulp-changed'),
     gulpif = require('gulp-if'),
     http = require('http');
-    concat = require('gulp-concat');
+concat = require('gulp-concat');
 var fg = require('fast-glob');
 var logger = require('gulp-logger');
 var assetRev = require('gulp-tm-asset-rev');
 const os = require('os');
 var through2 = require('through2');
 var path = require('path');
+var sourceMap = require('gulp-sourcemaps');
+
+var git = require('gulp-git');
 
 //var downloadHost = "download.o2oa.net";
 // var downloadHost = "release.o2oa.net";
@@ -114,49 +117,49 @@ function downloadFile_progress(path, filename, headcb, progresscb, cb){
     //         progresscb({transferred:1});
     //         cb();
     //     }else{
-            let stream = fs.createWriteStream(dest);
-            var options = { url:protocol+"://"+downloadHost+path };
-            var fileHost = downloadHost;
-            var filePath =  path;
-            stream.on('finish', () => {
-                //gutil.log("download", ":", gutil.colors.green(filename), " completed!");
-                cb();
+    let stream = fs.createWriteStream(dest);
+    var options = { url:protocol+"://"+downloadHost+path };
+    var fileHost = downloadHost;
+    var filePath =  path;
+    stream.on('finish', () => {
+        //gutil.log("download", ":", gutil.colors.green(filename), " completed!");
+        cb();
+    });
+    stream.on('error', (err) => {
+        gutil.log(gutil.colors.red("download error"), ":", gutil.colors.red(filename), err);
+    });
+
+    var req = http.request({
+        host:fileHost,
+        path:filePath,
+        method:'HEAD'
+    },function (res){
+        if (res.statusCode == 200) {
+            res.setEncoding(null);
+            var time = 0;
+            var l = res.headers['content-length'];
+            var str = progress({
+                length: l,
+                time: 100 /* ms */
             });
-            stream.on('error', (err) => {
-                gutil.log(gutil.colors.red("download error"), ":", gutil.colors.red(filename), err);
-            });
+            headcb(l);
 
-            var req = http.request({
-                host:fileHost,
-                path:filePath,
-                method:'HEAD'
-            },function (res){
-                if (res.statusCode == 200) {
-                    res.setEncoding(null);
-                    var time = 0;
-                    var l = res.headers['content-length'];
-                    var str = progress({
-                        length: l,
-                        time: 100 /* ms */
-                    });
-                    headcb(l);
-
-                    str.on('progress', function(progress) {
-                        if (pb){
-                            progresscb(progress);
-                            pb.render({ completed: currentLength, total: totalLength, time: time+=100 });
-                        }
-
-                    });
-                    request.get(options).pipe(str).pipe(stream);
-                } else {
-                    gutil.log(gutil.colors.red("download error"), ":", gutil.colors.red(filename), "statusCode:"+res.statusCode);
+            str.on('progress', function(progress) {
+                if (pb){
+                    progresscb(progress);
+                    pb.render({ completed: currentLength, total: totalLength, time: time+=100 });
                 }
-            })
-            req.on('error', (e) => {
-                gutil.log(gutil.colors.red("download error"), ":", gutil.colors.red(filename), e);
+
             });
-            req.end();
+            request.get(options).pipe(str).pipe(stream);
+        } else {
+            gutil.log(gutil.colors.red("download error"), ":", gutil.colors.red(filename), "statusCode:"+res.statusCode);
+        }
+    })
+    req.on('error', (e) => {
+        gutil.log(gutil.colors.red("download error"), ":", gutil.colors.red(filename), e);
+    });
+    req.end();
     //    }
     //});
 }
@@ -203,7 +206,7 @@ function downloadFile(path, filename, headcb, progresscb, cb){
     //             }
     //
     //         });
-             request.get(options).pipe(stream);
+    request.get(options).pipe(stream);
     //     } else {
     //         gutil.log(gutil.colors.red("download error"), ":", gutil.colors.red(filename), "statusCode:"+res.statusCode);
     //     }
@@ -285,11 +288,11 @@ function decompress_commons_and_jvm(cb){
             src: 'o2server/commons_git.tar.gz',
             dest: 'o2server',
             tar: {map: function(header){
-                count++;
+                    count++;
                     var d = new Date();
                     slog("["+dateFormat(d, "HH:MM:ss")+"] " + count +" "+ header.name+" ...");
-                //gutil.log(gutil.colors.cyan(header.name), gutil.colors.yellow("..."));
-            }}
+                    //gutil.log(gutil.colors.cyan(header.name), gutil.colors.yellow("..."));
+                }}
         }, function(err){
             if(err) {
                 gutil.log(gutil.colors.red("decompress error"), ":", gutil.colors.red("common.tar.gz "), err);
@@ -414,11 +417,30 @@ function build_concat_o2(){
     ];
     var dest = 'target/o2server/servers/webServer/o2_core/';
     return gulp.src(src)
+        .pipe(sourceMap.init())
         .pipe(concat('o2.js'))
         .pipe(gulp.dest(dest))
+        .pipe(concat('o2.min.js'))
         .pipe(uglify())
-        .pipe(rename({ extname: '.min.js' }))
+        //.pipe(rename({ extname: '.min.js' }))
+        .pipe(sourceMap.write(""))
         .pipe(gulp.dest(dest))
+}
+function build_concat_base(){
+    var src = [
+        'o2web/source/x_desktop/js/base.js',
+        'o2web/source/x_desktop/js/base_loader.js'
+    ];
+    var dest = 'target/o2server/servers/webServer/x_desktop/js/';
+    return gulp.src(src)
+        .pipe(sourceMap.init())
+        //.pipe(concat('o2.js'))
+        .pipe(gulp.dest(dest))
+        .pipe(concat('base.min.js'))
+        .pipe(uglify())
+        //.pipe(rename({ extname: '.min.js' }))
+        .pipe(sourceMap.write(""))
+        .pipe(gulp.dest(dest));
 }
 function build_concat_desktop(){
     let path = "o2_core";
@@ -441,10 +463,13 @@ function build_concat_desktop(){
     ];
     var dest = 'target/o2server/servers/webServer/o2_core/o2/xDesktop/';
     return gulp.src(src)
+        .pipe(sourceMap.init())
         .pipe(concat('$all.js'))
         .pipe(gulp.dest(dest))
+        .pipe(concat('$all.min.js'))
         .pipe(uglify())
-        .pipe(rename({ extname: '.min.js' }))
+        //.pipe(rename({ extname: '.min.js' }))
+        .pipe(sourceMap.write(""))
         .pipe(gulp.dest(dest))
 }
 function build_concat_xform(){
@@ -471,10 +496,108 @@ function build_concat_xform(){
     ];
     var dest = 'target/o2server/servers/webServer/'+path+'/';
     return gulp.src(src)
+        .pipe(sourceMap.init())
         .pipe(concat('$all.js'))
         .pipe(gulp.dest(dest))
+        .pipe(concat('$all.min.js'))
         .pipe(uglify())
-        .pipe(rename({ extname: '.min.js' }))
+        //.pipe(rename({ extname: '.min.js' }))
+        .pipe(sourceMap.write(""))
+        .pipe(gulp.dest(dest))
+}
+
+function build_concat_cms_xform(){
+    let processPath = "x_component_process_Xform";
+    let path = "x_component_cms_Xform";
+    var src = [
+        'o2web/source/o2_core/o2/widget/AttachmentController.js',
+        // 'source/o2_core/o2/xScript/CMSEnvironment.js',
+        'o2web/source/o2_core/o2/xScript/CMSMacro.js',
+        'o2web/source/o2_core/o2/widget/Tab.js',
+        'o2web/source/o2_core/o2/widget/O2Identity.js',
+        'o2web/source/' + processPath + '/Form.js',
+        'o2web/source/' + processPath + '/$Module.js',
+        'o2web/source/' + processPath + '/$Input.js',
+        'o2web/source/' + processPath + '/Div.js',
+        //'source/' + processPath + '/Combox.js',
+        'o2web/source/' + processPath + '/DatagridMobile.js',
+        'o2web/source/' + processPath + '/DatagridPC.js',
+        'o2web/source/' + processPath + '/Textfield.js',
+        //'source/' + processPath + '/Personfield.js',
+        'o2web/source/' + processPath + '/Button.js',
+        //'source/' + processPath + '/ViewSelector.js',
+        'o2web/source/' + processPath + '/Org.js',
+        // 'source/' + processPath + '/*.js',
+        'o2web/source/' + processPath + '/Actionbar.js',
+        //'source/' + processPath + '/Address.js',
+        'o2web/source/' + processPath + '/Attachment.js',
+        'o2web/source/' + processPath + '/Calendar.js',
+        'o2web/source/' + processPath + '/Checkbox.js',
+        'o2web/source/' + processPath + '/Datagrid.js',
+        'o2web/source/' + processPath + '/Htmleditor.js',
+        //'source/' + processPath + '/Iframe.js',
+        'o2web/source/' + processPath + '/Label.js',
+        'o2web/source/' + processPath + '/Number.js',
+        'o2web/source/' + processPath + '/Common.js',
+        'o2web/source/' + processPath + '/Image.js',
+        'o2web/source/' + processPath + '/ImageClipper.js',
+        'o2web/source/' + processPath + '/Html.js',
+        'o2web/source/' + processPath + '/Radio.js',
+        'o2web/source/' + processPath + '/Select.js',
+        //'source/' + processPath + '/Stat.js',
+        //'source/' + processPath + '/Statement.js',
+        //'source/' + processPath + '/StatementSelector.js',
+        //'source/' + processPath + '/Subform.js',
+        'o2web/source/' + processPath + '/Tab.js',
+        'o2web/source/' + processPath + '/Table.js',
+        'o2web/source/' + processPath + '/Textarea.js',
+        //'source/' + processPath + '/Tree.js',
+        //'source/' + processPath + '/View.js',
+        // 'source/x_component_process_Work/Processor.js',
+        // '!source/' + processPath + '/Office.js'
+
+
+        'o2web/source/o2_core/o2/widget/SimpleToolbar.js',
+        'o2web/source/' + path + '/ModuleImplements.js',
+        'o2web/source/' + path + '/Package.js',
+        'o2web/source/' + path + '/Form.js',
+        //'source/' + path + '/widget/Comment.js',
+        'o2web/source/' + path + '/widget/Log.js',
+        'o2web/source/' + path + '/Org.js',
+        'o2web/source/' + path + '/Author.js',
+        'o2web/source/' + path + '/Reader.js',
+        'o2web/source/' + path + '/Textfield.js',
+        'o2web/source/' + path + '/Actionbar.js',
+        'o2web/source/' + path + '/Attachment.js',
+        'o2web/source/' + path + '/Button.js',
+        'o2web/source/' + path + '/Calendar.js',
+        'o2web/source/' + path + '/Checkbox.js',
+        'o2web/source/' + path + '/Datagrid.js',
+        'o2web/source/' + path + '/Htmleditor.js',
+        'o2web/source/' + path + '/ImageClipper.js',
+        'o2web/source/' + path + '/Label.js',
+        'o2web/source/' + path + '/Number.js',
+        'o2web/source/' + path + '/Radio.js',
+        'o2web/source/' + path + '/Select.js',
+        'o2web/source/' + path + '/Tab.js',
+        'o2web/source/' + path + '/Table.js',
+        'o2web/source/' + path + '/Textarea.js'
+        //'source/' + path + '/Personfield.js',
+        //'source/' + path + '/Readerfield.js',
+        //'source/' + path + '/Authorfield.js',
+        //'source/' + path + '/Orgfield.js',
+        // 'source/' + path + '/*.js',
+        // '!source/' + path + '/Office.js'
+    ];
+    var dest = 'target/o2server/servers/webServer/'+path+'/';
+    return gulp.src(src)
+        .pipe(sourceMap.init())
+        .pipe(concat('$all.js'))
+        .pipe(gulp.dest(dest))
+        .pipe(concat('$all.min.js'))
+        .pipe(uglify())
+        //.pipe(rename({ extname: '.min.js' }))
+        .pipe(sourceMap.write(""))
         .pipe(gulp.dest(dest))
 }
 
@@ -485,14 +608,18 @@ function build_bundle(){
         'o2web/source/o2_lib/mootools/plugin/mBox.js',
         'o2web/source/o2_core/o2.js',
         'o2web/source/x_desktop/js/base.js',
+        'o2web/source/x_desktop/js/base_loader.js',
         "o2web/source/o2_core/o2/framework.js"
     ];
     var dest = 'target/o2server/servers/webServer/'+path+'/';
     return gulp.src(src)
+        .pipe(sourceMap.init())
         .pipe(concat('bundle.js'))
         .pipe(gulp.dest(dest))
+        .pipe(concat('bundle.min.js'))
         .pipe(uglify())
-        .pipe(rename({ extname: '.min.js' }))
+        //.pipe(rename({ extname: '.min.js' }))
+        .pipe(sourceMap.write(""))
         .pipe(gulp.dest(dest))
 }
 
@@ -638,14 +765,18 @@ function build_concat_basework_body() {
 
         'o2web/source/x_desktop/js/base_work_actions_temp.js',
 
-        'o2web/source/x_desktop/js/base.js'
+        'o2web/source/x_desktop/js/base.js',
+        'o2web/source/x_desktop/js/base_loader.js'
     ];
     var dest = 'target/o2server/servers/webServer/x_desktop/js/';
     return gulp.src(src)
+        .pipe(sourceMap.init())
         .pipe(concat('base_work.js'))
         .pipe(gulp.dest(dest))
+        .pipe(concat('base_work.min.js'))
         .pipe(uglify())
-        .pipe(rename({ extname: '.min.js' }))
+        //.pipe(rename({ extname: '.min.js' }))
+        .pipe(sourceMap.write(""))
         .pipe(gulp.dest(dest));
 }
 
@@ -739,45 +870,200 @@ function build_concat_baseportal_body() {
 
         'o2web/source/x_desktop/js/base_portal_actions_temp.js',
 
-        'o2web/source/x_desktop/js/base.js'
+        'o2web/source/x_desktop/js/base.js',
+        'o2web/source/x_desktop/js/base_loader.js'
     ];
     var dest = 'target/o2server/servers/webServer/x_desktop/js/';
     return gulp.src(src)
+        .pipe(sourceMap.init())
         .pipe(concat('base_portal.js'))
         .pipe(gulp.dest(dest))
+        .pipe(concat('base_portal.min.js'))
         .pipe(uglify())
-        .pipe(rename({ extname: '.min.js' }))
+        //.pipe(rename({ extname: '.min.js' }))
+        .pipe(sourceMap.write(""))
+        .pipe(gulp.dest(dest));
+}
+
+
+function build_concat_basedocument_style(){
+    return gulp.src([
+        "o2web/source/x_component_cms_Document/$Main/default/css.wcss",
+        "o2web/source/x_component_cms_Xform/$Form/default/css.wcss",
+        "o2web/source/o2_core/o2/widget/$AttachmentController/default/css.wcss"
+    ])
+        .pipe(concat_Style())
+        .pipe(concat('js/base_document_style_temp.js'))
+        .pipe(gulp.dest('o2web/source/x_desktop/'));
+}
+
+function build_concat_basedocument_action(){
+    return gulp.src([
+        "o2web/source/o2_core/o2/xAction/services/x_organization_assemble_authentication.json",
+        "o2web/source/o2_core/o2/xAction/services/x_organization_assemble_control.json",
+        "o2web/source/o2_core/o2/xAction/services/x_cms_assemble_control.json",
+        "o2web/source/o2_core/o2/xAction/services/x_program_center.json",
+        "o2web/source/o2_core/o2/xAction/services/x_organization_assemble_personal.json"
+    ])
+        .pipe(concat_Actions())
+        .pipe(concat('js/base_document_actions_temp.js'))
+        .pipe(gulp.dest('o2web/source/x_desktop/'));
+}
+
+function build_concat_basedocument_clean(cb) {
+    var dest = [
+        'o2web/source/x_desktop/js/base_document_actions_temp.js',
+        'o2web/source/x_desktop/js/base_document_style_temp.js'
+    ];
+    return del(dest, cb);
+}
+
+function build_concat_basedocument_body() {
+    var src = [
+        'o2web/source/x_desktop/js/base_concat_head.js',
+        'o2web/source/o2_core/o2/lp/'+(options.lp || 'zh-cn')+'.js',
+
+        'o2web/source/x_desktop/js/base_document_style_temp.js',
+
+        'o2web/source/o2_core/o2/widget/Common.js',
+        'o2web/source/o2_core/o2/widget/Dialog.js',
+        'o2web/source/o2_core/o2/widget/UUID.js',
+        'o2web/source/o2_core/o2/widget/Menu.js',
+        'o2web/source/o2_core/o2/widget/Mask.js',
+        'o2web/source/o2_core/o2/xDesktop/Common.js',
+        'o2web/source/o2_core/o2/xDesktop/Actions/RestActions.js',
+        'o2web/source/o2_core/o2/xAction/RestActions.js',
+        'o2web/source/o2_core/o2/xDesktop/Access.js',
+        'o2web/source/o2_core/o2/xDesktop/Dialog.js',
+        'o2web/source/o2_core/o2/xDesktop/Menu.js',
+        'o2web/source/o2_core/o2/xDesktop/UserData.js',
+        'o2web/source/x_component_Template/MPopupForm.js',
+        'o2web/source/o2_core/o2/xDesktop/Authentication.js',
+        'o2web/source/o2_core/o2/xDesktop/Window.js',
+
+        'o2web/source/x_component_Common/Main.js',
+
+        'o2web/source/x_component_cms_Document/lp/'+(options.lp || 'zh-cn')+'.js',
+        'o2web/source/x_component_process_Xform/lp/'+(options.lp || 'zh-cn')+'.js',
+        'o2web/source/x_component_Selector/lp/'+(options.lp || 'zh-cn')+'.js',
+        'o2web/source/x_component_cms_Xform/lp/'+(options.lp || 'zh-cn')+'.js',
+
+        'o2web/source/x_component_cms_Document/Main.js',
+
+        'o2web/source/x_component_Selector/package.js',
+
+        'o2web/source/o2_core/o2/xScript/Actions/UnitActions.js',
+        'o2web/source/o2_core/o2/xScript/Actions/CMSScriptActions.js',
+        'o2web/source/o2_core/o2/xScript/CMSEnvironment.js',
+
+        'o2web/source/o2_core/o2/xAction/services/x_organization_assemble_authentication.js',
+        'o2web/source/o2_core/o2/xAction/services/x_cms_assemble_control.js',
+        'o2web/source/o2_core/o2/xAction/services/x_organization_assemble_control.js',
+        'o2web/source/o2_core/o2/xAction/services/x_organization_assemble_personal.js',
+
+        'o2web/source/x_desktop/js/base_document_actions_temp.js',
+
+        'o2web/source/x_desktop/js/base.js',
+        'o2web/source/x_desktop/js/base_loader.js'
+    ];
+    var dest = 'target/o2server/servers/webServer/x_desktop/js/';
+    return gulp.src(src)
+        .pipe(sourceMap.init())
+        .pipe(concat('base_document.js'))
+        .pipe(gulp.dest(dest))
+        .pipe(concat('base_document.min.js'))
+        .pipe(uglify())
+        //.pipe(rename({ extname: '.min.js' }))
+        .pipe(sourceMap.write(""))
         .pipe(gulp.dest(dest));
 }
 
 exports.build_concat = gulp.parallel(
     build_concat_o2,
+    build_concat_base,
     build_concat_desktop,
     build_concat_xform,
+    build_concat_cms_xform,
     build_bundle,
     gulp.series(build_concat_basework_style, build_concat_basework_action, build_concat_basework_body,build_concat_basework_clean),
-    gulp.series(build_concat_baseportal_style, build_concat_baseportal_action, build_concat_baseportal_body,build_concat_baseportal_clean)
+    gulp.series(build_concat_baseportal_style, build_concat_baseportal_action, build_concat_baseportal_body,build_concat_baseportal_clean),
+    gulp.series(build_concat_basedocument_style, build_concat_basedocument_action, build_concat_basedocument_body,build_concat_basedocument_clean)
 );
 
+function getGitV(){
+    var tagPromise = new Promise(function(s, f){
+        git.exec({args : 'describe --tag'}, function (err, stdout) {
+            if (err){
+                f(err);
+            }
+            var v = stdout.substring(0, stdout.indexOf("-"));
+            s(v);
+        });
+    });
+    var revPromise = new Promise(function(s, f){
+        git.exec({args : 'rev-parse --short HEAD'}, function (err, hash) {
+            if (err){
+                f(err);
+            }
+            s(hash.trim());
+        });
+    });
+    return Promise.all([tagPromise,revPromise])
+}
 
 function build_web_v_html() {
     var src = 'o2web/source/x_desktop/*.html';
     var dest = 'target/o2server/servers/webServer/x_desktop/';
-    return gulp.src(src)
-        .pipe(assetRev())
-        .pipe(gulp.dest(dest))
-        .pipe(gutil.noop());
+
+    return getGitV().then(function(arr){
+        return gulp.src(src)
+            .pipe(assetRev({"verConnecter": arr[0], "md5": arr[1]}))
+            .pipe(gulp.dest(dest))
+            .pipe(gutil.noop());
+    }, function(){
+        return gulp.src(src)
+            .pipe(assetRev())
+            .pipe(gulp.dest(dest))
+            .pipe(gutil.noop());
+    });
 }
-function build_web_v_o2() {
-    var src = 'target/o2server/servers/webServer/o2_core//o2.js';
-    var dest = 'target/o2server/servers/webServer/o2_core/';
+function build_web_api() {
+    var src = 'o2web/api/**/*';
+    var dest = 'target/o2server/servers/webServer/api/';
     return gulp.src(src)
-        .pipe(assetRev())
         .pipe(gulp.dest(dest))
-        .pipe(uglify())
-        .pipe(rename({ extname: '.min.js' }))
-        .pipe(gulp.dest(dest))
-        .pipe(gutil.noop());
+}
+
+function build_doc(){
+    return getGitV().then(function(arr){
+        return (shell.task('jsdoc -c o2web/jsdoc.conf.json -q version='+arr[0]+'-'+arr[1]+''))();
+    }, function(){
+        return (shell.task('jsdoc -c o2web/jsdoc.conf.json -q version='))();
+    });
+}
+exports.build_api = gulp.series(build_doc, build_web_api);
+
+
+function build_web_v_o2() {
+    var src = [
+        'target/o2server/servers/webServer/o2_core/o2.js',
+        'target/o2server/servers/webServer/o2_core/o2.min.js'
+    ];
+    var dest = 'target/o2server/servers/webServer/o2_core/';
+
+    return getGitV().then(function(arr){
+        return gulp.src(src)
+            .pipe(assetRev({"verConnecter": arr[0], "md5": arr[1], "replace": true}))
+            //.pipe(gulp.dest(dest))
+            // .pipe(uglify())
+            // .pipe(rename({ extname: '.min.js' }))
+            // .pipe(gulp.dest(dest))
+            .pipe(gutil.noop());
+    }, function(){
+        return gulp.src(src)
+            .pipe(assetRev())
+            .pipe(gutil.noop());
+    });
 }
 
 
@@ -854,14 +1140,18 @@ exports.build_web = gulp.series(
     build_web_move,
     gulp.parallel(
         build_concat_o2,
+        build_concat_base,
         build_concat_desktop,
         build_concat_xform,
+        build_concat_cms_xform,
         gulp.series(build_concat_basework_style, build_concat_basework_action, build_concat_basework_body,build_concat_basework_clean),
         gulp.series(build_concat_baseportal_style, build_concat_baseportal_action, build_concat_baseportal_body,build_concat_baseportal_clean),
+        gulp.series(build_concat_basedocument_style, build_concat_basedocument_action, build_concat_basedocument_body,build_concat_basedocument_clean),
         build_bundle
     ),
     build_web_v_html,
-    build_web_v_o2);
+    build_web_v_o2,
+    gulp.series(build_doc, build_web_api));
 
 if (os.platform().indexOf("win")==-1){
     exports.deploy = gulp.series(deploy_server, chmod_jvm, chmod_commons, chmod_sh, chmod_servers);

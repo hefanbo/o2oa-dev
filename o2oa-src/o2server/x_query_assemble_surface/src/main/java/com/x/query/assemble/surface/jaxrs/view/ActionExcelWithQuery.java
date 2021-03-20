@@ -28,9 +28,13 @@ class ActionExcelWithQuery extends BaseAction {
 
 	ActionResult<Wo> execute(EffectivePerson effectivePerson, String flag, String queryFlag, JsonElement jsonElement)
 			throws Exception {
+		ActionResult<Wo> result = new ActionResult<>();
+		Wi wi = this.convertToWrapIn(jsonElement, Wi.class);
+		View view;
+		Runtime runtime;
+		Business business;
 		try (EntityManagerContainer emc = EntityManagerContainerFactory.instance().create()) {
-			ActionResult<Wo> result = new ActionResult<>();
-			Business business = new Business(emc);
+			business = new Business(emc);
 			Query query = business.pick(queryFlag, Query.class);
 			if (null == query) {
 				throw new ExceptionEntityNotExist(queryFlag, Query.class);
@@ -39,24 +43,23 @@ class ActionExcelWithQuery extends BaseAction {
 				throw new ExceptionAccessDenied(effectivePerson, query);
 			}
 			String id = business.view().getWithQuery(flag, query);
-			View view = business.pick(id, View.class);
+			view = business.pick(id, View.class);
 			if (null == view) {
 				throw new ExceptionEntityNotExist(flag, View.class);
 			}
 			if (!business.readable(effectivePerson, view)) {
 				throw new ExceptionAccessDenied(effectivePerson, view);
 			}
-			Wi wi = this.convertToWrapIn(jsonElement, Wi.class);
-			Runtime runtime = this.runtime(effectivePerson, business, view, wi.getFilterList(), wi.getParameter(),
+			runtime = this.runtime(effectivePerson, business, view, wi.getFilterList(), wi.getParameter(),
 					wi.getCount(), false);
 			runtime.bundleList = wi.getBundleList();
-			Plan plan = this.accessPlan(business, view, runtime);
-			String excelFlag = this.girdWriteToExcel(effectivePerson, business, plan, view);
-			Wo wo = new Wo();
-			wo.setId(excelFlag);
-			result.setData(wo);
-			return result;
 		}
+		Plan plan = this.accessPlan(business, view, runtime);
+		String excelFlag = this.girdWriteToExcel(effectivePerson, business, plan, view, wi.getExcelName());
+		Wo wo = new Wo();
+		wo.setId(excelFlag);
+		result.setData(wo);
+		return result;
 	}
 
 	public static class Wo extends WoId {
@@ -75,6 +78,9 @@ class ActionExcelWithQuery extends BaseAction {
 
 		@FieldDescribe("数量")
 		private Integer count = 0;
+
+		@FieldDescribe("excel导出名称，默认为视图名称")
+		private String excelName;
 
 		@FieldDescribe("限定结果集")
 		public List<String> bundleList = new TreeList<>();
@@ -111,6 +117,13 @@ class ActionExcelWithQuery extends BaseAction {
 			this.bundleList = bundleList;
 		}
 
+		public String getExcelName() {
+			return excelName;
+		}
+
+		public void setExcelName(String excelName) {
+			this.excelName = excelName;
+		}
 	}
 
 }

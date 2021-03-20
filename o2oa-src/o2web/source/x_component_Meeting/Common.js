@@ -1425,11 +1425,25 @@ MWF.xApplication.Meeting.MeetingForm = new Class({
 MWF.xApplication.Meeting.MeetingTooltip = new Class({
     Extends: MTooltips,
     _loadCustom : function( callback ){
-        this.loadRoom( function(){
-            this.loadInvite();
-            this.loadAttachment();
-            if(callback)callback();
-        }.bind(this) );
+        var fun = function () {
+            this.loadRoom( function(){
+                this.loadInvite();
+                this.loadAttachment();
+                if(callback)callback();
+            }.bind(this) );
+        }.bind(this)
+        if( this.options.isResetData ){
+            if( this.data && this.data.id ){
+                ( this.app.actions || this.actions ).getMeeting( this.data.id, function( json ){
+                    this.data = json.data;
+                    fun();
+                }.bind(this))
+            }else{
+                fun();
+            }
+        }else{
+            fun();
+        }
     },
     _getHtml : function(){
         var data = this.data;
@@ -1472,7 +1486,7 @@ MWF.xApplication.Meeting.MeetingTooltip = new Class({
             "   <div style='font-size: 12px;color:#666; float: right'>"+ this.lp.applyPerson  +":" + data.applicant.split("@")[0] +"</div>" +
             "   <div style='font-size: 16px;color:#333;float: left'>"+ this.lp.meetingDetail +"</div>"+
             "</div>"+
-            "<div style='font-size: 18px;color:#333;padding:0px 10px 15px 20px;'>"+ data.subject +"</div>"+
+            "<div style='font-size: 18px;color:#333;padding:0px 10px 15px 20px;overflow:hidden;'>"+ data.subject +"</div>"+
             "<div style='height:1px;margin:0px 20px;border-bottom:1px solid #ccc;'></div>"+
             "<table width='100%' bordr='0' cellpadding='7' cellspacing='0' style='margin:13px 13px 13px 13px;'>" +
             "<tr><td style='"+titleStyle+";' width='70'>"+this.lp.meetingTime+":</td>" +
@@ -1655,8 +1669,14 @@ MWF.xApplication.Meeting.MeetingTooltip.AttachmentMin = new Class({
     Extends : MWF.widget.AttachmentController.AttachmentMin,
     setEvent: function(){
         this.node.addEvents({
-            "mouseover": function(){if (!this.isSelected) this.node.setStyles(this.css["minAttachmentNode_list_over"])}.bind(this),
-            "mouseout": function(){if (!this.isSelected) this.node.setStyles(this.css["minAttachmentNode_list"])}.bind(this),
+            "mouseover": function(){
+                var styleName = "attachmentNode_"+this.controller.options.listStyle+"_over";
+                if (!this.isSelected) this.node.setStyles(this.css[styleName])
+            }.bind(this),
+            "mouseout": function(){
+                var styleName = "attachmentNode_"+this.controller.options.listStyle;
+                if (!this.isSelected) this.node.setStyles(this.css[styleName])
+            }.bind(this),
             "mousedown": function(e){this.selected(e);}.bind(this),
             "click": function(e){this.downloadAttachment(e);}.bind(this)
         });
@@ -1900,12 +1920,13 @@ MWF.xApplication.Meeting.MeetingArea = new Class({
             r.send();
         }
     },
-    loadTooltip : function( isHideAttachment ){
+    loadTooltip : function( isHideAttachment, isResetData ){
         this.tooltip = new MWF.xApplication.Meeting.MeetingTooltip(this.app.content, this.node, this.app, this.data, {
             axis : "x",
             hiddenDelay : 300,
             displayDelay : 300,
-            isHideAttachment : isHideAttachment
+            isHideAttachment : isHideAttachment,
+            isResetData : isResetData
         });
     },
     showTooltip: function(  ){

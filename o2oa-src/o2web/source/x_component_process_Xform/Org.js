@@ -1,13 +1,131 @@
 MWF.xDesktop.requireApp("process.Xform", "$Input", null, false);
 MWF.xDesktop.requireApp("Selector", "package", null, false);
 MWF.require("MWF.widget.O2Identity", null, false);
-MWF.xApplication.process.Xform.Org = MWF.APPOrg =  new Class({
+/** @class Org 人员组织组件。
+ * @example
+ * //可以在脚本中获取该组件
+ * //方法1：
+ * var field = this.form.get("fieldId"); //获取组件对象
+ * //方法2
+ * var field = this.target; //在组件本身的脚本中获取，比如事件脚本、默认值脚本、校验脚本等等
+ *
+ * var data = field.getData(); //获取值
+ * field.setData("字符串值"); //设置值
+ * field.hide(); //隐藏字段
+ * var id = field.json.id; //获取字段标识
+ * var flag = field.isEmpty(); //字段是否为空
+ * field.resetData();  //重置字段的值为默认值或置空
+ * @extends MWF.xApplication.process.Xform.$Input
+ * @o2category FormComponents
+ * @o2range {Process|CMS|Portal}
+ * @hideconstructor
+ */
+MWF.xApplication.process.Xform.Org = MWF.APPOrg =  new Class(
+    /** @lends MWF.xApplication.process.Xform.Org# */
+    {
     Implements: [Events],
     Extends: MWF.APP$Input,
     options: {
+        /**
+         * 组件加载前触发。
+         * @event MWF.xApplication.process.Xform.Org#queryLoad
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 组件加载时触发.
+         * @event MWF.xApplication.process.Xform.Org#load
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 组件加载后触发.
+         * @event MWF.xApplication.process.Xform.Org#postLoad
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 当组件值改变时触发。
+         * @event MWF.xApplication.process.Xform.Org#change
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 当组件不允许输入（使用人员选择框）时，完成选择人员，并且给组件赋值后执行。
+         * @event MWF.xApplication.process.Xform.Org#select
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
         "moduleEvents": ["load", "queryLoad", "postLoad", "change", "select"],
-        "selectorEvents" : ["queryLoadSelector","postLoadSelector","postLoadContent","queryLoadCategory","postLoadCategory",
-            "selectCategory", "unselectCategory","queryLoadItem","postLoadItem","selectItem", "unselectItem","change"],
+        /**
+         * 人员选择框事件：加载前执行。this.target指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#queryLoadSelector
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：加载后执行，由于选择项为异步加载，此时选择项并未加载完成。this.target指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#postLoadSelector
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：加载选择框容器节点前执行。this.target指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#queryLoadCategory
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：加载选择框容器节点后执行。this.target指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#postLoadContent
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+
+        /**
+         * 人员选择框事件：加载分类前执行。this.target指向分类，this.target.selector指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#queryLoadCategory
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：加载分类后执行。this.target指向分类，this.target.selector指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#postLoadCategory
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：选择分类后执行。this.target指向分类，this.target.selector指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#selectCategory
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：取消选择分类后执行。this.target指向分类，this.target.selector指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#unselectCategory
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：展开分类后执行。this.target指向分类，this.target.selector指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#expand
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：折叠分类后执行。this.target指向分类，this.target.selector指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#collapse
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+
+        /**
+         * 人员选择框事件：加载选择项前执行。this.target指向选择项，this.target.selector指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#queryLoadItem
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：加载选择项后执行。this.target指向选择项，this.target.selector指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#postLoadItem
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：选择选择项后执行。this.target指向选择项，this.target.selector指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#selectItem
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 人员选择框事件：取消选择选择项后执行。this.target指向选择项，this.target.selector指向人员选择框。
+         * @event MWF.xApplication.process.Xform.Org#unselectItem
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        "selectorEvents" : ["queryLoadSelector","postLoadSelector","queryLoadContent","postLoadContent","queryLoadCategory","postLoadCategory",
+            "selectCategory", "unselectCategory","queryLoadItem","postLoadItem","selectItem", "unselectItem","change","expand","collapse"],
         "readonly": true
     },
 
@@ -19,14 +137,19 @@ MWF.xApplication.process.Xform.Org = MWF.APPOrg =  new Class({
         var value = this.getValue();
         //var text = (this.node.getFirst()) ? this.node.getFirst().get("text") : this.node.get("text");
         var text = [];
-        value.each(function(v){
-            if( typeOf(v) === "string" ){
-                text.push(v);
-            }else{
-                text.push(v.name+((v.unitName) ? "("+v.unitName+")" : ""));
-            }
-        }.bind(this));
-        return {"value": value || "", "text": [text.join(",")]};
+        if( typeOf( value ) === "object" )value = [value];
+        if( typeOf( value ) === "array" ){
+            value.each(function(v){
+                if( typeOf(v) === "string" ){
+                    text.push(v);
+                }else{
+                    text.push(v.name+((v.unitName) ? "("+v.unitName+")" : ""));
+                }
+            }.bind(this));
+            return {"value": value || "", "text": [text.join(",")]};
+        }else{
+            return {"value": [""], "text": [""]};
+        }
     },
 
     loadDescription: function(){
@@ -119,13 +242,15 @@ MWF.xApplication.process.Xform.Org = MWF.APPOrg =  new Class({
                 dutys.each(function(duty){
                     if (duty.code) par = this.form.Macro.exec(duty.code, this);
                     if (par){
-                        var promise = o2.promiseAll(par).then(function(p){
+                        var pars = (o2.typeOf(par)=="array") ? par : [par];
+                        var promise = Promise.all(pars).then(function(p){
                             var uName = p.distinguishedName || p;
                             if (o2.typeOf(p)=="array") uName = p[0].distinguishedName || p[0];
                             var code = "return this.org.getDuty(\""+duty.name+"\", \""+uName+"\", true)";
                             var r = (!!uName) ? this.form.Macro.exec(code, this) : "";
 
-                            return o2.promiseAll(r).then(function(d){
+                            var m = (o2.typeOf(r)=="array") ? "all" : "resolve";
+                            return Promise[m](r).then(function(d){
                                 if (typeOf(d)!=="array") d = (d) ? [d.toString()] : [];
                                 var arr = [];
                                 d.each(function(dd){
@@ -276,7 +401,7 @@ MWF.xApplication.process.Xform.Org = MWF.APPOrg =  new Class({
 
         if( this.selectTypeList.length === 0 )return false;
 
-        var values = this.getInputData();
+        var values = this.getInputData() || [];
 
         var exclude = [];
         if( this.json.exclude ){
@@ -453,7 +578,15 @@ MWF.xApplication.process.Xform.Org = MWF.APPOrg =  new Class({
             //this._setBusinessData(values);
             this.validationMode();
             this.validation();
-            this.fireEvent("select");
+            var p = this.getValue();
+            if (p.then){
+                p.then(function(){
+                    this.fireEvent("select");
+                }.bind(this), function(){});
+            }else{
+                this.fireEvent("select");
+            }
+
         }.bind(this))
     },
     selectOnCancel: function(){
@@ -468,6 +601,11 @@ MWF.xApplication.process.Xform.Org = MWF.APPOrg =  new Class({
         if (!v || !v.length) if (this.descriptionNode)  this.descriptionNode.setStyle("display", "block");
     },
 
+    /**
+     * @summary 弹出选择界面.
+     * @example
+     * this.form.get('org').clickSelect();
+     */
     clickSelect: function( ev ){
         if (this.readonly)return;
         if( layout.mobile ){
@@ -477,6 +615,14 @@ MWF.xApplication.process.Xform.Org = MWF.APPOrg =  new Class({
                     if( this.selector && this.selector.loading ) {
                     }else if( this.selector && this.selector.selector && this.selector.selector.active ){
                     }else{
+                        /**
+                         * @summary 人员选择框package的对象
+                         * @member {o2.O2Selector}
+                         * @example
+                         *  //可以在脚本中获取该组件
+                         * var selector = this.form.get("fieldId").selector.selector; //获取人员选择框对象
+                         * var options = selector.options; //获取人员选择框的选项
+                         */
                         this.selector = new MWF.O2Selector(this.form.app.content, options);
                     }
                 }
@@ -1067,7 +1213,7 @@ MWF.xApplication.process.Xform.Org = MWF.APPOrg =  new Class({
         }.bind(this), function(){});
 
         this.moduleValueAG = p;
-        if (p) p.then(function(){
+        if (p && p.then) p.then(function(){
             this.moduleValueAG = null;
         }.bind(this), function(){
             this.moduleValueAG = null;
@@ -1708,11 +1854,13 @@ MWF.APPOrg.GroupOptions = new Class({
         if( this.json.groupRange==="group" ){
             return {
                 "count": count,
+                "storeRange" : this.json.storeRange,
                 "include": this.getSelectRange( true )
             }
         }else{
             return {
-                "count": count
+                "count": count,
+                "storeRange" : this.json.storeRange
             }
         }
     },
@@ -1763,6 +1911,7 @@ MWF.APPOrg.UnitOptions = new Class({
             "count": count,
             "units": selectUnits,
             "unitType": (this.json.selectUnitType==="all") ? "" : this.json.selectUnitType,
+            "storeRange" : this.json.storeRange,
             "expandSubEnable" : (this.json.unitExpandSubEnable=="no") ? false : true
         };
     },
@@ -1930,6 +2079,7 @@ MWF.APPOrg.IdentityOptions = new Class({
                 "noUnit" : true,
                 "count": count,
                 "resultType" : this.json.identityResultType,
+                "storeRange" : this.json.storeRange,
                 "include" : this._getInclude()
             };
         }else{
@@ -1943,6 +2093,7 @@ MWF.APPOrg.IdentityOptions = new Class({
                 "resultType" : this.json.identityResultType,
                 "categoryType": this.json.categoryType || "unit",
                 "dutyUnitLevelBy" : this.json.dutyUnitLevelBy || "duty",
+                "storeRange" : this.json.storeRange,
                 "include" : this._getInclude()
             };
         }

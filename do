@@ -28,13 +28,9 @@ RUN_CONTAINER_NAME="o2oa-test"
 if [ $1 = "update" ]; then
   rsync -r "$SRC_DIR"/ "$BUILD_DIR"/
 elif [ $1 = "update_deps" ]; then
-  tmp_dir=$(mktemp -d)
-  cat deps/jvm.tar.gz.part* > $tmp_dir/jvm.tar.gz
-  cat deps/commons.tar.gz.part* > $tmp_dir/commons.tar.gz
   mkdir -p $BUILD_DIR/o2server/jvm
-  tar xzf $tmp_dir/jvm.tar.gz -C $BUILD_DIR/o2server/jvm
-  tar xzf $tmp_dir/commons.tar.gz -C $BUILD_DIR/o2server
-  rm -r $tmp_dir
+  cat deps/jvm.tar.gz.part* | tar xz -C $BUILD_DIR/o2server/jvm
+  cat deps/commons.tar.gz.part* | tar xz -C $BUILD_DIR/o2server
   if [ -f deps/node_modules.tar.gz ]; then
     tar xzf deps/node_modules.tar.gz -C $BUILD_DIR
   fi

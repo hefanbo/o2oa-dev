@@ -21,7 +21,7 @@
  *  GNU Affero General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
+ *  along with O2OA.  If not, see <https://www.gnu.org/licenses/>.
  *
  * ***** END LICENSE BLOCK ******/
 
@@ -77,7 +77,7 @@ if (!window.Promise){
     }
     this.o2 = window.o2 || {};
     this.o2.version = {
-        "v": "5.1.1",
+        "v": "6.0",
         "build": "2020.06.12",
         "info": "O2OA 活力办公 创意无限. Copyright © 2020, o2oa.net O2 Team All rights reserved."
     };
@@ -225,8 +225,31 @@ if (!window.Promise){
                 cb = (callback[name]) ? callback[name] : ((callback[key]) ? callback[key] : null);
             }
         }
-        if (cb) return (promise_cb) ? promise_cb(cb.apply(b, par)) : cb.apply(b, par) ;
-        return (promise_cb) ? promise_cb.apply(b, par) : null;
+        if (cb) return cb.apply(b, par);
+        //return null;
+
+        // if (cb){
+        //     if (promise_cb){
+        //         var r = cb.apply(b, par);
+        //
+        //         window.setTimeout(function(){
+        //             promise_cb(r);
+        //         },0)
+        //         //return promise_cb(r);
+        //     }else{
+        //         return cb.apply(b, par);
+        //     }
+        //     //return (promise_cb) ? promise_cb(cb.apply(b, par)) : cb.apply(b, par) ;
+        // }
+        // if (promise_cb){
+        //     window.setTimeout(function(){
+        //         promise_cb.apply(b, par);
+        //     },0)
+        //
+        //     //return promise_cb.apply(b, par);
+        // }
+
+        //return (promise_cb) ? promise_cb.apply(b, par) : null;
 
         // if (key.toLowerCase()==="success" && (type==="function" || type==="o2_async_function")){
         //     (promise_cb) ? promise_cb(callback.apply(b, par)) : callback.apply(b, par) ;
@@ -434,6 +457,7 @@ if (!window.Promise){
         "raphael": ["../o2_lib/raphael/raphael.js"],
         "d3": ["../o2_lib/d3/d3.min.js"],
         "ace": ["../o2_lib/ace/src-min-noconflict/ace.js","../o2_lib/ace/src-min-noconflict/ext-language_tools.js"],
+        //"ace": ["../o2_lib/ace/src-noconflict/ace.js","../o2_lib/ace/src-noconflict/ext-language_tools.js"],
         "monaco": ["../o2_lib/vs/loader.js"],
         "JSBeautifier": ["../o2_lib/JSBeautifier/beautify.js"],
         "JSBeautifier_css": ["../o2_lib/JSBeautifier/beautify-css.js"],
@@ -507,32 +531,44 @@ if (!window.Promise){
     };
 
     var _load = function(urls, options, callback){
-        var ms = (_typeOf(urls)==="array") ? urls : [urls];
-        var op =  (_typeOf(options)==="object") ? _getJsOptions(options) : _getJsOptions(null);
-        var cbk = (_typeOf(options)==="function") ? options : callback;
+        if (window.document && !window.importScripts){
+            var ms = (_typeOf(urls)==="array") ? urls : [urls];
+            var op =  (_typeOf(options)==="object") ? _getJsOptions(options) : _getJsOptions(null);
+            var cbk = (_typeOf(options)==="function") ? options : callback;
 
-        var cb = cbk;
-        if (typeof define === 'function' && define.amd){
-            define.amd = false;
-            cb = (cbk) ? function(){define.amd = true; cbk();} : function(){define.amd = true;}
-        }
+            var cb = cbk;
+            if (typeof define === 'function' && define.amd){
+                define.amd = false;
+                cb = (cbk) ? function(){define.amd = true; cbk();} : function(){define.amd = true;}
+            }
 
-        var modules = [];
-        for (var i=0; i<ms.length; i++){
-            var url = ms[i];
-            var module = _frameworks[url] || url;
-            if (_typeOf(module)==="array"){
-                modules = modules.concat(module)
+            var modules = [];
+            for (var i=0; i<ms.length; i++){
+                var url = ms[i];
+                var module = _frameworks[url] || url;
+                if (_typeOf(module)==="array"){
+                    modules = modules.concat(module)
+                }else{
+                    modules.push(module)
+                }
+            }
+            var thisLoaded = [];
+            if (op.sequence){
+                _loadSequence(modules, cb, op, 0, thisLoaded, _loadSingle);
             }else{
-                modules.push(module)
+                _loadDisarray(modules, cb, op, thisLoaded, _loadSingle);
+            }
+        }else{
+            if (window.importScripts){
+                var ms = (_typeOf(urls)==="array") ? urls : [urls];
+                ms.each(function(url){
+                    window.importScripts(o2.filterUrl(url));
+                });
+                var cbk = (_typeOf(options)==="function") ? options : callback;
+                if (cbk) cbk();
             }
         }
-        var thisLoaded = [];
-        if (op.sequence){
-            _loadSequence(modules, cb, op, 0, thisLoaded, _loadSingle);
-        }else{
-            _loadDisarray(modules, cb, op, thisLoaded, _loadSingle);
-        }
+
     };
     this.o2.load = _load;
 
@@ -749,7 +785,9 @@ if (!window.Promise){
             var el = els.item(i);
             var name = el.getAttribute("data-o2-element");
             if (name) _bindToModule(op.module, el, name.toString());
+            debugger;
             if (el.hasAttribute("data-o2-events")){
+
                 var events = el.getAttribute("data-o2-events").toString();
                 if (events) _bindToEvents(op.module, el, events);
             }
@@ -1059,31 +1097,36 @@ if (!window.Promise){
         var jsPath = (compression || !this.o2.session.isDebugger) ? url.replace(/\.js/, ".min.js") : url;
         jsPath = (jsPath.indexOf("?")!==-1) ? jsPath+"&v="+this.o2.version.v : jsPath+"?v="+this.o2.version.v;
 
-        var xhr = new Request({
-            url: o2.filterUrl(jsPath), async: async, method: "get",
-            onSuccess: function(){
-                //try{
-                _loaded[key] = true;
-                o2.runCallback(callback, "success", [module]);
-                //}catch (e){
-                //    o2.runCallback(callback, "failure", [e]);
-                //}
-            },
-            onFailure: function(r){
-                var rex = /lp\/.+\.js/;
-                if (rex.test(url)){
-                    var zhcnUrl = url.replace(rex, "lp/zh-cn.js");
-                    if (zhcnUrl!==url){
-                        _requireJs(zhcnUrl, callback, async, compression, module)
+        if (window.importScripts){
+            window.importScripts(o2.filterUrl(jsPath));
+            o2.runCallback(callback, "success", [module]);
+        }else{
+            var xhr = new Request({
+                url: o2.filterUrl(jsPath), async: async, method: "get",
+                onSuccess: function(){
+                    //try{
+                    _loaded[key] = true;
+                    o2.runCallback(callback, "success", [module]);
+                    //}catch (e){
+                    //    o2.runCallback(callback, "failure", [e]);
+                    //}
+                },
+                onFailure: function(r){
+                    var rex = /lp\/.+\.js/;
+                    if (rex.test(url)){
+                        var zhcnUrl = url.replace(rex, "lp/zh-cn.js");
+                        if (zhcnUrl!==url){
+                            _requireJs(zhcnUrl, callback, async, compression, module)
+                        }else{
+                            o2.runCallback(callback, "failure", [r]);
+                        }
                     }else{
                         o2.runCallback(callback, "failure", [r]);
                     }
-                }else{
-                    o2.runCallback(callback, "failure", [r]);
                 }
-            }
-        });
-        xhr.send();
+            });
+            xhr.send();
+        }
     };
     var _requireSingle = function(module, callback, async, compression){
         if (o2.typeOf(module)==="array"){
@@ -1297,10 +1340,17 @@ if (!window.Promise){
         r.send();
     };
 
-    var _cacheUrls = [
+    var _cacheUrls = (Browser.name == "ie") ? [
         /jaxrs\/form\/workorworkcompleted\/.+/ig,
         /jaxrs\/form\/.+/ig,
-        //    /jaxrs\/script/ig,
+        /jaxrs\/script\/.+\/app\/.+\/imported/ig,
+        /jaxrs\/script\/portal\/.+\/name\/.+\/imported/ig,
+        /jaxrs\/script\/.+\/application\/.+\/imported/ig,
+        /jaxrs\/page\/.+\/portal\/.+/ig,
+        /jaxrs\/custom\/.+/ig
+    ]:[
+        /jaxrs\/form\/workorworkcompleted\/.+/ig,
+        /jaxrs\/form\/.+/ig,
         /jaxrs\/script\/.+\/app\/.+\/imported/ig,
         /jaxrs\/script\/portal\/.+\/name\/.+\/imported/ig,
         /jaxrs\/script\/.+\/application\/.+\/imported/ig,
@@ -1310,15 +1360,6 @@ if (!window.Promise){
         /jaxrs\/custom\/.+/ig,
         /jaxrs\/definition\/idea.+/ig,
         /jaxrs\/distribute\/assemble\/source\/.+/ig,
-
-        ///jaxrs\/form\/workorworkcompleted\/.+/ig,
-        //    /jaxrs\/script/ig,
-        // /jaxrs\/script\/.+\/app\/.+\/imported/ig,
-        // /jaxrs\/script\/portal\/.+\/name\/.+\/imported/ig,
-        // /jaxrs\/script\/.+\/application\/.+\/imported/ig,
-        // /jaxrs\/page\/.+\/portal\/.+/ig
-        // /jaxrs\/authentication/ig
-        // /jaxrs\/statement\/.*\/execute\/page\/.*\/size\/.*/ig
     ];
     // _restful_bak = function(method, address, data, callback, async, withCredentials, cache){
     //     var loadAsync = (async !== false);
@@ -1407,7 +1448,7 @@ if (!window.Promise){
         //var noCache = false;
         if (!loadAsync || !useWebWorker){
             var res;
-            var p = new Promise(function(s,f){
+            var p = new Promise(function(resolve,reject){
                 res = new Request.JSON({
                     url: o2.filterUrl(address),
                     secure: false,
@@ -1426,13 +1467,20 @@ if (!window.Promise){
                                 layout.session.token = xToken;
                             }
                         }
-                        return o2.runCallback(callback, "success", [responseJSON],null, s);
+                        var r = o2.runCallback(callback, "success", [responseJSON],null);
+                        resolve(r || responseJSON);
+                        //return o2.runCallback(callback, "success", [responseJSON],null, resolve);
                     },
                     onFailure: function(xhr){
-                        return o2.runCallback(callback, "requestFailure", [xhr], null, f);
+                        //var r = o2.runCallback(callback, "requestFailure", [xhr], null, reject);
+
+                        reject(xhr);
+                        //return o2.runCallback(callback, "requestFailure", [xhr], null, reject);
                     }.bind(this),
                     onError: function(text, error){
-                        return o2.runCallback(callback, "error", [text, error], null, f);
+                        var r = o2.runCallback(callback, "error", [text, error], null, reject);
+                        (r) ? reject(r) : reject(null, text, error);
+                        //return o2.runCallback(callback, "error", [text, error], null, reject);
                     }.bind(this)
                 });
 
@@ -1451,7 +1499,16 @@ if (!window.Promise){
                 }
                 //Content-Type	application/x-www-form-urlencoded; charset=utf-8
                 res.send(data);
-            }.bind(this)).catch(function(){});
+            }.bind(this));
+
+            // p = p.then(function(responseJSON){
+            //     return o2.runCallback(callback, "success", [responseJSON],null);
+            // }, function(xhr, text, error){
+            //     return o2.runCallback(callback, "failure", [xhr, text, error], null);
+            // });
+            p = p.catch(function(xhr, text, error){
+                return o2.runCallback(callback, "failure", [xhr, text, error], null);
+            });
 
             //var oReturn = (callback.success && callback.success.isAG) ? callback.success : callback;
             var oReturn = p;
@@ -1480,14 +1537,22 @@ if (!window.Promise){
                                 layout.session.token = xToken;
                             }
                         }
-                        o2.runCallback(callback, "success", [result.data], null, s);
+                        s(result.data);
+                        //o2.runCallback(callback, "success", [result.data], null, s);
                     }else{
-                        o2.runCallback(callback, "failure", [result.data], null, f);
+                        f(result.data);
+                        //o2.runCallback(callback, "failure", [result.data], null, f);
                     }
                     actionWorker.terminate();
                 }
                 actionWorker.postMessage(workerMessage);
             }.bind(this));
+
+            p = p.then(function(data){
+                return o2.runCallback(callback, "success", [data],null);
+            }, function(data){
+                return o2.runCallback(callback, "failure", [data], null);
+            });
 
             //var oReturn = (callback.success && callback.success.addResolve) ? callback.success : callback;
             var oReturn = p;
@@ -1814,7 +1879,7 @@ if (!window.Promise){
     //     return Object.appendChain(asyncGeneratorPrototype, "if (this.success) this.success.apply(this, arguments);");
     // }
     //
-    // //@todo
+    //
     // _AsyncGenerator.all = function(arr){
     //     var result = [];
     //     var ag = function (){
@@ -1862,16 +1927,18 @@ if (!window.Promise){
 
     var _promiseAll = function(p){
         if (o2.typeOf(p)=="array"){
-            if (p.some(function(e){ return (o2.typeOf(e.then)=="function") })){
+            if (p.some(function(e){ return (e && o2.typeOf(e.then)=="function") })){
                 return Promise.all(p);
             }else{
-                return { "then": function(s){ s(p); return this;} };
+                return { "then": function(s){ if (s) s(p); return this;} };
+                //return new Promise(function(s){s(p); return this;});
             }
         }else{
             if (p && o2.typeOf(p.then)=="function"){
                 return Promise.resolve(p);
             }else{
-                return { "then": function(s){ s(p); return this;} };
+                return { "then": function(s){ if (s) s(p); return this;} };
+                //return new Promise(function(s){s(p); return this;});
             }
         }
         // var method = (o2.typeOf(p)=="array") ? "all" : "resolve";
@@ -2113,6 +2180,27 @@ o2.core = true;
             }
         });
     }
+
+    var styleString = Element.getComputedStyle;
+    function styleNumber(element, style){
+        return styleString(element, style).toInt() || 0;
+    }
+
+    function topBorder(element){
+        return styleNumber(element, 'border-top-width');
+    }
+
+    function leftBorder(element){
+        return styleNumber(element, 'border-left-width');
+    }
+
+    [Document, Window].invoke('implement', {
+        getSize: function(){
+            var doc = this.getDocument();
+            doc = ((!doc.compatMode || doc.compatMode == 'CSS1Compat') && (!layout || !layout.userLayout || !layout.userLayout.scale || layout.userLayout.scale==1)) ? doc.html : doc.body;
+            return {x: doc.clientWidth, y: doc.clientHeight};
+        },
+    });
     if (window.Element && Element.implement) Element.implement({
         "isIntoView": function() {
             // var pNode = this.getParent();
@@ -2420,8 +2508,100 @@ o2.core = true;
             h += (this.getStyle("padding-left").toFloat() || 0)+ (this.getStyle("padding-right").toFloat() || 0);
             if (!notMargin) h += (this.getStyle("margin-left").toFloat() || 0)+ (this.getStyle("margin-right").toFloat() || 0);
             return h;
+        },
+        "getSize": function(){
+            if ((/^(?:body|html)$/i).test(this.tagName)) return this.getWindow().getSize();
+            if (!window.getComputedStyle) return {x: this.offsetWidth, y: this.offsetHeight};
+            if (this.get('tag') == 'svg') return svgCalculateSize(this);
+            try {
+                if (!layout || !layout.userLayout || !layout.userLayout.scale || layout.userLayout.scale==1){
+                    var bounds = this.getBoundingClientRect();
+                    return {x: bounds.width, y: bounds.height};
+                }else{
+                    return {"x": this.offsetWidth.toFloat(), "y": this.offsetHeight.toFloat()};
+                }
+            } catch (e){
+                return {x: 0, y: 0};
+            }
+        },
+        "getScaleOffsets": function(){
+            var hasGetBoundingClientRect = this.getBoundingClientRect;
+//<1.4compat>
+            hasGetBoundingClientRect = hasGetBoundingClientRect && !Browser.Platform.ios;
+//</1.4compat>
+            if (hasGetBoundingClientRect){
+                var bound = this.getBoundingClientRect();
+
+                var boundLeft = bound.left;
+                var boundTop = bound.top;
+                if (!layout || !layout.userLayout || !layout.userLayout.scale || layout.userLayout.scale==1){
+
+                }else{
+                    boundLeft= boundLeft/layout.userLayout.scale;
+                    boundTop = boundTop/layout.userLayout.scale;
+                }
+
+
+
+                var html = document.id(this.getDocument().documentElement);
+                var htmlScroll = html.getScroll();
+                var elemScrolls = this.getScrolls();
+                var isFixed = (Element.getComputedStyle(this, 'position') == 'fixed');
+
+                return {
+                    x: boundLeft.toFloat() + elemScrolls.x + ((isFixed) ? 0 : htmlScroll.x) - html.clientLeft,
+                    y: boundTop.toFloat() + elemScrolls.y + ((isFixed) ? 0 : htmlScroll.y) - html.clientTop
+                };
+            }
+
+            var element = this, position = {x: 0, y: 0};
+            if (isBody(this)) return position;
+
+            while (element && !isBody(element)){
+                position.x += element.offsetLeft;
+                position.y += element.offsetTop;
+//<1.4compat>
+                if (Browser.firefox){
+                    if (!borderBox(element)){
+                        position.x += leftBorder(element);
+                        position.y += topBorder(element);
+                    }
+                    var parent = element.parentNode;
+                    if (parent && styleString(parent, 'overflow') != 'visible'){
+                        position.x += leftBorder(parent);
+                        position.y += topBorder(parent);
+                    }
+                } else if (element != this && Browser.safari){
+                    position.x += leftBorder(element);
+                    position.y += topBorder(element);
+                }
+//</1.4compat>
+                element = element.offsetParent;
+            }
+//<1.4compat>
+            if (Browser.firefox && !borderBox(this)){
+                position.x -= leftBorder(this);
+                position.y -= topBorder(this);
+            }
+//</1.4compat>
+            return position;
+        },
+        getPosition: function(relative){
+            var offset = this.getScaleOffsets(),
+                scroll = this.getScrolls();
+            var position = {
+                x: offset.x - scroll.x,
+                y: offset.y - scroll.y
+            };
+
+            if (relative && (relative = document.id(relative))){
+                var relativePosition = relative.getPosition();
+                return {x: position.x - relativePosition.x - leftBorder(relative), y: position.y - relativePosition.y - topBorder(relative)};
+            }
+            return position;
         }
     });
+
     Object.copy = function(from, to){
         Object.each(from, function(value, key){
             switch (typeOf(value)){
@@ -2602,97 +2782,142 @@ o2.more = true;
 //o2.addReady
 (function(){
     //dom ready
-    var _dom = {
-        ready: false,
-        loaded: false,
-        checks: [],
-        shouldPoll: false,
-        timer: null,
-        testElement: document.createElement('div'),
-        readys: [],
+    var _dom;
+    if (window.document){
+        _dom = {
+            ready: false,
+            loaded: false,
+            checks: [],
+            shouldPoll: false,
+            timer: null,
+            testElement: document.createElement('div'),
+            readys: [],
 
-        domready: function(){
-            clearTimeout(_dom.timer);
-            if (_dom.ready) return;
-            _dom.loaded = _dom.ready = true;
-            o2.removeListener(document, 'DOMContentLoaded', _dom.checkReady);
-            o2.removeListener(document, 'readystatechange', _dom.check);
-            _dom.onReady();
-        },
-        check: function(){
-            for (var i = _dom.checks.length; i--;) if (_dom.checks[i]() && window.MooTools && o2.core && o2.more){
-                _dom.domready();
-                return true;
+            domready: function(){
+                clearTimeout(_dom.timer);
+                if (_dom.ready) return;
+                _dom.loaded = _dom.ready = true;
+                o2.removeListener(document, 'DOMContentLoaded', _dom.checkReady);
+                o2.removeListener(document, 'readystatechange', _dom.check);
+                _dom.onReady();
+            },
+            check: function(){
+                for (var i = _dom.checks.length; i--;) if (_dom.checks[i]() && window.MooTools && o2.core && o2.more){
+                    _dom.domready();
+                    return true;
+                }
+                return false;
+            },
+            poll: function(){
+                clearTimeout(_dom.timer);
+                if (!_dom.check()) _dom.timer = setTimeout(_dom.poll, 10);
+            },
+
+            /*<ltIE8>*/
+            // doScroll technique by Diego Perini http://javascript.nwbox.com/IEContentLoaded/
+            // testElement.doScroll() throws when the DOM is not ready, only in the top window
+            doScrollWorks: function(){
+                try {
+                    _dom.testElement.doScroll();
+                    return true;
+                } catch (e){}
+                return false;
+            },
+            /*</ltIE8>*/
+
+            onReady: function(){
+                for (var i=0; i<_dom.readys.length; i++){
+                    this.readys[i].apply(window);
+                }
+            },
+            addReady: function(fn){
+                if (_dom.loaded){
+                    if (fn) fn.apply(window);
+                }else{
+                    if (fn) _dom.readys.push(fn);
+                }
+                return _dom;
+            },
+            checkReady: function(){
+                _dom.checks.push(function(){return true});
+                _dom.check();
             }
-            return false;
-        },
-        poll: function(){
-            clearTimeout(_dom.timer);
-            if (!_dom.check()) _dom.timer = setTimeout(_dom.poll, 10);
-        },
+        };
+
+
+        o2.addListener(document, 'DOMContentLoaded', _dom.checkReady);
 
         /*<ltIE8>*/
-        // doScroll technique by Diego Perini http://javascript.nwbox.com/IEContentLoaded/
-        // testElement.doScroll() throws when the DOM is not ready, only in the top window
-        doScrollWorks: function(){
-            try {
-                _dom.testElement.doScroll();
-                return true;
-            } catch (e){}
-            return false;
-        },
+        // If doScroll works already, it can't be used to determine domready
+        //   e.g. in an iframe
+        if (_dom.testElement.doScroll && !_dom.doScrollWorks()){
+            _dom.checks.push(_dom.doScrollWorks);
+            _dom.shouldPoll = true;
+        }
         /*</ltIE8>*/
 
-        onReady: function(){
-            for (var i=0; i<_dom.readys.length; i++){
-                this.readys[i].apply(window);
+        if (document.readyState) _dom.checks.push(function(){
+            var state = document.readyState;
+            return (state == 'loaded' || state == 'complete');
+        });
+
+        if ('onreadystatechange' in document) o2.addListener(document, 'readystatechange', _dom.check);
+        else _dom.shouldPoll = true;
+
+        if (_dom.shouldPoll) _dom.poll();
+    }else{
+        _dom = {
+            ready: false,
+            loaded: false,
+            checks: [],
+            shouldPoll: false,
+            timer: null,
+            readys: [],
+
+            domready: function(){
+                clearTimeout(_dom.timer);
+                if (_dom.ready) return;
+                _dom.loaded = _dom.ready = true;
+                _dom.onReady();
+            },
+            check: function(){
+                if (window.MooTools && o2.core && o2.more){
+                    _dom.domready();
+                    return true;
+                }
+                return false;
+            },
+            onReady: function(){
+                for (var i=0; i<_dom.readys.length; i++){
+                    this.readys[i].apply(window);
+                }
+            },
+            addReady: function(fn){
+                if (_dom.loaded){
+                    if (fn) fn.apply(window);
+                }else{
+                    if (fn) _dom.readys.push(fn);
+                }
+                return _dom;
+            },
+            checkReady: function(){
+                _dom.checks.push(function(){return true});
+                _dom.check();
             }
-        },
-        addReady: function(fn){
-            if (_dom.loaded){
-                if (fn) fn.apply(window);
-            }else{
-                if (fn) _dom.readys.push(fn);
-            }
-            return _dom;
-        },
-        checkReady: function(){
-            _dom.checks.push(function(){return true});
-            _dom.check();
-        }
-    };
+        };
+    }
     var _loadO2 = function(){
         (!o2.core) ? this.o2.load("o2.core", _dom.check) : _dom.check();
         (!o2.more) ? this.o2.load("o2.more", _dom.check) : _dom.check();
     };
-
-    o2.addListener(document, 'DOMContentLoaded', _dom.checkReady);
-
-    /*<ltIE8>*/
-    // If doScroll works already, it can't be used to determine domready
-    //   e.g. in an iframe
-    if (_dom.testElement.doScroll && !_dom.doScrollWorks()){
-        _dom.checks.push(_dom.doScrollWorks);
-        _dom.shouldPoll = true;
-    }
-    /*</ltIE8>*/
-
-    if (document.readyState) _dom.checks.push(function(){
-        var state = document.readyState;
-        return (state == 'loaded' || state == 'complete');
-    });
-
-    if ('onreadystatechange' in document) o2.addListener(document, 'readystatechange', _dom.check);
-    else _dom.shouldPoll = true;
-
-    if (_dom.shouldPoll) _dom.poll();
-
     if (!window.MooTools){
         this.o2.load("mootools", function(){ _loadO2(); _dom.check(); });
     }else{
         _loadO2();
     }
     this.o2.addReady = function(fn){ _dom.addReady.call(_dom, fn); };
+
+
 })();
 
 //compatible
@@ -2702,7 +2927,7 @@ COMMON = {
         COMMON.contentPath = path;
     },
     "JSON": o2.JSON,
-    "Browser": Browser,
+    "Browser": window.Browser,
     "Class": o2.Class,
     "XML": o2.xml,
     "AjaxModule": {
@@ -2719,7 +2944,7 @@ COMMON = {
     "Request": Request,
     "typeOf": o2.typeOf
 };
-COMMON.Browser.Platform.isMobile = o2.session.isMobile;
+if (COMMON.Browser) COMMON.Browser.Platform.isMobile = o2.session.isMobile;
 COMMON.DOM.addReady = o2.addReady;
 MWF = o2;
 MWF.getJSON = o2.JSON.get;

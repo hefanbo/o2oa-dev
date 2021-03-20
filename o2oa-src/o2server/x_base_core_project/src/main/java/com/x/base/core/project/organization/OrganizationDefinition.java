@@ -47,7 +47,7 @@ public class OrganizationDefinition {
 	public final static String PortalManager = "PortalManager";
 	public final static String PortalManager_description = "门户管理员(系统角色)，可以进行门户应用设计，对门户应用进行管理操作。";
 
-	public final static String BBSManager = "BSSManager";
+	public final static String BBSManager = "BBSManager";
 	public final static String BBSManager_description = "社区管理员(系统角色)，可以对社区进行论坛分区，版块的创建，权限的设定，贴子的管理等操作。";
 
 	public final static String CMSManager = "CMSManager";
@@ -58,7 +58,7 @@ public class OrganizationDefinition {
 
 	public final static String CRMManager = "CRMManager";
 	public final static String CRMManager_description = "CRM管理员(系统角色)，可以进行CRM系统相关配置，对客户信息，商机等信息进行管理操作。";
-	
+
 	public final static String TeamWorkManager = "TeamWorkManager";
 	public final static String TeamWorkManager_description = "TeamWork管理员(系统角色)，可以进行TeamWork系统相关配置，对项目，任务等信息进行管理操作。";
 
@@ -76,6 +76,9 @@ public class OrganizationDefinition {
 
 	public final static String FileManager = "FileManager";
 	public final static String FileManager_description = "云文件管理员(系统角色)，可以进行云文件系统相关配置。";
+
+	public final static String ServiceManager = "ServiceManager";
+	public final static String ServiceManager_description = "服务管理员(系统角色)，可以进行服务管理的接口和代理配置。";
 
 	public final static String RoleDefinitionSuffix = "SystemRole";
 
@@ -100,7 +103,7 @@ public class OrganizationDefinition {
 	public final static List<String> DEFAULTROLES = new UnmodifiableList<String>(ListTools.toList(Manager,
 			AttendanceManager, OrganizationManager, PersonManager, GroupManager, UnitManager, RoleManager,
 			ProcessPlatformManager, ProcessPlatformCreator, MeetingManager, MeetingViewer, PortalManager, BBSManager,
-			CMSManager, OKRManager, CRMManager,TeamWorkManager, QueryManager, MessageManager, HotPictureManager, SearchPrivilege, FileManager));
+			CMSManager, OKRManager, CRMManager,TeamWorkManager, QueryManager, MessageManager, HotPictureManager, SearchPrivilege, FileManager, ServiceManager));
 
 	public static String name(String distinguishedName) {
 		if (StringUtils.contains(distinguishedName, "@")) {

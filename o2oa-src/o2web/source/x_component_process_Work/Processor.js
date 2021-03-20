@@ -1167,6 +1167,11 @@ MWF.xApplication.process.Work.Processor = new Class({
         debugger;
         if(this.routeDataList)return this.routeDataList;
         if( this.form && this.form.businessData && this.form.businessData.routeList ){
+            this.form.businessData.routeList.sort( function(a, b){
+                var aIdx = parseInt(a.orderNumber || "9999999");
+                var bIdx = parseInt(b.orderNumber || "9999999");
+                return aIdx - bIdx;
+            }.bind(this));
             this.form.businessData.routeList.each( function(d){
                 d.selectConfigList = JSON.parse(d.selectConfig || "[]");
             }.bind(this));
@@ -1174,6 +1179,11 @@ MWF.xApplication.process.Work.Processor = new Class({
         }
         if (!this.routeDataList) {
             o2.Actions.get("x_processplatform_assemble_surface").listRoute({"valueList": this.task.routeList}, function (json) {
+                json.data.sort(function(a, b){
+                    var aIdx = parseInt(a.orderNumber || "9999999");
+                    var bIdx = parseInt(b.orderNumber || "9999999");
+                    return aIdx - bIdx;
+                }.bind(this));
                 json.data.each(function (d) {
                     d.selectConfigList = JSON.parse(d.selectConfig || "[]");
                 }.bind(this));
@@ -2051,7 +2061,7 @@ if (MWF.xApplication.process.Xform && MWF.xApplication.process.Xform.Form) {
                 if (this.ignoreOldData) {
                     identityOpt.values = this._computeValue() || [];
                 } else {
-                    identityOpt.values = this.getValue();
+                    identityOpt.values = this.getValue() || [];
                 }
                 identityOpt.exclude = exclude;
             }
@@ -2069,7 +2079,7 @@ if (MWF.xApplication.process.Xform && MWF.xApplication.process.Xform.Form) {
                 if (this.ignoreOldData) {
                     unitOpt.values = this._computeValue() || [];
                 } else {
-                    unitOpt.values = this.getValue();
+                    unitOpt.values = this.getValue() || [];
                 }
                 unitOpt.exclude = exclude;
             }
@@ -2355,7 +2365,7 @@ if (MWF.xApplication.process.Xform && MWF.xApplication.process.Xform.Form) {
         resetSelectorData: function () {
             if (this.selector && this.selector.selector) {
                 this.selector.selector.emptySelectedItems();
-                this.selector.selector.options.values = this.getValue();
+                this.selector.selector.options.values = this.getValue() || [];
                 this.selector.selector.setSelectedItem();
             }
         },
@@ -2364,7 +2374,7 @@ if (MWF.xApplication.process.Xform && MWF.xApplication.process.Xform.Form) {
             this.setData(v || "");
         },
         resetData: function () {
-            var v = this.getValue();
+            var v = this.getValue() || [];
             //this.setData((v) ? v.join(", ") : "");
             this.setData(v);
         },

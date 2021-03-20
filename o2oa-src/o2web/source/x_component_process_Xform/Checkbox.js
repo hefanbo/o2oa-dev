@@ -1,6 +1,20 @@
 MWF.xDesktop.requireApp("process.Xform", "$Input", null, false);
 MWF.require("MWF.widget.UUID", null, false);
-MWF.xApplication.process.Xform.Checkbox = MWF.APPCheckbox =  new Class({
+/** @class Calendar 多选按钮组件。
+ * @example
+ * //可以在脚本中获取该组件
+ * //方法1：
+ * var field = this.form.get("fieldId"); //获取组件对象
+ * //方法2
+ * var field = this.target; //在组件本身的脚本中获取，比如事件脚本、默认值脚本、校验脚本等等
+ * @extends MWF.xApplication.process.Xform.$Input
+ * @o2category FormComponents
+ * @o2range {Process|CMS|Portal}
+ * @hideconstructor
+ */
+MWF.xApplication.process.Xform.Checkbox = MWF.APPCheckbox =  new Class(
+    /** @lends MWF.xApplication.process.Xform.Checkbox# */
+    {
 	Implements: [Events],
 	Extends: MWF.APP$Input,
 
@@ -85,10 +99,24 @@ MWF.xApplication.process.Xform.Checkbox = MWF.APPCheckbox =  new Class({
             }.bind(this));
         }
     },
+    /**
+     * @summary 重新计算下拉选项，该功能通常用在下拉选项为动态计算的情况.
+     * @example
+     * this.form.get('fieldId').resetOption();
+     */
     resetOption: function(){
         this.node.empty();
         this.setOptions();
     },
+        /**
+         * @summary 获取选择项。
+         * @return {Array} 返回选择项数组，如果使用选择项脚本，根据脚本返回决定，如：<pre><code class='language-js'>[
+         *  "女|female",
+         *  "男|male"
+         * ]</code></pre>
+         * @example
+         * this.form.get('fieldId').getOptions();
+         */
 	getOptions: function(){
 		if (this.json.itemType == "values"){
 			return this.json.itemValues;
@@ -97,6 +125,29 @@ MWF.xApplication.process.Xform.Checkbox = MWF.APPCheckbox =  new Class({
 		}
 		//return [];
 	},
+
+    /**
+     * @summary 获取整理后的选择项。
+     * @return {Object} 返回整理后的选择项，如：
+     * <pre><code class='language-js'>{"valueList": ["","female","male"], "textList": ["","女","男"]}
+     * </code></pre>
+     * @example
+     * var optionData = this.form.get('fieldId').getOptionsObj();
+     */
+    getOptionsObj : function(){
+        var textList = [];
+        var valueList = [];
+        var optionItems = this.getOptions();
+        if (!optionItems) optionItems = [];
+        if (o2.typeOf(optionItems)==="array"){
+            optionItems.each(function(item){
+                var tmps = item.split("|");
+                textList.push( tmps[0] );
+                valueList.push( tmps[1] || tmps[0] );
+            }.bind(this));
+        }
+        return { textList : textList, valueList : valueList };
+    },
 
     setOptions: function(){
         var optionItems = this.getOptions();
@@ -215,6 +266,12 @@ MWF.xApplication.process.Xform.Checkbox = MWF.APPCheckbox =  new Class({
             radio.checked = value.indexOf(radio.value) != -1;
         }
     },
+    /**
+     * @summary 获取选中的值和文本.
+     * @example
+     * var array = this.form.get('fieldId').getTextData();
+     * @return {Object} 返回选中项值和文本，格式为 { 'value' : value, 'text' : text }.
+     */
 	getTextData: function(){
 		var inputs = this.node.getElements("input");
 		var value = [];
@@ -272,7 +329,18 @@ MWF.xApplication.process.Xform.Checkbox = MWF.APPCheckbox =  new Class({
     resetData: function(){
         this.setData(this.getValue());
     },
-
+    /**当参数为Promise的时候，请查看文档: {@link  https://www.yuque.com/o2oa/ixsnyt/ws07m0|使用Promise处理表单异步}
+     * @summary 为字段赋值，并且使值对应的选项选中。
+     *  @param data{String|Promise} .
+     *  @example
+     *  this.form.get("fieldId").setData("test"); //赋文本值
+     *  @example
+     *  //使用Promise
+     *  var field = this.form.get("fieldId");
+     *  var dict = new this.Dict("test"); //test为数据字典名称
+     *  var promise = dict.get("tools", true); //异步使用数据字典的get方法时返回Promise，参数true表示异步
+     *  field.setData( promise );
+     */
     setData: function(data){
 	    return this._setValue(data, "__setData");
         // if (data && data.isAG){
@@ -306,6 +374,7 @@ MWF.xApplication.process.Xform.Checkbox = MWF.APPCheckbox =  new Class({
 					}
 				}
 			});
+            this.validationMode();
 		}
         this.fireEvent("setData");
 	},

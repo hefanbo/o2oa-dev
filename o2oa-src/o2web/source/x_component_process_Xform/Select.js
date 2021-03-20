@@ -1,9 +1,35 @@
 MWF.xDesktop.requireApp("process.Xform", "$Input", null, false);
-MWF.xApplication.process.Xform.Select = MWF.APPSelect =  new Class({
+/** @class Select 下拉选择组件。
+ * @example
+ * //可以在脚本中获取该组件
+ * //方法1：
+ * var field = this.form.get("fieldId"); //获取组件对象
+ * //方法2
+ * var field = this.target; //在组件本身的脚本中获取，比如事件脚本、默认值脚本、校验脚本等等
+ *
+ * var data = field.getData(); //获取值
+ * field.setData("字符串值"); //设置值
+ * field.hide(); //隐藏字段
+ * var id = field.json.id; //获取字段标识
+ * var flag = field.isEmpty(); //字段是否为空
+ * field.resetData();  //重置字段的值为默认值或置空
+ * @extends MWF.xApplication.process.Xform.$Input
+ * @o2category FormComponents
+ * @o2range {Process|CMS|Portal}
+ * @hideconstructor
+ */
+MWF.xApplication.process.Xform.Select = MWF.APPSelect =  new Class(
+	/** @lends MWF.xApplication.process.Xform.Select# */
+	{
 	Implements: [Events],
 	Extends: MWF.APP$Input,
 	iconStyle: "selectIcon",
 
+	/**
+	 * @ignore
+	 * @member {Element} descriptionNode
+	 * @memberOf MWF.xApplication.process.Xform.Select#
+	 */
     initialize: function(node, json, form, options){
         this.node = $(node);
         this.node.store("module", this);
@@ -120,11 +146,25 @@ MWF.xApplication.process.Xform.Select = MWF.APPSelect =  new Class({
         }.bind(this));
 
 	},
+	/**
+	 * @summary 刷新选择项，如果选择项是脚本，重新计算。
+	 * @example
+	 * this.form.get('fieldId').resetOption();
+	 */
     resetOption: function(){
         this.node.empty();
         this.setOptions();
 		this.fireEvent("resetOption")
     },
+	/**
+	 * @summary 获取选择项。
+	 * @return {Array} 返回选择项数组，如果使用选择项脚本，根据脚本返回决定，如：<pre><code class='language-js'>[
+	 *  "女|female",
+	 *  "男|male"
+	 * ]</code></pre>
+	 * @example
+	 * this.form.get('fieldId').getOptions();
+	 */
 	getOptions: function(){
 		if (this.json.itemType == "values"){
 			return this.json.itemValues;
@@ -133,6 +173,30 @@ MWF.xApplication.process.Xform.Select = MWF.APPSelect =  new Class({
 		}
 		return [];
 	},
+
+	/**
+	 * @summary 获取整理后的选择项。
+	 * @return {Object} 返回整理后的选择项，如：
+	 * <pre><code class='language-js'>{"valueList": ["","female","male"], "textList": ["","女","男"]}
+	 * </code></pre>
+	 * @example
+	 * var optionData = this.form.get('fieldId').getOptionsObj();
+	 */
+	getOptionsObj : function(){
+		var textList = [];
+		var valueList = [];
+		var optionItems = this.getOptions();
+		if (!optionItems) optionItems = [];
+		if (o2.typeOf(optionItems)==="array"){
+			optionItems.each(function(item){
+				var tmps = item.split("|");
+				textList.push( tmps[0] );
+				valueList.push( tmps[1] || tmps[0] );
+			}.bind(this));
+		}
+		return { textList : textList, valueList : valueList };
+	},
+
 	setOptions: function(){
 		var optionItems = this.getOptions();
 		this._setOptions(optionItems);
@@ -266,8 +330,10 @@ MWF.xApplication.process.Xform.Select = MWF.APPSelect =  new Class({
 	__setValue: function(value){
 		if (!this.readonly && !this.json.isReadonly ) {
 			this._setBusinessData(value);
-			for (var i=0; i<this.node.options.length; i++){
-				var option = this.node.options[i];
+
+			var ops = this.node.getElements("option");
+			for (var i=0; i<ops.length; i++){
+				var option = ops[i];
 				if (option.value==value){
 					option.selected = true;
 					//	break;
@@ -294,6 +360,17 @@ MWF.xApplication.process.Xform.Select = MWF.APPSelect =  new Class({
     //     }
 	// 	//this.node.set("value", value);
 	// },
+
+	/**
+	 * @summary 获取选中项的value和text。
+	 * @return {Object} 返回选中项的value和text，如：
+	 * <pre><code class='language-js'>{"value": ["male"], "text": ["男"]}
+	 * {"value": [""], "text": [""]}
+	 * </code></pre>
+	 * @example
+	 * var data = this.form.get('fieldId').getTextData();
+	 * var text = data.text[0] //获取选中项的文本
+	 */
 	getTextData: function(){
 		var value = [];
 		var text = [];
@@ -322,35 +399,25 @@ MWF.xApplication.process.Xform.Select = MWF.APPSelect =  new Class({
 		return {"value": value, "text": text};
 	},
     getInputData: function(){
-		var ops = this.node.getElements("option");
-		var value = [];
-		ops.each(function(op){
-			if (op.selected){
-				var v = op.get("value");
-				if (v) value.push(v);
-			}
-		});
-        if (!value.length) return null;
-		return (value.length==1) ? value[0] : value;
+		if( this.readonly || this.json.isReadonly ){
+			return this._getBusinessData();
+		}else{
+			var ops = this.node.getElements("option");
+			var value = [];
+			ops.each(function(op){
+				if (op.selected){
+					var v = op.get("value");
+					if (v) value.push(v);
+				}
+			});
+			if (!value.length) return null;
+			return (value.length==1) ? value[0] : value;
+		}
 	},
     resetData: function(){
 
         this.setData(this.getValue());
     },
-	getOptionsObj : function(){
-		var textList = [];
-		var valueList = [];
-		var optionItems = this.getOptions();
-		if (!optionItems) optionItems = [];
-		if (o2.typeOf(optionItems)==="array"){
-			optionItems.each(function(item){
-				var tmps = item.split("|");
-				textList.push( tmps[0] );
-				valueList.push( tmps[1] || tmps[0] );
-			}.bind(this));
-		}
-		return { textList : textList, valueList : valueList };
-	},
 
 	setData: function(data){
 		return this._setValue(data, "__setData");
@@ -401,6 +468,7 @@ MWF.xApplication.process.Xform.Select = MWF.APPSelect =  new Class({
 					}
 				}
 			});
+			this.validationMode();
 		}
 		this.fireEvent("setData", [data]);
 	}

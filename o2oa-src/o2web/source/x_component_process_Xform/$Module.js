@@ -1,16 +1,63 @@
-
 MWF.require("MWF.widget.Common", null, false);
-MWF.xApplication.process.Xform.$Module = MWF.APP$Module =  new Class({
+/** @classdesc $Module 组件类，此类为所有组件的父类。
+ * @class
+ * @o2category FormComponents
+ * @hideconstructor
+ * */
+MWF.xApplication.process.Xform.$Module = MWF.APP$Module =  new Class(
+    /** @lends MWF.xApplication.process.Xform.$Module# */
+    {
     Implements: [Events],
     options: {
+        /**
+         * 组件加载前触发。
+         * @event MWF.xApplication.process.Xform.$Module#queryLoad
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 组件加载时触发.
+         * @event MWF.xApplication.process.Xform.$Module#load
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 组件加载后触发.
+         * @event MWF.xApplication.process.Xform.$Module#postLoad
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
         "moduleEvents": ["load", "queryLoad", "postLoad"]
     },
-
     initialize: function(node, json, form, options){
-
+        /**
+         * @summary 组件的节点，mootools封装过的Dom对象，可以直接使用原生的js和moootools方法访问和操作该对象。
+         * @see https://mootools.net/core/docs/1.6.0/Element/Element
+         * @member {Element}
+         * @example
+         *  //可以在脚本中获取该组件
+         * var field = this.form.get("fieldId"); //获取组件对象
+         * field.node.setStyle("font-size","12px"); //给节点设置样式
+         */
         this.node = $(node);
         this.node.store("module", this);
+
+        /**
+         * @summary 组件的配置信息，比如id,类型,是否只读等等。可以在组件的queryLoad事件里修改该配置来对组件做一些改变。
+         * @member {JsonObject}
+         * @example
+         *  //可以在脚本中获取该组件
+         * var json = this.form.get("fieldId").json; //获取组件对象
+         * var id = json.id; //获取组件的id
+         * var type = json.type; //获取组件的类型，如Textfield 为文本输入组件，Select为下拉组件
+         * json.isReadonly = true; //设置组件为只读。
+         */
         this.json = json;
+
+        /**
+         * @summary 组件的所在表单对象.
+         * @member {MWF.xApplication.process.Xform.Form}
+         * @example
+         * var form = this.form.get("fieldId").form; //获取组件所在表单对象
+         * var container = form.container; //获取表单容器
+         */
         this.form = form;
     },
     _getSource: function(){
@@ -22,19 +69,28 @@ MWF.xApplication.process.Xform.$Module = MWF.APP$Module =  new Class({
         )) parent = parent.getParent();
         return (parent) ? parent.retrieve("module") : null;
     },
+    /**
+     * @summary 隐藏组件.
+     * @example
+     * this.form.get("fieldId").hide(); //隐藏组件
+     */
     hide: function(){
         var dsp = this.node.getStyle("display");
         if (dsp!=="none") this.node.store("mwf_display", dsp);
         this.node.setStyle("display", "none");
         if (this.iconNode) this.iconNode.setStyle("display", "none");
     },
+    /**
+     * @summary 显示组件.
+     * @example
+     * this.form.get("fieldId").show(); //显示组件
+     */
     show: function(){
         var dsp = this.node.retrieve("mwf_display", dsp);
         this.node.setStyle("display", dsp);
         if (this.iconNode) this.iconNode.setStyle("display", "block");
     },
     load: function(){
-
         this._loadModuleEvents();
         if (this.fireEvent("queryLoad")){
             this._queryLoaded();

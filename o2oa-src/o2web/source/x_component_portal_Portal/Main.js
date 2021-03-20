@@ -28,6 +28,7 @@ MWF.xApplication.portal.Portal.Main = new Class({
             this.options.portalId = this.status.portalId;
             this.options.pageId = this.status.pageId;
             this.options.widgetId = this.status.widgetId;
+            this.options.parameters = this.status.parameters;
         }
     },
     loadApplication: function(callback){
@@ -93,9 +94,25 @@ MWF.xApplication.portal.Portal.Main = new Class({
             if (!!pageJson && loadModuleFlag){
                 this.pageJson = pageJson;
                 layout.sessionPromise.finally(function(){
-                    this.pageInfor = pageJson.data;
-                    this.setTitle(this.portal.name+"-"+pageJson.data.name);
-                    var page = (pageJson.data.data) ? JSON.decode(MWF.decodeJsonString(pageJson.data.data)): null;
+                    // this.pageInfor = pageJson.data;
+                    // this.setTitle(this.portal.name+"-"+pageJson.data.name);
+                    // var page = (pageJson.data.data) ? JSON.decode(MWF.decodeJsonString(pageJson.data.data)): null;
+
+                    var pageName = pageJson.data.page ? pageJson.data.page.name : pageJson.data.name;
+                    this.setTitle((this.portal && this.portal.name) ? this.portal.name+"-"+pageName : pageName);
+                    var page;
+                    if (pageJson.data.page){
+                        page = (pageJson.data.page.data) ? JSON.decode(MWF.decodeJsonString(pageJson.data.page.data)): null;
+                        this.relatedFormMap = pageJson.data.relatedWidgetMap;
+                        this.relatedScriptMap = pageJson.data.relatedScriptMap;
+                        delete pageJson.data.page.data;
+                        this.pageInfor = pageJson.data.page;
+                    }else{
+                        page = (pageJson.data.data) ? JSON.decode(MWF.decodeJsonString(pageJson.data.data)): null;
+                        delete pageJson.data.data;
+                        this.pageInfor = pageJson.data;
+                    }
+
                     if (page){
                         this.options.pageId = pageJson.data.id;
 
@@ -115,7 +132,7 @@ MWF.xApplication.portal.Portal.Main = new Class({
         }.bind(this);
 
         if (name){
-            var m = (layout.mobile) ? "getPageByNameMobile" : "getPageByName";
+            var m = (layout.mobile) ? "getPageByNameMobileV2" : "getPageByNameV2";
             this.action[m](name, this.portal.id, function(json){
                 pageJson = json;
                 check();
@@ -128,7 +145,7 @@ MWF.xApplication.portal.Portal.Main = new Class({
 
         }else{
             if (this.options.pageId){
-                var m = (layout.mobile) ? "getPageByNameMobile" : "getPageByName";
+                var m = (layout.mobile) ? "getPageByNameMobileV2" : "getPageByNameV2";
                 this.action[m](this.options.pageId, this.portal.id, function(json){
                     pageJson = json;
                     check();
@@ -153,7 +170,8 @@ MWF.xApplication.portal.Portal.Main = new Class({
         }
     },
     openPage: function(pageJson, par, callback){
-        this.setTitle((this.portal && this.portal.name) ? this.portal.name+"-"+pageJson.data.page.name : pageJson.data.page.name);
+        var pageName = pageJson.data.page ? pageJson.data.page.name : pageJson.data.name;
+        this.setTitle((this.portal && this.portal.name) ? this.portal.name+"-"+pageName : pageName);
         if (pageJson.data.page){
             this.page = (pageJson.data.page.data) ? JSON.decode(MWF.decodeJsonString(pageJson.data.page.data)): null;
             this.relatedFormMap = pageJson.data.relatedWidgetMap;
@@ -173,11 +191,15 @@ MWF.xApplication.portal.Portal.Main = new Class({
         var check = function(){
             if (!!pageJson && loadModuleFlag){
                 this.pageJson = pageJson;
-                layout.sessionPromise.then(function(){
+                if (layout.session && layout.session.user){
                     this.openPage(pageJson, par, callback);
-                }.bind(this), function(){
-                    this.openPage(pageJson, par, callback);
-                }.bind(this));
+                }else if( layout.sessionPromise ){
+                    layout.sessionPromise.then(function () {
+                        this.openPage(pageJson, par, callback);
+                    }.bind(this), function () {
+                        this.openPage(pageJson, par, callback);
+                    }.bind(this));
+                }
             }
         }.bind(this);
 
@@ -204,7 +226,10 @@ MWF.xApplication.portal.Portal.Main = new Class({
         }
         this.action.getApplication(this.options.portalId, function(json){
             this.portal = json.data;
-            if (this.pageJson) this.setTitle(this.portal.name+"-"+this.pageJson.data.page.name);
+            if (this.pageJson){
+                var pageName = this.pageJson.data.page ? this.pageJson.data.page.name : this.pageJson.data.name;
+                this.setTitle(this.portal.name+"-"+pageName);
+            }
 
             if (this.portal.icon){
                 if (this.taskitem){
@@ -246,7 +271,7 @@ MWF.xApplication.portal.Portal.Main = new Class({
         }
     },
     recordStatus: function(){
-        return {"portalId": this.options.portalId, "pageId": this.options.pageId};
+        return {"portalId": this.options.portalId, "pageId": this.options.pageId, "parameters" : this.options.parameters};
     },
     onPostClose: function(){
         if (this.appForm){

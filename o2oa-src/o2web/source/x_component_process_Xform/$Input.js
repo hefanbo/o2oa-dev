@@ -1,10 +1,16 @@
 MWF.xDesktop.requireApp("process.Xform", "$Module", null, false);
-/** Class Input组件 */
-MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
+/** @class $Input 组件类，此类为所有输入组件的父类
+ * @hideconstructor
+ * @o2category FormComponents
+* @extends MWF.xApplication.process.Xform.$Module
+ * @abstract
+ */
+MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class(
+    /** @lends MWF.xApplication.process.Xform.$Input# */
+    {
 	Implements: [Events],
 	Extends: MWF.APP$Module,
 	iconStyle: "personfieldIcon",
-
     initialize: function(node, json, form, options){
         this.node = $(node);
         this.node.store("module", this);
@@ -83,6 +89,11 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
                 if( this.json.showIcon!='no' && !this.form.json.hideModuleIcon ){
                     if (COMMON.Browser.safari) w = w-20;
                 }
+
+                /**
+                 * @summary 描述信息节点，允许用户手工输入的组件才有此节点，只读情况下无此节点.
+                 * @member {Element}
+                 */
                 this.descriptionNode = new Element("div", {"styles": this.form.css.descriptionNode, "text": this.json.description}).inject(this.node);
                 this.descriptionNode.setStyles({
                     "width": ""+w+"px",
@@ -253,7 +264,15 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
             this.loadDescription();
         }
 	},
-	
+    /**
+     * @summary 判断组件是否只读.
+     * @example
+     * var readonly = this.form.get('subject').isReadonly();
+     * @return {Boolean} 是否只读.
+     */
+	isReadonly : function(){
+        return !!(this.readonly || this.json.isReadonly);
+    },
 	getTextData: function(){
 		//var value = this.node.get("value");
 		//var text = this.node.get("text");
@@ -262,16 +281,46 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
 		return {"value": [value || ""] , "text": [text || value || ""]};
 	},
     /**
-     * 判断组件值是否为空.
-     * @return {boolean}.
+     * @summary 判断组件值是否为空.
+     * @example
+     * if( this.form.get('subject').isEmpty() ){
+     *     this.form.notice('标题不能为空', 'warn');
+     * }
+     * @return {Boolean} 值是否为空.
      */
     isEmpty : function(){
 	    var data = this.getData();
 	    return !data || !data.trim();
     },
     /**
-     * 获取组件值.
-     * @return {object/string}.
+     * 在脚本中使用 this.data[fieldId] 也可以获取组件值。
+     * 区别如下：<br/>
+     * 1、当使用Promise的时候<br/>
+     * 使用异步函数生成器（Promise）为组件赋值的时候，用getData方法立即获取数据，可能返回修改前的值，当Promise执行完成以后，会返回修改后的值。<br/>
+     * this.data[fieldId] 立即获取数据，可能获取到异步函数生成器，当Promise执行完成以后，会返回修改后的值。<br/>
+     * {@link https://www.yuque.com/o2oa/ixsnyt/ws07m0#EggIl|具体差异请查看链接}<br/>
+     * 2、当表单上没有对应组件的时候，可以使用this.data[fieldId]获取值，但是this.form.get('fieldId')无法获取到组件。
+     * @summary 获取组件值。
+     * @example
+     * var data = this.form.get('fieldId').getData(); //没有使用promise的情况、
+     * @example
+     *  //如果无法确定表单上是否有组件，需要判断
+     *  var data;
+     *  if( this.form.get('fieldId') ){ //判断表单是否有无对应组件
+     *      data = this.form.get('fieldId').getData();
+     *  }else{
+     *      data = this.data['fieldId']; //直接从数据中获取字段值
+     *  }
+     * @example
+     *  //使用Promise的情况
+     *  var field = this.form.get("fieldId");
+     *  var dict = new this.Dict("test"); //test为数据字典名称
+     *  var promise = dict.get("tools", true); //异步使用数据字典的get方法时返回Promise，参数true表示异步
+     *  promise.then( function(){
+     *      var data = field.getData(); //此时由于异步请求已经执行完毕，getData方法获取到了数据字典的值
+     *  })
+     *  field.setData( promise );
+     * @return 组件的数据.
      */
 	getData: function(when){
         if (this.json.compute == "save") this._setValue(this._computeValue());
@@ -285,14 +334,32 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
         }
     },
     /**
-     * 重置组件的值，如果设置了默认值，则设置为默认值，否则置空。
+     * @summary 重置组件的值为默认值或置空。
+     *  @example
+     * this.form.get('subject').resetData();
      */
     resetData: function(){
         this.setData(this.getValue());
     },
-    /**
-     * 为控件赋值。
-     *  @param {string/number/jsonObject} .
+    /**当参数为Promise的时候，请参考文档: {@link  https://www.yuque.com/o2oa/ixsnyt/ws07m0|使用Promise处理表单异步}<br/>
+     * 当表单上没有对应组件的时候，可以使用this.data[fieldId] = data赋值。
+     * @summary 为组件赋值。
+     * @param data{String|Promise} .
+     * @example
+     *  this.form.get("fieldId").setData("test"); //赋文本值
+     * @example
+     *  //如果无法确定表单上是否有组件，需要判断
+     *  if( this.form.get('fieldId') ){ //判断表单是否有无对应组件
+     *      this.form.get('fieldId').setData( data );
+     *  }else{
+     *      this.data['fieldId'] = data;
+     *  }
+     * @example
+     *  //使用Promise
+     *  var field = this.form.get("fieldId");
+     *  var dict = new this.Dict("test"); //test为数据字典名称
+     *  var promise = dict.get("tools", true); //异步使用数据字典的get方法时返回Promise，参数true表示异步
+     *  field.setData( promise );
      */
 	setData: function(data){
         // if (data && data.isAG){
@@ -307,7 +374,11 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
         // }else{
         if (!!data && o2.typeOf(data.then)=="function"){
             var p = o2.promiseAll(data).then(function(v){
-                this.__setValue(v);
+                this.__setData(v);
+                // if (this.node.getFirst() && !this.readonly && !this.json.isReadonly) {
+                //     this.checkDescription();
+                //     this.validationMode();
+                // }
             }.bind(this), function(){});
             this.moduleValueAG = p;
             p.then(function(){
@@ -317,7 +388,11 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
             }.bind(this));
         }else{
             this.moduleValueAG = null;
-            this.__setValue(data);
+            this.__setData(data);
+            // if (this.node.getFirst() && !this.readonly && !this.json.isReadonly) {
+            //     this.checkDescription();
+            //     this.validationMode();
+            // }
         }
             //this.__setData(data);
         //}
@@ -517,9 +592,13 @@ MWF.xApplication.process.Xform.$Input = MWF.APP$Input =  new Class({
         return true;
     },
     /**
-     * 根据组件的校验设置进行校验。
-     *  @param {string} routeName-路由名称.
-     *  @return {boolean} 是否通过校验
+     * @summary 根据组件的校验设置进行校验。
+     *  @param {String} [routeName] - 可选，路由名称.
+     *  @example
+     *  if( !this.form.get('fieldId').validation() ){
+     *      return false;
+     *  }
+     *  @return {Boolean} 是否通过校验
      */
     validation: function(routeName, opinion){
         if (!this.readonly && !this.json.isReadonly){

@@ -16,7 +16,8 @@ o2.widget.Tree = new Class({
 		"action": "action",
 		"icon": "icon",
         "style": "",
-		"sub": "sub"
+		"sub": "sub",
+		"defalut" : "defalut"
 	},
 	initialize: function(container, options){
 		this.setOptions(options);
@@ -155,6 +156,7 @@ o2.widget.Tree = new Class({
 		obj[this.jsonMapping.text] = options.text;
 		obj[this.jsonMapping.action] = options.action;
         obj[this.jsonMapping.style] = options.style;
+		obj[this.jsonMapping.defalut] = options.defalut;
 		obj[this.jsonMapping.icon] = (options.icon) ? options.icon : "none";
 		return obj;
 	}
@@ -169,6 +171,7 @@ o2.widget.Tree.Node = new Class({
 		"text": "",
 		"action": "",
         "style": "",
+		"default" : false,
 		"icon": "folder.png"
 	},
 	imgs: {
@@ -225,12 +228,16 @@ o2.widget.Tree.Node = new Class({
 	},
 	
 	load: function(){
+		debugger;
+		this.tree.fireEvent("beforeLoadTreeNode", [this]);
+
 		this.nodeTable = new Element("table", {
 			"border": "0",
 			"cellpadding": "0",
 			"cellspacing": "0",
-			"styles": this.tree.css.nodeTable
+			"styles": {"width": "fit-content", "table-layout": "fixed"}
 		}).inject(this.itemNode);
+		this.nodeTable.setStyles(this.tree.css.nodeTable);
 
         if (this.options.style){
             if (this.tree.css[this.options.style]){
@@ -245,7 +252,8 @@ o2.widget.Tree.Node = new Class({
 		this.createOperateNode();
 		this.createIconNode();
 		this.createTextNode();
-		
+
+		this.tree.fireEvent("afterLoadTreeNode", [this]);
 	},
 	createLevelNode: function(){
 		for (var i=0; i<this.level; i++){
@@ -312,12 +320,13 @@ o2.widget.Tree.Node = new Class({
         }
 	//	var width = this.tree.container.getSize().x - (this.level*20+40);
 	//	this.textNode.setStyle("width", ""+width+"px");
-		
+
 		var textDivNode = new Element("div", {
-			"styles": this.tree.css.textDivNode,
-		//	"html": this.options.text,
+			"styles": {"display": "inline-block"},
+			//	"html": this.options.text,
 			"title": this.options.title
 		});
+		textDivNode.setStyles(this.tree.css.textDivNode);
         if (this.options.style){
             if (this.tree.css[this.options.style]){
                 textDivNode.setStyles(this.tree.css[this.options.style].textDivNode);
@@ -335,6 +344,9 @@ o2.widget.Tree.Node = new Class({
 		}.bind(this));
 		
 		textDivNode.inject(this.textNode);
+		if( this.options.default ){
+			textDivNode.click();
+		}
 	},
 	clickNode: function(e){
 		this.selectNode(e);
@@ -342,7 +354,9 @@ o2.widget.Tree.Node = new Class({
 	},
 	
 	selectNode: function(){
+		this.tree.fireEvent("beforeSelect", [this]);
 		if (this.tree.currentNode){
+			this.tree.currentNode.fireEvent("unselect");
 			var textDivNode = this.tree.currentNode.textNode.getElement("div");
 			textDivNode.setStyles(this.tree.css.textDivNode);
             if (this.tree.currentNode.options.style){
@@ -359,6 +373,7 @@ o2.widget.Tree.Node = new Class({
             }
         }
 		this.tree.currentNode = this;
+		this.tree.fireEvent("afterSelect", [this]);
 	},
 	doAction: function(e){
 		var t = typeOf(this.options.action);

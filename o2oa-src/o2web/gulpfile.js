@@ -12,11 +12,12 @@ var gulp = require('gulp'),
     JSFtp = require('jsftp'),
     gutil = require('gulp-util'),
     fs = require("fs");
-    concat = require('gulp-concat');
+concat = require('gulp-concat');
 //let uglify = require('gulp-uglify-es').default;
 var through2 = require('through2');
 var path = require('path');
-
+var sourceMap = require('gulp-sourcemaps');
+var git = require('gulp-git');
 
 var assetRev = require('gulp-tm-asset-rev');
 var apps = require('./gulpapps.js');
@@ -49,6 +50,7 @@ function setOptions(op1, op2){
     options.remotePath = op1.remotePath || op2.remotePath || "";
     options.dest = op1.dest || op2.dest || "dest";
     options.lp = op1.lp || op2.lp || "zh-cn";
+    options.src = op1.src || op2.src || "";
 }
 var options = {};
 setOptions(o_options, getEvOptions(o_options.ev));
@@ -165,6 +167,7 @@ function createXFormConcatTask(path, isMin, thisOptions) {
         ];
         var dest = option.dest+'/' + path + '/';
         return gulp.src(src)
+            .pipe(sourceMap.init())
             .pipe(concat('$all.js'))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
@@ -182,8 +185,136 @@ function createXFormConcatTask(path, isMin, thisOptions) {
                 remotePath: (option.remotePath || '/') + path
             })))
             .pipe(gulp.dest(dest))
+            .pipe(concat('$all.min.js'))
             .pipe(uglify())
-            .pipe(rename({ extname: '.min.js' }))
+            .pipe(sourceMap.write(""))
+            .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
+            .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || '@anonymous',
+                port: option.port || 21,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulpif((option.upload == 'sftp' && option.host != ''), sftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || null,
+                port: option.port || 22,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulp.dest(dest))
+    });
+}
+
+function createCMSXFormConcatTask(path, isMin, thisOptions) {
+    var processPath = "x_component_process_Xform";
+    gulp.task(path+" : concat", function(){
+        var option = thisOptions || options;
+        var src = [
+            'source/o2_core/o2/widget/AttachmentController.js',
+            // 'source/o2_core/o2/xScript/CMSEnvironment.js',
+            'source/o2_core/o2/xScript/CMSMacro.js',
+            'source/o2_core/o2/widget/Tab.js',
+            'source/o2_core/o2/widget/O2Identity.js',
+            'source/' + processPath + '/Form.js',
+            'source/' + processPath + '/$Module.js',
+            'source/' + processPath + '/$Input.js',
+            'source/' + processPath + '/Div.js',
+            //'source/' + processPath + '/Combox.js',
+            'source/' + processPath + '/DatagridMobile.js',
+            'source/' + processPath + '/DatagridPC.js',
+            'source/' + processPath + '/Textfield.js',
+            //'source/' + processPath + '/Personfield.js',
+            'source/' + processPath + '/Button.js',
+            //'source/' + processPath + '/ViewSelector.js',
+            'source/' + processPath + '/Org.js',
+            // 'source/' + processPath + '/*.js',
+            'source/' + processPath + '/Actionbar.js',
+            //'source/' + processPath + '/Address.js',
+            'source/' + processPath + '/Attachment.js',
+            'source/' + processPath + '/Calendar.js',
+            'source/' + processPath + '/Checkbox.js',
+            'source/' + processPath + '/Datagrid.js',
+            'source/' + processPath + '/Htmleditor.js',
+            //'source/' + processPath + '/Iframe.js',
+            'source/' + processPath + '/Label.js',
+            'source/' + processPath + '/Number.js',
+            'source/' + processPath + '/Common.js',
+            'source/' + processPath + '/Image.js',
+            'source/' + processPath + '/ImageClipper.js',
+            'source/' + processPath + '/Html.js',
+            'source/' + processPath + '/Radio.js',
+            'source/' + processPath + '/Select.js',
+            //'source/' + processPath + '/Stat.js',
+            //'source/' + processPath + '/Statement.js',
+            //'source/' + processPath + '/StatementSelector.js',
+            //'source/' + processPath + '/Subform.js',
+            'source/' + processPath + '/Tab.js',
+            'source/' + processPath + '/Table.js',
+            'source/' + processPath + '/Textarea.js',
+            //'source/' + processPath + '/Tree.js',
+            //'source/' + processPath + '/View.js',
+            // 'source/x_component_process_Work/Processor.js',
+            // '!source/' + processPath + '/Office.js'
+
+
+            'source/o2_core/o2/widget/SimpleToolbar.js',
+            'source/' + path + '/ModuleImplements.js',
+            'source/' + path + '/Package.js',
+            'source/' + path + '/Form.js',
+            //'source/' + path + '/widget/Comment.js',
+            'source/' + path + '/widget/Log.js',
+            'source/' + path + '/Org.js',
+            'source/' + path + '/Author.js',
+            'source/' + path + '/Reader.js',
+            'source/' + path + '/Textfield.js',
+            'source/' + path + '/Actionbar.js',
+            'source/' + path + '/Attachment.js',
+            'source/' + path + '/Button.js',
+            'source/' + path + '/Calendar.js',
+            'source/' + path + '/Checkbox.js',
+            'source/' + path + '/Datagrid.js',
+            'source/' + path + '/Htmleditor.js',
+            'source/' + path + '/ImageClipper.js',
+            'source/' + path + '/Label.js',
+            'source/' + path + '/Number.js',
+            'source/' + path + '/Radio.js',
+            'source/' + path + '/Select.js',
+            'source/' + path + '/Tab.js',
+            'source/' + path + '/Table.js',
+            'source/' + path + '/Textarea.js'
+
+            //'source/' + path + '/Personfield.js',
+            //'source/' + path + '/Readerfield.js',
+            //'source/' + path + '/Authorfield.js',
+            //'source/' + path + '/Orgfield.js',
+            // 'source/' + path + '/*.js',
+            // '!source/' + path + '/Office.js'
+        ];
+        var dest = option.dest+'/' + path + '/';
+        return gulp.src(src)
+            .pipe(sourceMap.init())
+            .pipe(concat('$all.js'))
+            .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
+            .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || '@anonymous',
+                port: option.port || 21,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulpif((option.upload == 'sftp' && option.host != ''), sftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || null,
+                port: option.port || 22,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulp.dest(dest))
+            .pipe(concat('$all.min.js'))
+            .pipe(uglify())
+            .pipe(sourceMap.write(""))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
                 host: option.host,
@@ -213,6 +344,7 @@ function createO2ConcatTask(path, isMin, thisOptions) {
         ];
         var dest = option.dest+'/' + path + '/';
         return gulp.src(src)
+            .pipe(sourceMap.init())
             .pipe(concat('o2.js'))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
@@ -230,8 +362,10 @@ function createO2ConcatTask(path, isMin, thisOptions) {
                 remotePath: (option.remotePath || '/') + path
             })))
             .pipe(gulp.dest(dest))
+            .pipe(concat('o2.min.js'))
             .pipe(uglify())
-            .pipe(rename({ extname: '.min.js' }))
+            //.pipe(rename({ extname: '.min.js' }))
+            .pipe(sourceMap.write(""))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
                 host: option.host,
@@ -271,6 +405,7 @@ function createO2ConcatTask(path, isMin, thisOptions) {
         ];
         var dest = option.dest+'/' + path + '/o2/xDesktop/';
         return gulp.src(src)
+            .pipe(sourceMap.init())
             .pipe(concat('$all.js'))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/o2/xDesktop/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
@@ -288,8 +423,10 @@ function createO2ConcatTask(path, isMin, thisOptions) {
                 remotePath: (option.remotePath || '/') + path+"/o2/xDesktop/"
             })))
             .pipe(gulp.dest(dest))
+            .pipe(concat('$all.min.js'))
             .pipe(uglify())
-            .pipe(rename({ extname: '.min.js' }))
+            //.pipe(rename({ extname: '.min.js' }))
+            .pipe(sourceMap.write(""))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/o2/xDesktop/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
                 host: option.host,
@@ -315,10 +452,12 @@ function createO2ConcatTask(path, isMin, thisOptions) {
             'source/o2_lib/mootools/plugin/mBox.js',
             'source/' + path + '/o2.js',
             'source/x_desktop/js/base.js',
+            'source/x_desktop/js/base_loader.js',
             "source/o2_core/o2/framework.js"
         ];
         var dest = option.dest+'/' + path + '/';
         return gulp.src(src)
+            .pipe(sourceMap.init())
             .pipe(concat('bundle.js'))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
@@ -336,8 +475,10 @@ function createO2ConcatTask(path, isMin, thisOptions) {
                 remotePath: (option.remotePath || '/') + path
             })))
             .pipe(gulp.dest(dest))
+            .pipe(concat('bundle.min.js'))
             .pipe(uglify())
-            .pipe(rename({ extname: '.min.js' }))
+            //.pipe(rename({ extname: '.min.js' }))
+            .pipe(sourceMap.write(""))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
                 host: option.host,
@@ -502,10 +643,12 @@ function createBaseWorkConcatBodyTask(path, isMin, thisOptions) {
 
             'source/' + path + '/js/base_work_actions_temp.js',
 
-            'source/' + path + '/js/base.js'
+            'source/' + path + '/js/base.js',
+            'source/' + path + '/js/base_loader.js'
         ];
         var dest = option.dest+'/' + path + '/';
         return gulp.src(src)
+            .pipe(sourceMap.init())
             .pipe(concat('js/base_work.js'))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
@@ -523,8 +666,10 @@ function createBaseWorkConcatBodyTask(path, isMin, thisOptions) {
                 remotePath: (option.remotePath || '/') + path
             })))
             .pipe(gulp.dest(dest))
+
             .pipe(uglify())
-            .pipe(rename({ extname: '.min.js' }))
+            .pipe(concat('js/base_work.min.js'))
+            .pipe( sourceMap.write("") )
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
                 host: option.host,
@@ -648,10 +793,12 @@ function createBasePortalConcatBodyTask(path, isMin, thisOptions) {
 
             'source/' + path + '/js/base_portal_actions_temp.js',
 
-            'source/' + path + '/js/base.js'
+            'source/' + path + '/js/base.js',
+            'source/' + path + '/js/base_loader.js'
         ];
         var dest = option.dest+'/' + path + '/';
         return gulp.src(src)
+            .pipe(sourceMap.init())
             .pipe(concat('js/base_portal.js'))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
@@ -672,6 +819,7 @@ function createBasePortalConcatBodyTask(path, isMin, thisOptions) {
             // .pipe(gulp.src(src))
             .pipe(concat('js/base_portal.min.js'))
             .pipe(uglify())
+            .pipe( sourceMap.write("") )
             // .pipe(rename({ extname: '.min.js' }))
             .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
             .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
@@ -700,10 +848,207 @@ function createBasePortalConcatTask(path, isMin, thisOptions){
 }
 
 
+function createBaseDocumentConcatActionTask(path){
+    gulp.task(path+".base_document : action", function(){
+        return gulp.src([
+            "source/o2_core/o2/xAction/services/x_organization_assemble_authentication.json",
+            "source/o2_core/o2/xAction/services/x_organization_assemble_control.json",
+            "source/o2_core/o2/xAction/services/x_cms_assemble_control.json",
+            "source/o2_core/o2/xAction/services/x_program_center.json",
+            "source/o2_core/o2/xAction/services/x_organization_assemble_personal.json"
+        ])
+            .pipe(concat_Actions())
+            .pipe(concat('js/base_document_actions_temp.js'))
+            .pipe(gulp.dest('source/x_desktop/'))
+    })
+}
+
+function createBaseDocumentConcatStyleTask(path){
+    gulp.task(path+".base_document : style", function(){
+        return gulp.src([
+            "source/x_component_cms_Document/$Main/default/css.wcss",
+            "source/x_component_cms_Xform/$Form/default/css.wcss",
+            "source/o2_core/o2/widget/$AttachmentController/default/css.wcss"
+        ])
+            .pipe(concat_Style())
+            .pipe(concat('js/base_document_style_temp.js'))
+            .pipe(gulp.dest('source/x_desktop/'))
+    })
+}
+
+function createBaseDocumentConcatBodyTask(path, isMin, thisOptions) {
+    gulp.task(path+".base_document : concat", function(){
+        var option = thisOptions || options;
+        var src = [
+            'source/' + path + '/js/base_concat_head.js',
+            'source/o2_core/o2/lp/'+(option.lp || 'zh-cn')+'.js',
+
+            'source/' + path + '/js/base_document_style_temp.js',
+
+            'source/o2_core/o2/widget/Common.js',
+            'source/o2_core/o2/widget/Dialog.js',
+            'source/o2_core/o2/widget/UUID.js',
+            'source/o2_core/o2/widget/Menu.js',
+            'source/o2_core/o2/widget/Mask.js',
+            'source/o2_core/o2/xDesktop/Common.js',
+            'source/o2_core/o2/xDesktop/Actions/RestActions.js',
+            'source/o2_core/o2/xAction/RestActions.js',
+            'source/o2_core/o2/xDesktop/Access.js',
+            'source/o2_core/o2/xDesktop/Dialog.js',
+            'source/o2_core/o2/xDesktop/Menu.js',
+            'source/o2_core/o2/xDesktop/UserData.js',
+            'source/x_component_Template/MPopupForm.js',
+            'source/o2_core/o2/xDesktop/Authentication.js',
+            'source/o2_core/o2/xDesktop/Window.js',
+
+            'source/x_component_Common/Main.js',
+
+            'source/x_component_cms_Document/lp/'+(option.lp || 'zh-cn')+'.js',
+            'source/x_component_process_Xform/lp/'+(option.lp || 'zh-cn')+'.js',
+            'source/x_component_Selector/lp/'+(option.lp || 'zh-cn')+'.js',
+            'source/x_component_cms_Xform/lp/'+(option.lp || 'zh-cn')+'.js',
+
+            'source/x_component_cms_Document/Main.js',
+
+            'source/x_component_Selector/package.js',
+
+            'source/o2_core/o2/xScript/Actions/UnitActions.js',
+            'source/o2_core/o2/xScript/Actions/CMSScriptActions.js',
+            'source/o2_core/o2/xScript/CMSEnvironment.js',
+
+            'source/o2_core/o2/xAction/services/x_organization_assemble_authentication.js',
+            'source/o2_core/o2/xAction/services/x_cms_assemble_control.js',
+            'source/o2_core/o2/xAction/services/x_organization_assemble_control.js',
+            'source/o2_core/o2/xAction/services/x_organization_assemble_personal.js',
+
+            'source/' + path + '/js/base_document_actions_temp.js',
+
+            'source/' + path + '/js/base.js',
+            'source/' + path + '/js/base_loader.js'
+        ];
+        var dest = option.dest+'/' + path + '/';
+        return gulp.src(src)
+            .pipe(sourceMap.init())
+            .pipe(concat('js/base_document.js'))
+            .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
+            .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || '@anonymous',
+                port: option.port || 21,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulpif((option.upload == 'sftp' && option.host != ''), sftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || null,
+                port: option.port || 22,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulp.dest(dest))
+            // .pipe(gulp.src(src))
+            .pipe(concat('js/base_document.min.js'))
+            .pipe(uglify())
+            .pipe( sourceMap.write("") )
+            // .pipe(rename({ extname: '.min.js' }))
+            .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
+            .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || '@anonymous',
+                port: option.port || 21,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulpif((option.upload == 'sftp' && option.host != ''), sftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || null,
+                port: option.port || 22,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulp.dest(dest))
+    });
+}
+
+function createBaseDocumentConcatDelTempTask(path) {
+    gulp.task(path+".base_document : clean", function(cb){
+        var dest = [
+            'source/'+path+'/js/base_document_actions_temp.js',
+            'source/'+path+'/js/base_document_style_temp.js'
+        ];
+        return del(dest, cb);
+    });
+}
+
+function createBaseDocumentConcatTask(path, isMin, thisOptions){
+    createBaseDocumentConcatActionTask(path);
+    createBaseDocumentConcatStyleTask(path);
+    createBaseDocumentConcatBodyTask(path, isMin, thisOptions);
+    createBaseDocumentConcatDelTempTask(path);
+    gulp.task( path+".base_document", gulp.series(path+".base_document : action", path+".base_document : style", path+".base_document : concat", path+".base_document : clean"));
+}
+
+
+
+function createBaseConcatTask(path, isMin, thisOptions){
+    gulp.task(path+".base", function(){
+        var option = thisOptions || options;
+        var src = [
+            'source/' + path + '/js/base.js',
+            'source/' + path + '/js/base_loader.js'
+        ];
+        var dest = option.dest+'/' + path + '/';
+        return gulp.src(src)
+            .pipe(sourceMap.init())
+            .pipe(concat('js/base.js'))
+            .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
+            .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || '@anonymous',
+                port: option.port || 21,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulpif((option.upload == 'sftp' && option.host != ''), sftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || null,
+                port: option.port || 22,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulp.dest(dest))
+            // .pipe(gulp.src(src))
+            .pipe(concat('js/base.min.js'))
+            .pipe(uglify())
+            .pipe( sourceMap.write("") )
+            // .pipe(rename({ extname: '.min.js' }))
+            .pipe(gulpif((option.upload == 'local' && option.location != ''), gulp.dest(option.location + path + '/')))
+            .pipe(gulpif((option.upload == 'ftp' && option.host != ''), ftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || '@anonymous',
+                port: option.port || 21,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulpif((option.upload == 'sftp' && option.host != ''), sftp({
+                host: option.host,
+                user: option.user || 'anonymous',
+                pass: option.pass || null,
+                port: option.port || 22,
+                remotePath: (option.remotePath || '/') + path
+            })))
+            .pipe(gulp.dest(dest))
+    });
+}
+
 function getAppTask(path, isMin, thisOptions) {
-    if (path==="x_component_process_Xform"){
+    if (path==="x_component_process_Xform") {
         createDefaultTask(path, isMin, thisOptions);
         createXFormConcatTask(path, isMin, thisOptions);
+        return gulp.series(path, path + " : concat");
+    }else if (path==="x_component_cms_Xform"){
+        createDefaultTask(path, isMin, thisOptions);
+        createCMSXFormConcatTask(path, isMin, thisOptions);
         return gulp.series(path, path+" : concat");
     }else if (path==="o2_core"){
         createDefaultTask(path, isMin, thisOptions);
@@ -713,7 +1058,9 @@ function getAppTask(path, isMin, thisOptions) {
         createDefaultTask(path, isMin, thisOptions);
         createBaseWorkConcatTask(path, isMin, thisOptions);
         createBasePortalConcatTask(path, isMin, thisOptions);
-        return gulp.series(path, path+".base_work", path+".base_portal");
+        createBaseDocumentConcatTask(path, isMin, thisOptions);
+        createBaseConcatTask(path, isMin, thisOptions);
+        return gulp.series(path, path+".base_work", path+".base_portal", path+".base_document", path+".base");
         //return gulp.series(path, path+".base_work : concat");
     }else{
         createDefaultTask(path, isMin, thisOptions);
@@ -865,72 +1212,94 @@ gulp.task("index", function () {
 });
 gulp.task("cleanAll", getCleanTask('/'));
 
+function getGitV(){
+    var tagPromise = new Promise(function(s){
+        git.exec({args : 'describe --tag'}, function (err, stdout) {
+            var v = stdout.substring(0, stdout.indexOf("-"));
+            s(v);
+        });
+    });
+    var revPromise = new Promise(function(s){
+        git.exec({args : 'rev-parse --short HEAD'}, function (err, hash) {
+            s(hash.trim());
+        });
+    });
+    return Promise.all([tagPromise,revPromise])
+}
+
 gulp.task("o2:new-v:html", function () {
     var path = "x_desktop";
-    var src = '/source/x_desktop/*.html';
+    var src = 'source/x_desktop/*.html';
     var dest = options.dest + '/x_desktop/';
-    return gulp.src(src)
-        .pipe(assetRev())
-        .pipe(gulpif((options.upload == 'local' && options.location != ''), gulp.dest(options.location + path + '/')))
-        .pipe(gulpif((options.upload == 'ftp' && options.host != ''), ftp({
-            host: options.host,
-            user: options.user || 'anonymous',
-            pass: options.pass || '@anonymous',
-            port: options.port || 21,
-            remotePath: (options.remotePath || '/') + path
-        })))
-        .pipe(gulpif((options.upload == 'sftp' && options.host != ''), sftp({
-            host: options.host,
-            user: options.user || 'anonymous',
-            pass: options.pass || null,
-            port: options.port || 22,
-            remotePath: (options.remotePath || '/') + path
-        })))
-        .pipe(gulp.dest(dest))
-        .pipe(gutil.noop());
 
+    return getGitV().then(function(arr) {
+        return gulp.src(src)
+            .pipe(assetRev({"verConnecter": arr[0], "md5": arr[1]}))
+            .pipe(gulpif((options.upload == 'local' && options.location != ''), gulp.dest(options.location + path + '/')))
+            .pipe(gulpif((options.upload == 'ftp' && options.host != ''), ftp({
+                host: options.host,
+                user: options.user || 'anonymous',
+                pass: options.pass || '@anonymous',
+                port: options.port || 21,
+                remotePath: (options.remotePath || '/') + path
+            })))
+            .pipe(gulpif((options.upload == 'sftp' && options.host != ''), sftp({
+                host: options.host,
+                user: options.user || 'anonymous',
+                pass: options.pass || null,
+                port: options.port || 22,
+                remotePath: (options.remotePath || '/') + path
+            })))
+            .pipe(gulp.dest(dest))
+            .pipe(gutil.noop());
+    });
 });
+
 gulp.task("o2:new-v:o2", function () {
     var path = "o2_core";
     var src = options.dest +'/o2_core/o2.js';
     var dest = options.dest +'/o2_core/';
-    return gulp.src(src)
-        .pipe(assetRev())
-        .pipe(gulpif((options.upload == 'local' && options.location != ''), gulp.dest(options.location + path + '/')))
-        .pipe(gulpif((options.upload == 'ftp' && options.host != ''), ftp({
-            host: options.host,
-            user: options.user || 'anonymous',
-            pass: options.pass || '@anonymous',
-            port: options.port || 21,
-            remotePath: (options.remotePath || '/') + path
-        })))
-        .pipe(gulpif((options.upload == 'sftp' && options.host != ''), sftp({
-            host: options.host,
-            user: options.user || 'anonymous',
-            pass: options.pass || null,
-            port: options.port || 22,
-            remotePath: (options.remotePath || '/') + path
-        })))
-        .pipe(gulp.dest(dest))
-        .pipe(uglify())
-        .pipe(rename({ extname: '.min.js' }))
-        .pipe(gulpif((options.upload == 'local' && options.location != ''), gulp.dest(options.location + path + '/')))
-        .pipe(gulpif((options.upload == 'ftp' && options.host != ''), ftp({
-            host: options.host,
-            user: options.user || 'anonymous',
-            pass: options.pass || '@anonymous',
-            port: options.port || 21,
-            remotePath: (options.remotePath || '/') + path
-        })))
-        .pipe(gulpif((options.upload == 'sftp' && options.host != ''), sftp({
-            host: options.host,
-            user: options.user || 'anonymous',
-            pass: options.pass || null,
-            port: options.port || 22,
-            remotePath: (options.remotePath || '/') + path
-        })))
-        .pipe(gulp.dest(dest))
-        .pipe(gutil.noop());
+
+    return getGitV().then(function(arr){
+        var v = arr[0]+"-"+arr[1];
+        return gulp.src(src)
+            .pipe(assetRev({"verConnecter": arr[0], "md5": arr[1], "replace": true}))
+            .pipe(gulpif((options.upload == 'local' && options.location != ''), gulp.dest(options.location + path + '/')))
+            .pipe(gulpif((options.upload == 'ftp' && options.host != ''), ftp({
+                host: options.host,
+                user: options.user || 'anonymous',
+                pass: options.pass || '@anonymous',
+                port: options.port || 21,
+                remotePath: (options.remotePath || '/') + path
+            })))
+            .pipe(gulpif((options.upload == 'sftp' && options.host != ''), sftp({
+                host: options.host,
+                user: options.user || 'anonymous',
+                pass: options.pass || null,
+                port: options.port || 22,
+                remotePath: (options.remotePath || '/') + path
+            })))
+            .pipe(gulp.dest(dest))
+            .pipe(uglify())
+            .pipe(rename({ extname: '.min.js' }))
+            .pipe(gulpif((options.upload == 'local' && options.location != ''), gulp.dest(options.location + path + '/')))
+            .pipe(gulpif((options.upload == 'ftp' && options.host != ''), ftp({
+                host: options.host,
+                user: options.user || 'anonymous',
+                pass: options.pass || '@anonymous',
+                port: options.port || 21,
+                remotePath: (options.remotePath || '/') + path
+            })))
+            .pipe(gulpif((options.upload == 'sftp' && options.host != ''), sftp({
+                host: options.host,
+                user: options.user || 'anonymous',
+                pass: options.pass || null,
+                port: options.port || 22,
+                remotePath: (options.remotePath || '/') + path
+            })))
+            .pipe(gulp.dest(dest))
+            .pipe(gutil.noop());
+    });
 });
 gulp.task("o2:new-v", gulp.parallel("o2:new-v:o2", "o2:new-v:html"));
 
@@ -962,3 +1331,11 @@ function build(){
     options.dest = o_options.dest || uploadOptions.dest || "dest";
 };
 gulp.task("build", gulp.series("clean", gulp.parallel(appTasks, 'index'), "o2:new-v"))
+
+gulp.task("temp_o2", function(){
+    return gulp.src("source/x_test/o2.js")
+        .pipe(uglify())
+        .pipe(rename({ extname: '.min.js' }))
+        .pipe(gulp.dest("source/x_test/"))
+        .pipe(gutil.noop());
+})

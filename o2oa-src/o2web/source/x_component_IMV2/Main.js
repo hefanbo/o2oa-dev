@@ -32,10 +32,23 @@ MWF.xApplication.IMV2.Main = new Class({
 			};
 			this.emojiList.push(emoji);
 		}
+
 	},
 	onQueryClose: function () {
-		this.closeListening()
+		this.closeListening();
 	},
+	// 获取组件名称
+	loadComponentName: function () {
+		o2.Actions.load("x_component_assemble_control").ComponentAction.get("IMV2", function (json) {
+			var imComponent = json.data;
+			if (imComponent && imComponent.title) {
+				this.setTitle(imComponent.title);
+			}
+		}.bind(this), function (err) {
+			console.log(err);
+		})
+	},
+	// 加载应用
 	loadApplication: function (callback) {
 		var url = this.path + this.options.style + "/im.html";
 		this.content.loadHtml(url, { "bind": { "lp": this.lp, "data": {} }, "module": this }, function () {
@@ -52,29 +65,38 @@ MWF.xApplication.IMV2.Main = new Class({
 			}.bind(this));
 
 		}.bind(this));
+		this.loadComponentName();
 	},
+	// 监听ws消息
 	startListening: function () {
-		this.messageNumber = layout.desktop.message.items.length;
-		//查询ws消息 如果增加
-		if (this.listener) {
-			clearInterval(this.listener);
-		}
-		this.listener = setInterval(function () {
-			var newNumber = layout.desktop.message.items.length;
-			//判断是否有新的ws消息
-			if (newNumber > this.messageNumber) {
-				//查询会话数据
-				this._checkConversationMessage();
-				//查询聊天数据
-				this._checkNewMessage();
-				this.messageNumber = newNumber;
+		if (layout.desktop && layout.desktop.message) {
+			this.messageNumber = layout.desktop.message.items.length;
+			//查询ws消息 如果增加
+			if (this.listener) {
+				clearInterval(this.listener);
 			}
-		}.bind(this), 1000);
+			this.listener = setInterval(function () {
+				var newNumber = layout.desktop.message.items.length;
+				//判断是否有新的ws消息
+				if (newNumber > this.messageNumber) {
+					this.reciveNewMessage();
+					this.messageNumber = newNumber;
+				}
+			}.bind(this), 1000);
+		}
 	},
+	// 关闭监听
 	closeListening: function () {
 		if (this.listener) {
 			clearInterval(this.listener);
 		}
+	},
+	// 接收新的消息 会话列表更新 或者 聊天窗口更新
+	reciveNewMessage: function () {
+		//查询会话数据
+		this._checkConversationMessage();
+		//查询聊天数据
+		this._checkNewMessage();
 	},
 	//加载会话列表
 	loadConversationList: function (list) {
@@ -132,13 +154,13 @@ MWF.xApplication.IMV2.Main = new Class({
 		}.bind(this));
 	},
 	//修改群名
-	tapUpdateConvTitle: function() {
+	tapUpdateConvTitle: function () {
 		this.chatTitleMoreMenuNode.setStyle("display", "none");
 		var form = new MWF.xApplication.IMV2.UpdateConvTitleForm(this, {}, {}, { app: this.app });
 		form.create();
 	},
 	//修改群成员
-	tapUpdateConvMembers: function() {
+	tapUpdateConvMembers: function () {
 		this.chatTitleMoreMenuNode.setStyle("display", "none");
 		var members = [];
 		for (var i = 0; i < this.conversationNodeItemList.length; i++) {
@@ -180,6 +202,49 @@ MWF.xApplication.IMV2.Main = new Class({
 		this.hideFun = this.hideEmojiBox.bind(this);
 		document.body.addEvent("mousedown", this.hideFun);
 	},
+	// 点击发送文件消息
+	showChooseFile: function () {
+		if (!this.uploadFileAreaNode) {
+			this.createUploadFileNode();
+		}
+		this.fileUploadNode.click();
+	},
+	//创建文件选择框
+	createUploadFileNode: function () {
+		this.uploadFileAreaNode = new Element("div");
+		var html = "<input name=\"file\" type=\"file\" multiple/>";
+		this.uploadFileAreaNode.set("html", html);
+		this.fileUploadNode = this.uploadFileAreaNode.getFirst();
+		this.fileUploadNode.addEvent("change", function () {
+			var files = this.fileUploadNode.files;
+			if (files.length) {
+				var file = files.item(0);
+				var formData = new FormData();
+				formData.append('file', file);
+				formData.append('fileName', file.name);
+				var fileExt = file.name.substring(file.name.lastIndexOf("."));
+				// 图片消息
+				var type = "file"
+				if (fileExt.toLowerCase() == ".bmp" || fileExt.toLowerCase() == ".jpeg"
+					|| fileExt.toLowerCase() == ".png" || fileExt.toLowerCase() == ".jpg") {
+					type = "image"
+				} else { // 文件消息
+					type = "file"
+				}
+				//上传文件
+				o2.Actions.load("x_message_assemble_communicate").ImAction.uploadFile(this.conversationId, type, formData, "{}", function (json) {
+					if (json.data) {
+						var fileId = json.data.id
+						var fileExtension = json.data.fileExtension
+						var fileName = json.data.fileName
+						this._newImageOrFileMsgAndSend(type, fileId, fileName, fileExtension)
+					}
+				}.bind(this), function (error) {
+					console.log(error);
+				}.bind(this))
+			}
+		}.bind(this));
+	},
 	hideEmojiBox: function () {
 		//关闭emojiBoxNode
 		this.emojiBoxNode.setStyle("display", "none");
@@ -202,7 +267,7 @@ MWF.xApplication.IMV2.Main = new Class({
 		form.create()
 	},
 	//更新群名
-	updateConversationTitle: function(title, convId) {
+	updateConversationTitle: function (title, convId) {
 		var conv = {
 			id: convId,
 			title: title,
@@ -226,7 +291,7 @@ MWF.xApplication.IMV2.Main = new Class({
 		}.bind(this))
 	},
 	//更新群成员
-	updateConversationMembers: function(members, convId) {
+	updateConversationMembers: function (members, convId) {
 		var conv = {
 			id: convId,
 			personList: members,
@@ -283,6 +348,38 @@ MWF.xApplication.IMV2.Main = new Class({
 				item.removeCheckClass();
 			}
 		}
+	},
+	//创建图片或文件消息
+	_newImageOrFileMsgAndSend: function (type, fileId, fileName, fileExt) {
+		var distinguishedName = layout.session.user.distinguishedName;
+		var time = this._currentTime();
+		var body = {
+			"body": "[文件]",
+			"type": type,
+			"fileId": fileId,
+			"fileExtension": fileExt,
+			"fileName": fileName
+		};
+		var bodyJson = JSON.stringify(body);
+		var uuid = (new MWF.widget.UUID).toString();
+		var message = {
+			"id": uuid,
+			"conversationId": this.conversationId,
+			"body": bodyJson,
+			"createPerson": distinguishedName,
+			"createTime": time,
+			"sendStatus": 1
+		};
+		o2.Actions.load("x_message_assemble_communicate").ImAction.msgCreate(message,
+			function (json) {
+				console.log("消息发送成功！");
+			}.bind(this),
+			function (error) {
+				console.log(error);
+			}.bind(this));
+		this.messageList.push(message);
+		this._buildSender(body, distinguishedName, false);
+		this._refreshConvMessage(message);
 	},
 	//创建文本消息 并发送
 	_newAndSendTextMsg: function (text, type) {
@@ -435,6 +532,12 @@ MWF.xApplication.IMV2.Main = new Class({
 			new Element("img", { "src": "../x_component_IMV2/$Main/default/icons/location.png", "width": 24, "height": 24 }).inject(mapBox);
 			var url = this._getBaiduMapUrl(msgBody.latitude, msgBody.longitude, msgBody.address, msgBody.addressDetail);
 			new Element("a", { "href": url, "target": "_blank", "text": msgBody.address }).inject(mapBox);
+		} else if (msgBody.type == "file") { //文件
+			var mapBox = new Element("span").inject(lastNode);
+			var fileIcon = this._getFileIcon(msgBody.fileExtension);
+			new Element("img", { "src": "../x_component_IMV2/$Main/file_icons/" + fileIcon, "width": 48, "height": 48 }).inject(mapBox);
+			var downloadUrl = this._getFileDownloadUrl(msgBody.fileId);
+			new Element("a", { "href": downloadUrl, "target": "_blank", "text": msgBody.fileName }).inject(mapBox);
 		} else {//text
 			new Element("span", { "text": msgBody.body }).inject(lastNode);
 		}
@@ -489,6 +592,12 @@ MWF.xApplication.IMV2.Main = new Class({
 			new Element("img", { "src": "../x_component_IMV2/$Main/default/icons/location.png", "width": 24, "height": 24 }).inject(mapBox);
 			var url = this._getBaiduMapUrl(msgBody.latitude, msgBody.longitude, msgBody.address, msgBody.addressDetail);
 			new Element("a", { "href": url, "target": "_blank", "text": msgBody.address }).inject(mapBox);
+		} else if (msgBody.type == "file") { //文件
+			var mapBox = new Element("span").inject(lastNode);
+			var fileIcon = this._getFileIcon(msgBody.fileExtension);
+			new Element("img", { "src": "../x_component_IMV2/$Main/file_icons/" + fileIcon, "width": 48, "height": 48 }).inject(mapBox);
+			var downloadUrl = this._getFileDownloadUrl(msgBody.fileId);
+			new Element("a", { "href": downloadUrl, "target": "_blank", "text": msgBody.fileName }).inject(mapBox);
 		} else {//text
 			new Element("span", { "text": msgBody.body }).inject(lastNode);
 		}
@@ -501,7 +610,7 @@ MWF.xApplication.IMV2.Main = new Class({
 	//图片 根据大小 url
 	_getFileUrlWithWH: function (id, width, height) {
 		var action = MWF.Actions.get("x_message_assemble_communicate").action;
-		var url = action.address + action.actions.imgFileDownloadWithWH.uri;
+		var url = action.getAddress() + action.actions.imgFileDownloadWithWH.uri;
 		url = url.replace("{id}", encodeURIComponent(id));
 		url = url.replace("{width}", encodeURIComponent(width));
 		url = url.replace("{height}", encodeURIComponent(height));
@@ -510,7 +619,7 @@ MWF.xApplication.IMV2.Main = new Class({
 	//file 下载的url
 	_getFileDownloadUrl: function (id) {
 		var action = MWF.Actions.get("x_message_assemble_communicate").action;
-		var url = action.address + action.actions.imgFileDownload.uri;
+		var url = action.getAddress() + action.actions.imgFileDownload.uri;
 		url = url.replace("{id}", encodeURIComponent(id));
 		return url;
 	},
@@ -524,6 +633,76 @@ MWF.xApplication.IMV2.Main = new Class({
 		var orgAction = MWF.Actions.get("x_organization_assemble_control")
 		var url = (id) ? orgAction.getPersonIcon(id) : "../x_component_IMV2/$Main/default/icons/group.png";
 		return url + "?" + (new Date().getTime());
+	},
+	// 文件类型icon图
+	_getFileIcon: function (ext) {
+		if (ext) {
+			if (ext === "jpg" || ext === "jpeg") {
+				return "icon_file_jpeg.png";
+			} else if (ext === "gif") {
+				return "icon_file_gif.png";
+			} else if (ext === "png") {
+				return "icon_file_png.png";
+			} else if (ext === "tiff") {
+				return "icon_file_tiff.png";
+			} else if (ext === "bmp" || ext === "webp") {
+				return "icon_file_img.png";
+			} else if (ext === "ogg" || ext === "mp3" || ext === "wav" || ext === "wma") {
+				return "icon_file_mp3.png";
+			} else if (ext === "mp4") {
+				return "icon_file_mp4.png";
+			} else if (ext === "avi") {
+				return "icon_file_avi.png";
+			} else if (ext === "mov" || ext === "rm" || ext === "mkv") {
+				return "icon_file_rm.png";
+			} else if (ext === "doc" || ext === "docx") {
+				return "icon_file_word.png";
+			} else if (ext === "xls" || ext === "xlsx") {
+				return "icon_file_excel.png";
+			} else if (ext === "ppt" || ext === "pptx") {
+				return "icon_file_ppt.png";
+			} else if (ext === "html") {
+				return "icon_file_html.png";
+			} else if (ext === "pdf") {
+				return "icon_file_pdf.png";
+			} else if (ext === "txt" || ext === "json") {
+				return "icon_file_txt.png";
+			} else if (ext === "zip") {
+				return "icon_file_zip.png";
+			} else if (ext === "rar") {
+				return "icon_file_rar.png";
+			} else if (ext === "7z") {
+				return "icon_file_arch.png";
+			} else if (ext === "ai") {
+				return "icon_file_ai.png";
+			} else if (ext === "att") {
+				return "icon_file_att.png";
+			} else if (ext === "au") {
+				return "icon_file_au.png";
+			} else if (ext === "cad") {
+				return "icon_file_cad.png";
+			} else if (ext === "cdr") {
+				return "icon_file_cdr.png";
+			} else if (ext === "eps") {
+				return "icon_file_eps.png";
+			} else if (ext === "exe") {
+				return "icon_file_exe.png";
+			} else if (ext === "iso") {
+				return "icon_file_iso.png";
+			} else if (ext === "link") {
+				return "icon_file_link.png";
+			} else if (ext === "swf") {
+				return "icon_file_flash.png";
+			} else if (ext === "psd") {
+				return "icon_file_psd.png";
+			} else if (ext === "tmp") {
+				return "icon_file_tmp.png";
+			} else {
+				return "icon_file_unkown.png";
+			}
+		} else {
+			return "icon_file_unkown.png";
+		}
 	},
 	//输出特殊的时间格式
 	_friendlyTime: function (date) {
@@ -714,7 +893,7 @@ MWF.xApplication.IMV2.ConversationItem = new Class({
 			this.messageTimeNode.set("text", time);
 		}
 	},
-	refreshConvTitle: function(title) {
+	refreshConvTitle: function (title) {
 		this.titleNode.set("text", title);
 	},
 	addCheckClass: function () {
@@ -861,10 +1040,10 @@ MWF.xApplication.IMV2.CreateConversationForm = new Class({
 		if (data) {
 			if (this.options["isUpdateMember"] === true) {
 				this.app.updateConversationMembers(data.person, this.app.conversationId);
-			}else {
-				this.app.newConversation(data.person, this.options["personCount"] === 1 ? "single": "group");
+			} else {
+				this.app.newConversation(data.person, this.options["personCount"] === 1 ? "single" : "group");
 			}
-			
+
 			this.close();
 		}
 	}
@@ -891,13 +1070,13 @@ MWF.xApplication.IMV2.UpdateConvTitleForm = new Class({
 			"    <td styles='formTableValue14' item='title' colspan='3'></td></tr>" +
 			"</table>";
 		this.formTableArea.set("html", html);
-		 
+
 		this.form = new MForm(this.formTableArea, this.data || {}, {
 			isEdited: true,
 			style: "minder",
 			hasColon: true,
 			itemTemplate: {
-				title: {text: "群名", type: "text", notEmpty: true },
+				title: { text: "群名", type: "text", notEmpty: true },
 			}
 		}, this.app);
 		this.form.load();

@@ -45,7 +45,7 @@ import com.x.base.core.project.tools.DateTools;
 import com.x.base.core.project.tools.StringTools;
 
 @Entity
-@ContainerEntity(dumpSize = 1000, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
+@ContainerEntity(dumpSize = 200, type = ContainerEntity.Type.content, reference = ContainerEntity.Reference.strong)
 @Table(name = PersistenceProperties.Person.table, uniqueConstraints = {
 		@UniqueConstraint(name = PersistenceProperties.Person.table + JpaObject.IndexNameMiddle
 				+ JpaObject.DefaultUniqueConstraintSuffix, columnNames = { JpaObject.IDCOLUMN,
@@ -115,7 +115,8 @@ public class Person extends SliceJpaObject {
 	@FieldDescribe("性别.男:m,女:f,未知:d")
 	@Enumerated(EnumType.STRING)
 	@Column(length = GenderType.length, name = ColumnNamePrefix + genderType_FIELDNAME)
-	@Index(name = TABLE + IndexNameMiddle + genderType_FIELDNAME)
+	//Enum类型不需要进行索引
+	//@Index(name = TABLE + IndexNameMiddle + genderType_FIELDNAME)
 	@CheckPersist(allowEmpty = false)
 	private GenderType genderType;
 
@@ -299,7 +300,7 @@ public class Person extends SliceJpaObject {
 	@FieldDescribe("必填,手机号.")
 	@Column(length = JpaObject.length_32B, name = ColumnNamePrefix + mobile_FIELDNAME)
 	/** 其他地区手机号不一致,所以这里使用外部校验,不使用mobileString */
-	@Index(name = TABLE + IndexNameMiddle + mobile_FIELDNAME)
+	@Index(name = TABLE + IndexNameMiddle + mobile_FIELDNAME, unique = true)
 	@CheckPersist(allowEmpty = false, citationNotExists = @CitationNotExist(fields = mobile_FIELDNAME, type = Person.class))
 	private String mobile;
 

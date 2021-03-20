@@ -477,6 +477,7 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
             },
             "click": function(e){
                 if (!this.retrieve("disabled")) _self.doAction(e, this, click);
+                e.stopPropagation();
             }
         });
         this.actions.push(actionNode);
@@ -742,11 +743,11 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
     uploadAttachment: function(e, node){
         if (this.module) this.module.uploadAttachment(e, node);
     },
-    doUploadAttachment: function(obj, action, invokeUrl, parameter, finish, every, beforeUpload, multiple, accept, size){
+    doUploadAttachment: function(obj, action, invokeUrl, parameter, finish, every, beforeUpload, multiple, accept, size, failureEvery){
         if (FormData.expiredIE){
-            this.doInputUploadAttachment(obj, action, invokeUrl, parameter, finish, every, beforeUpload, multiple, accept, size);
+            this.doInputUploadAttachment(obj, action, invokeUrl, parameter, finish, every, beforeUpload, multiple, accept, size, failureEvery);
         }else{
-            this.doFormDataUploadAttachment(obj, action, invokeUrl, parameter, finish, every, beforeUpload, multiple, accept, size);
+            this.doFormDataUploadAttachment(obj, action, invokeUrl, parameter, finish, every, beforeUpload, multiple, accept, size, failureEvery);
         }
     },
     addUploadMessage: function(fileName){
@@ -788,7 +789,7 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
         }
 
     },
-    doInputUploadAttachment: function(obj, action, invokeUrl, parameter, finish, every, beforeUpload, multiple, accept){
+    doInputUploadAttachment: function(obj, action, invokeUrl, parameter, finish, every, beforeUpload, multiple, accept, failureEvery){
         var restActions = action;
         if (typeOf(action)=="string"){
             restActions = o2.Actions.get(action).action;
@@ -835,6 +836,7 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
                     if(finish) finish();
                 }else{
                     //formNode.unmask();
+                    // if(failureEvery)failureEvery(json);
                     this.setMessageTitle(messageItem, o2.LP.desktop.action.sendError);
                     this.setMessageText(messageItem, o2.LP.desktop.action.sendError+": "+json.message);
                     o2.xDesktop.notice("error", {x: "right", y:"top"}, json.message);
@@ -897,7 +899,7 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
             }.bind(this));
         }.bind(this));
     },
-    doFormDataUploadAttachment: function(obj, action, invokeUrl, parameter, finish, every, beforeUpload, multiple, accept, size){
+    doFormDataUploadAttachment: function(obj, action, invokeUrl, parameter, finish, every, beforeUpload, multiple, accept, size, failureEvery){
         if (!this.uploadFileAreaNode){
             this.uploadFileAreaNode = new Element("div");
             var html = "<input name=\"file\" multiple type=\"file\" accept=\"*/*\"/>";
@@ -909,6 +911,7 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
                 if (files.length){
                     var count = files.length;
                     var current = 0;
+                    var hasFailUpload = false;
 
                     var restActions = action;
                     if (typeOf(action)=="string"){
@@ -918,7 +921,7 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
 
                     var callback = function(){
                         if (current == count){
-                            if(finish) finish();
+                            if(finish) finish( hasFailUpload );
                         }
                     };
 
@@ -992,6 +995,14 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
                                                                     current++;
                                                                     if (every) every(json, current, count);
                                                                     callback();
+                                                                },
+                                                                "failure": function (xhr) {
+                                                                    var json = JSON.decode(xhr.responseText);
+                                                                    if( json && json.message )o2.xDesktop.notice("error", {x: "right", y:"top"}, json.message);
+                                                                    current++;
+                                                                    hasFailUpload = true;
+                                                                    if (failureEvery) failureEvery(xhr, current, count);
+                                                                    callback();
                                                                 }
                                                             });
                                                         }else{
@@ -1004,6 +1015,14 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
                                                                 "success": function(json){
                                                                     current++;
                                                                     if (every) every(json, current, count);
+                                                                    callback();
+                                                                },
+                                                                "failure": function (xhr) {
+                                                                    var json = JSON.decode(xhr.responseText);
+                                                                    if( json && json.message )o2.xDesktop.notice("error", {x: "right", y:"top"}, json.message);
+                                                                    current++;
+                                                                    hasFailUpload = true;
+                                                                    if (failureEvery) failureEvery(xhr, current, count);
                                                                     callback();
                                                                 }
                                                             });
@@ -1035,6 +1054,14 @@ o2.widget.AttachmentController = o2.widget.ATTER  = new Class({
                                         "success": function(json){
                                             current++;
                                             if (every) every(json, current, count);
+                                            callback();
+                                        },
+                                        "failure": function (xhr) {
+                                            var json = JSON.decode(xhr.responseText);
+                                            if( json && json.message )o2.xDesktop.notice("error", {x: "right", y:"top"}, json.message);
+                                            current++;
+                                            hasFailUpload = true;
+                                            if (failureEvery) failureEvery(xhr, current, count);
                                             callback();
                                         }
                                     });
@@ -1639,6 +1666,7 @@ o2.widget.AttachmentController.Attachment = new Class({
                 "click": function(e){
                     if (!this.retrieve("disabled")){
                         click.apply(_self.controller, [e, this]);
+                        e.stopPropagation();
                     }
                 }
             });
@@ -1663,6 +1691,7 @@ o2.widget.AttachmentController.Attachment = new Class({
                 "click": function(e){
                     if (!this.retrieve("disabled")){
                         click.apply(_self.controller, [e, this]);
+                        e.stopPropagation();
                     }
                 }
             });

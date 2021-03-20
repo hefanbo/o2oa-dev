@@ -1,5 +1,5 @@
 o2.widget = o2.widget || {};
-o2.require("o2.widget.codemirror", null, false);
+//o2.require("o2.widget.codemirror", null, false);
 o2.require("o2.xDesktop.UserData", null, false);
 o2.widget.JavascriptEditor = new Class({
 	Implements: [Options, Events],
@@ -19,6 +19,7 @@ o2.widget.JavascriptEditor = new Class({
 		this.setOptions(options);
 		this.unbindEvents = [];
 		this.node = $(node);
+		this.id = o2.uuid();
 	},
     getDefaultEditorData: function(){
 	    switch (this.options.type) {
@@ -144,14 +145,17 @@ o2.widget.JavascriptEditor = new Class({
                 }.bind(this));
                 this.editor.onDidBlurEditorText(function(e){
                     o2.shortcut.keyboard.activate();
+                    this.fireEvent("blur");
                 }.bind(this));
+                this.editor.onDidChangeModelContent(function(e){
+                    this.fireEvent("change");
+                }.bind(this))
 
-
-                o2.widget.JavascriptEditor.getCompletionEnvironment(this.options.runtime, function(){
+                //o2.widget.JavascriptEditor.getCompletionEnvironment(this.options.runtime, function(){
                     this.monacoModel = this.editor.getModel();
                     this.monacoModel.o2Editor = this;
                     this.registerCompletion();
-                }.bind(this));
+                //}.bind(this));
 
                 this.fireEvent("postLoad");
                 if (callback) callback();
@@ -220,6 +224,14 @@ o2.widget.JavascriptEditor = new Class({
                     }.bind(this)
                 });
 
+                this.editor.on("blur", function(){
+                    this.fireEvent("blur");
+                }.bind(this));
+                this.editor.on("change", function(){
+                    this.fireEvent("change");
+                }.bind(this));
+
+
                 this.node.addEvent("keydown", function(e){
                     e.stopPropagation();
                 });
@@ -228,9 +240,9 @@ o2.widget.JavascriptEditor = new Class({
                     this.setFontSize( this.fontSize );
                 }
 
-                o2.widget.JavascriptEditor.getCompletionEnvironment(this.options.runtime, function(){
+                //o2.widget.JavascriptEditor.getCompletionEnvironment(this.options.runtime, function(){
                     this.registerCompletion();
-                }.bind(this));
+                //}.bind(this));
 
                 this.fireEvent("postLoad");
                 if (callback) callback();
@@ -238,23 +250,12 @@ o2.widget.JavascriptEditor = new Class({
         }.bind(this));
     },
     registerCompletion: function(){
-
         if (this.editor){
             switch (this.options.type.toLowerCase()) {
                 case "ace": this.registerCompletionAce(); break;
                 case "monaco": this.registerCompletionMonaco(); break;
             }
         }
-    },
-
-    getCompletionObject: function(textPrefix, runtime){
-        var macro = o2.widget.JavascriptEditor.runtimeEnvironment[runtime];
-        var o = null;
-        if (macro){
-            code = "try {return "+textPrefix+";}catch(e){return null;}";
-            o = macro.exec(code);
-        }
-        return o;
     },
     registerCompletionMonaco: function(){
         if (!o2.widget.monaco.registeredCompletion){
@@ -263,27 +264,44 @@ o2.widget.JavascriptEditor = new Class({
                 provideCompletionItems: function (model, position, context, token) {
                     var textUntilPosition = model.getValueInRange({ startLineNumber: position.lineNumber, startColumn: 1, endLineNumber: position.lineNumber, endColumn: position.column });
                     var textPrefix = textUntilPosition.substr(0, textUntilPosition.lastIndexOf("."));
-                    var o = this.getCompletionObject(textPrefix, model.o2Editor.options.runtime);
 
-                    var word = model.getWordUntilPosition(position);
-                    var range = { startLineNumber: position.lineNumber, endLineNumber: position.lineNumber, startColumn: word.startColumn, endColumn: word.endColumn };
+                    if (textPrefix){
+                        var preCode = "";
+                        var endLineNumber = (position.lineNumber>1) ? position.lineNumber-1 : 0;
+                        if (endLineNumber>0){
+                            var range = {
+                                endColumn: model.getLineMaxColumn(endLineNumber),
+                                endLineNumber: endLineNumber,
+                                startColumn: 1,
+                                startLineNumber: 1
+                            };
+                            preCode = model.getValueInRange(range);
 
-                    if (o) {
-                        var arr = [];
-                        Object.keys(o).each(function (key) {
-                            var keyType = typeOf(o[key]);
-                            if (keyType === "function") {
-                                var count = o[key].length;
-                                var v = key + "(";
-                                for (var i = 1; i <= count; i++) v += (i == count) ? "par" + i : "par" + i + ", ";
-                                v += ")";
-                                arr.push({ label: key, kind: monaco.languages.CompletionItemKind.Function, insertText: v, range: range, detail: keyType });
-                            } else {
-                                arr.push({ label: key, kind: monaco.languages.CompletionItemKind.Interface, insertText: key, range: range, detail: keyType });
-                            }
-                        });
+                        }
+
+                        var sufCode = "";
+                        var lineCount = model.getLineCount();
+                        var nextLineNumber = position.lineNumber+1;
+                        if (nextLineNumber<=lineCount){
+                            range = {
+                                endColumn: model.getLineMaxColumn(lineCount),
+                                endLineNumber: lineCount,
+                                startColumn: 1,
+                                startLineNumber: nextLineNumber
+                            };
+                            sufCode = model.getValueInRange(range);
+                        }
+
+                        var word = model.getWordUntilPosition(position);
+                        var insertRange = { startLineNumber: position.lineNumber, endLineNumber: position.lineNumber, startColumn: word.startColumn, endColumn: word.endColumn };
+
+                        return new Promise(function(s){
+                            //if (this.getCompletionObject)
+                            o2.widget.JavascriptEditor.getCompletionObject(textPrefix, preCode+"\n"+sufCode, insertRange, model.o2Editor.options.runtime, function(o){
+                                s({suggestions: o});
+                            }.bind(this), "monaco");
+                        }.bind(this));
                     }
-                    return {suggestions: arr}
                 }.bind(this)
             });
             o2.widget.monaco.registeredCompletion = true;
@@ -295,27 +313,40 @@ o2.widget.JavascriptEditor = new Class({
             var exports = ace.require("ace/ext/language_tools");
             exports.addCompleter({
                 identifierRegexps: [
-                    /[a-zA-Z_0-9\$\-\u00A2-\uFFFF\.]/
+                    /[a-zA-Z_0-9\$\-\u00A2-\uFFFF]/
                 ],
                 getCompletions: function(editor, session, pos, prefix, callback){
-                    var x = prefix.substr(0, prefix.lastIndexOf("."));
-                    var o = this.getCompletionObject(x, editor.o2Editor.options.runtime);
+                    debugger;
+                    var codeRange = session.getWordRange(pos.row, 0);
+                    codeRange.setEnd(pos.row, pos.column);
+                    var x = session.getTextRange(codeRange);
+                    x = x.substr(0, x.lastIndexOf("."));
 
-                    if (o){
-                        var arr = [];
-                        Object.keys(o).each(function(key){
-                            var keyType = typeOf(o[key]);
-                            if (keyType==="function") {
-                                var count = o[key].length;
-                                var v = x+"."+key+"(";
-                                for (var i=1; i<=count; i++) v+= (i==count) ? "par"+i :  "par"+i+", ";
-                                v+=");";
-                                arr.push({ caption: key, value: v, score: 3, meta: keyType });
-                            }else{
-                                arr.push({ caption: key, value: x+"."+key, score: 3, meta: keyType });
-                            }
-                        });
-                        callback(null, arr);
+                    if (x){
+                        var endLineNumber = (pos.row>0) ? pos.row-1 : -1;
+                        var preCode = "";
+                        if (endLineNumber>-1){
+                            var range = session.getWordRange(0,0);
+                            range.setEnd(endLineNumber, session.getLine(endLineNumber).length);
+                            preCode = session.getTextRange(range);
+                        }
+
+                        var sufCode = "";
+                        var lineCount = session.getLength()-1;
+                        var nextLineNumber = pos.row+1;
+                        if (nextLineNumber<=lineCount){
+                            var range = session.getWordRange(nextLineNumber,0);
+                            range.setEnd(lineCount, session.getLine(lineCount).length);
+                            sufCode = session.getTextRange(range);
+                        }
+
+
+                        return new Promise(function(s){
+                            o2.widget.JavascriptEditor.getCompletionObject(x, preCode+"\n"+sufCode, null, editor.o2Editor.options.runtime, function(o){
+                                callback(null, o);
+                                if (s) s(o);
+                            }.bind(this), "ace");
+                        }.bind(this));
                     }
                 }.bind(this)
             });
@@ -352,6 +383,11 @@ o2.widget.JavascriptEditor = new Class({
             }
         }
     },
+    destroy: function(){
+	    this.fireEvent("destroy");
+	    this.destroyEditor();
+	    o2.release(this);
+    },
     setTheme: function(theme){
         if (this.editor){
             switch (this.options.type.toLowerCase()) {
@@ -368,6 +404,67 @@ o2.widget.JavascriptEditor = new Class({
             }
         }
     },
+
+    getRange: function(startLine, startCol, endLine, endCol){
+        if (this.editor){
+            switch (this.options.type.toLowerCase()) {
+                case "ace":
+                    var range = this.editor.getSelection().getWordRange( startLine-1, startCol-1 );
+                    range.setStart(startLine-1, startCol-1);
+                    if (endLine && endCol){
+                        range.setEnd(endLine-1, endCol-1);
+                    }
+                    return range;
+                case "monaco":
+                    return {
+                        "endColumn": endCol,
+                        "endLineNumber": endLine,
+                        "startColumn": startCol,
+                        "startLineNumber": startLine
+                    }
+                    ;
+            }
+        }
+        return null;
+    },
+    selectRange: function(range){
+        if (this.editor){
+            switch (this.options.type.toLowerCase()) {
+                case "ace":
+                    if (o2.typeOf(range)==="array"){
+                        this.editor.getSelection().setSelectionRange( range[0] );
+                        for (var i=1; i<range.length; i++) this.editor.getSelection().addRange( range[i] );
+                    }else{
+                        this.editor.getSelection().setSelectionRange( range );
+                    }
+                    break;
+                case "monaco":
+                    if (o2.typeOf(range)==="array"){
+                        var selections = [];
+                        range.each(function(r){
+                            selections.push({
+                                "positionColumn": r.endColumn,
+                                "positionLineNumber": r.endLineNumber,
+                                "selectionStartColumn": r.startColumn,
+                                "selectionStartLineNumber": r.startLineNumber
+                            });
+                        });
+                        this.editor.setSelections(selections);
+                    }else{
+                        var selection = {
+                            "positionColumn": range.endColumn,
+                            "positionLineNumber": range.endLineNumber,
+                            "selectionStartColumn": range.startColumn,
+                            "selectionStartLineNumber": range.startLineNumber
+                        }
+                        this.editor.setSelection(selection);
+                    }
+                    this.editor.focus();
+                    break;
+            }
+        }
+    },
+
     setValue: function(v){
         if (this.editor) this.editor.setValue(v);
     },
@@ -484,6 +581,18 @@ o2.widget.JavascriptEditor = new Class({
             }
         }
     },
+    gotoLine: function(line, col){
+        if (this.editor){
+            switch (this.options.type.toLowerCase()) {
+                case "ace": this.editor.gotoLine(line-1, col-1, true); break;
+                case "monaco": this.editor.revealPositionInCenterIfOutsideViewport({
+                    "column": col,
+                    "lineNumber": line
+                }, 0);
+            }
+        }
+    },
+
     goto: function(){
         var p = this.editor.getCursorPosition();
         if (p.row==0){
@@ -567,132 +676,199 @@ o2.widget.JavascriptEditor = new Class({
     }
 });
 
-o2.widget.JavascriptEditor.runtimeEnvironment = {};
-o2.widget.JavascriptEditor.getCompletionEnvironment = function(runtime, callback) {
+// o2.widget.JavascriptEditor.runtimeEnvironment = {};
+// o2.widget.JavascriptEditor.getCompletionEnvironment = function(runtime, callback) {
+//
+//     if (!o2.widget.JavascriptEditor.runtimeEnvironment[runtime]) {
+//         o2.require("o2.xScript.Macro", function() {
+//             switch (runtime) {
+//                 case "service":
+//                     o2.widget.JavascriptEditor.getServiceCompletionEnvironment(runtime,callback);
+//                     break;
+//                 case "server":
+//                     o2.widget.JavascriptEditor.getServerCompletionEnvironment(runtime,callback);
+//                     break;
+//                 case "all":
+//                     o2.widget.JavascriptEditor.getAllCompletionEnvironment(runtime,callback);
+//                     break;
+//                 default:
+//                     o2.widget.JavascriptEditor.getDefaultCompletionEnvironment(runtime,callback);
+//             }
+//         });
+//     } else {
+//         if (callback) callback();
+//     }
+// };
+//
+// o2.widget.JavascriptEditor.getServiceCompletionEnvironment = function(runtime, callback) {
+//     //var serviceScriptText = null;
+//     var serviceScriptSubstitute = null;
+//     var check = function () {
+//         //if (o2.typeOf(serviceScriptText) !== "null" && o2.typeOf(serviceScriptSubstitute) !== "null") {
+//         if (o2.typeOf(serviceScriptSubstitute) !== "null") {
+//             //var code = "o2.Macro.swapSpace.tmpMacroCompletionFunction = function (){\n" + serviceScriptSubstitute + "\n" + serviceScriptText + "\nreturn bind;" + "\n};";
+//             var code = "o2.Macro.swapSpace.tmpMacroCompletionFunction = function (){\n" + serviceScriptSubstitute + "\nreturn bind;" + "\n};";
+//             Browser.exec(code);
+//             var ev = o2.Macro.swapSpace.tmpMacroCompletionFunction() ;
+//             o2.widget.JavascriptEditor.runtimeEnvironment[runtime] = {
+//                 "environment": ev,
+//                 exec: function(code){
+//                     return o2.Macro.exec(code, this.environment);
+//                 }
+//             }
+//             if (callback) callback();
+//         }
+//     }
+//
+//     // o2.xhr_get("../x_desktop/js/initialServiceScriptText.js", function (xhr) {
+//     //     serviceScriptText = xhr.responseText;
+//     //     check();
+//     // }, function () {
+//     //     serviceScriptText = "";
+//     //     check();
+//     // });
+//     o2.xhr_get("../x_desktop/js/initalServiceScriptSubstitute.js", function (xhr) {
+//         serviceScriptSubstitute = xhr.responseText;
+//         check();
+//     }, function () {
+//         serviceScriptSubstitute = "";
+//         check();
+//     });
+// };
+//
+// o2.widget.JavascriptEditor.getServerCompletionEnvironment = function(runtime, callback) {
+//    //var serverScriptText = null;
+//     var serverScriptSubstitute = null;
+//     var check = function () {
+//         // if (o2.typeOf(serverScriptText) !== "null" && o2.typeOf(serverScriptSubstitute) !== "null") {
+//         //     var code = "o2.Macro.swapSpace.tmpMacroCompletionFunction = function (){\n" + serverScriptSubstitute + "\n" + serverScriptText + "\nreturn bind;" + "\n};";
+//         if (o2.typeOf(serverScriptSubstitute) !== "null") {
+//             var code = "o2.Macro.swapSpace.tmpMacroCompletionFunction = function (){\n" + serverScriptSubstitute + "\nreturn bind;" + "\n};";
+//             Browser.exec(code);
+//             var ev = o2.Macro.swapSpace.tmpMacroCompletionFunction();
+//             o2.widget.JavascriptEditor.runtimeEnvironment[runtime] = {
+//                 "environment": ev,
+//                 exec: function(code){
+//                     return o2.Macro.exec(code, this.environment);
+//                 }
+//             }
+//             if (callback) callback();
+//         }
+//     }
+//
+//     // o2.xhr_get("../x_desktop/js/initialScriptText.js", function (xhr) {
+//     //     serverScriptText = xhr.responseText;
+//     //     check();
+//     // }, function () {
+//     //     serverScriptText = "";
+//     //     check();
+//     // });
+//     o2.xhr_get("../x_desktop/js/initalScriptSubstitute.js", function (xhr) {
+//         serverScriptSubstitute = xhr.responseText;
+//         check();
+//     }, function () {
+//         serverScriptSubstitute = "";
+//         check();
+//     });
+// };
+//
+// o2.widget.JavascriptEditor.getDefaultCompletionEnvironment = function(runtime, callback){
+//     var json = null;
+//     o2.getJSON("../o2_core/o2/widget/$JavascriptEditor/environment.json", function (data) {
+//         json = data;
+//         o2.widget.JavascriptEditor.runtimeEnvironment[runtime] = new o2.Macro.FormContext(json);
+//         if (callback) callback();
+//     });
+// }
+//
+// o2.widget.JavascriptEditor.getAllCompletionEnvironment = function(runtime, callback){
+//     var check = function(){
+//         if (o2.widget.JavascriptEditor.runtimeEnvironment["service"] && o2.widget.JavascriptEditor.runtimeEnvironment["server"] && o2.widget.JavascriptEditor.runtimeEnvironment["web"] ){
+//         //if (o2.widget.JavascriptEditor.runtimeEnvironment["web"] ){
+//             var ev = Object.merge(o2.widget.JavascriptEditor.runtimeEnvironment["service"].environment,
+//                 o2.widget.JavascriptEditor.runtimeEnvironment["server"].environment,
+//                 o2.widget.JavascriptEditor.runtimeEnvironment["web"].environment)
+//
+//             //var ev = o2.widget.JavascriptEditor.runtimeEnvironment["web"].environment;
+//
+//             o2.widget.JavascriptEditor.runtimeEnvironment[runtime] = {
+//                 "environment": ev,
+//                 exec: function(code){
+//                     return o2.Macro.exec(code, this.environment);
+//                 }
+//             }
+//             if (callback) callback();
+//         }
+//     }
+//     o2.widget.JavascriptEditor.getServiceCompletionEnvironment("service", check);
+//     o2.widget.JavascriptEditor.getServerCompletionEnvironment("server", check);
+//     o2.widget.JavascriptEditor.getDefaultCompletionEnvironment("web", check);
+//
+// }
 
-    if (!o2.widget.JavascriptEditor.runtimeEnvironment[runtime]) {
-        o2.require("o2.xScript.Macro", function() {
-            switch (runtime) {
-                case "service":
-                    o2.widget.JavascriptEditor.getServiceCompletionEnvironment(runtime,callback);
-                    break;
-                case "server":
-                    o2.widget.JavascriptEditor.getServerCompletionEnvironment(runtime,callback);
-                    break;
-                case "all":
-                    o2.widget.JavascriptEditor.getAllCompletionEnvironment(runtime,callback);
-                    break;
-                default:
-                    o2.widget.JavascriptEditor.getDefaultCompletionEnvironment(runtime,callback);
-            }
-        });
-    } else {
-        if (callback) callback();
+o2.widget.JavascriptEditor.filterRangeScript = function(s, f1, f2){
+    var textScript = "";
+    var n = 0;
+    for (var i=s.length-1; i>=0; i--){
+        var char = s.charAt(i);
+        if (char==f2) n++;
+        if (char==f1){
+            n--;
+            if (n<0) break;
+        }
+        textScript = char+textScript;
     }
-};
+    return textScript;
+},
 
-o2.widget.JavascriptEditor.getServiceCompletionEnvironment = function(runtime, callback) {
-    //var serviceScriptText = null;
-    var serviceScriptSubstitute = null;
-    var check = function () {
-        //if (o2.typeOf(serviceScriptText) !== "null" && o2.typeOf(serviceScriptSubstitute) !== "null") {
-        if (o2.typeOf(serviceScriptSubstitute) !== "null") {
-            //var code = "o2.Macro.swapSpace.tmpMacroCompletionFunction = function (){\n" + serviceScriptSubstitute + "\n" + serviceScriptText + "\nreturn bind;" + "\n};";
-            var code = "o2.Macro.swapSpace.tmpMacroCompletionFunction = function (){\n" + serviceScriptSubstitute + "\nreturn bind;" + "\n};";
-            Browser.exec(code);
-            var ev = o2.Macro.swapSpace.tmpMacroCompletionFunction() ;
-            o2.widget.JavascriptEditor.runtimeEnvironment[runtime] = {
-                "environment": ev,
-                exec: function(code){
-                    return o2.Macro.exec(code, this.environment);
-                }
+o2.widget.JavascriptEditor.getCompletionObject = function(textPrefix, preCode, range, runtime, callback, type){
+    textPrefix = o2.widget.JavascriptEditor.filterRangeScript(textPrefix, "(", ")");
+    textPrefix = o2.widget.JavascriptEditor.filterRangeScript(textPrefix, "{", "}");
+    textPrefix = o2.widget.JavascriptEditor.filterRangeScript(textPrefix, "[", "]");
+
+    if (textPrefix.lastIndexOf("=")!=-1) textPrefix = textPrefix.substr(textPrefix.lastIndexOf("=")+1);
+    if (textPrefix.lastIndexOf(" new ")!=-1) textPrefix = textPrefix.substr(textPrefix.lastIndexOf(" new ")+5);
+    //if (preCode.lastIndexOf("{")!=-1) preCode = preCode.substr(preCode.lastIndexOf("{")+1);
+
+    var codeObj = {
+        "code": textPrefix,
+        "preCode": preCode,
+        "runtime": runtime,
+        "id": o2.uuid(),
+        "type": type,
+        "range": range
+    }
+
+    return o2.JSEditorCWE.exec(codeObj, callback);
+},
+
+o2.widget.JavascriptEditor.completionWorkerEnvironment = o2.JSEditorCWE = {
+    init: function(){
+        this.callbackPool = {};
+        this.scriptWorker = new Worker("../o2_core/scriptWorker.js");
+        this.scriptWorker.onmessage = function(e) {
+            if (e.data && e.data.type=="ready") this.setOnMessage();
+        }.bind(this);
+        return this;
+    },
+    setOnMessage: function(){
+        this.scriptWorker.onmessage = function(e) {
+            var o = e.data;
+            if (o){
+                var bo = this.callbackPool[o.id];
+                if (bo.uuid==o.uuid) if (bo.callback) bo.callback(o.o);
             }
-            if (callback) callback();
+        }.bind(this);
+    },
+    exec: function(o, callback){
+        if (this.scriptWorker){
+            var uuid = o2.uuid();
+            o.uuid = uuid;
+            this.callbackPool[o.id] = {
+                "callback": callback,
+                "uuid": uuid
+            }
+            this.scriptWorker.postMessage(o);
         }
     }
-
-    // o2.xhr_get("../x_desktop/js/initialServiceScriptText.js", function (xhr) {
-    //     serviceScriptText = xhr.responseText;
-    //     check();
-    // }, function () {
-    //     serviceScriptText = "";
-    //     check();
-    // });
-    o2.xhr_get("../x_desktop/js/initalServiceScriptSubstitute.js", function (xhr) {
-        serviceScriptSubstitute = xhr.responseText;
-        check();
-    }, function () {
-        serviceScriptSubstitute = "";
-        check();
-    });
-};
-
-o2.widget.JavascriptEditor.getServerCompletionEnvironment = function(runtime, callback) {
-   //var serverScriptText = null;
-    var serverScriptSubstitute = null;
-    var check = function () {
-        // if (o2.typeOf(serverScriptText) !== "null" && o2.typeOf(serverScriptSubstitute) !== "null") {
-        //     var code = "o2.Macro.swapSpace.tmpMacroCompletionFunction = function (){\n" + serverScriptSubstitute + "\n" + serverScriptText + "\nreturn bind;" + "\n};";
-        if (o2.typeOf(serverScriptSubstitute) !== "null") {
-            var code = "o2.Macro.swapSpace.tmpMacroCompletionFunction = function (){\n" + serverScriptSubstitute + "\nreturn bind;" + "\n};";
-            Browser.exec(code);
-            var ev = o2.Macro.swapSpace.tmpMacroCompletionFunction();
-            o2.widget.JavascriptEditor.runtimeEnvironment[runtime] = {
-                "environment": ev,
-                exec: function(code){
-                    return o2.Macro.exec(code, this.environment);
-                }
-            }
-            if (callback) callback();
-        }
-    }
-
-    // o2.xhr_get("../x_desktop/js/initialScriptText.js", function (xhr) {
-    //     serverScriptText = xhr.responseText;
-    //     check();
-    // }, function () {
-    //     serverScriptText = "";
-    //     check();
-    // });
-    o2.xhr_get("../x_desktop/js/initalScriptSubstitute.js", function (xhr) {
-        serverScriptSubstitute = xhr.responseText;
-        check();
-    }, function () {
-        serverScriptSubstitute = "";
-        check();
-    });
-};
-
-o2.widget.JavascriptEditor.getDefaultCompletionEnvironment = function(runtime, callback){
-    var json = null;
-    o2.getJSON("../o2_core/o2/widget/$JavascriptEditor/environment.json", function (data) {
-        json = data;
-        o2.widget.JavascriptEditor.runtimeEnvironment[runtime] = new o2.Macro.FormContext(json);
-        if (callback) callback();
-    });
-}
-
-o2.widget.JavascriptEditor.getAllCompletionEnvironment = function(runtime, callback){
-    var check = function(){
-        if (o2.widget.JavascriptEditor.runtimeEnvironment["service"] && o2.widget.JavascriptEditor.runtimeEnvironment["server"] && o2.widget.JavascriptEditor.runtimeEnvironment["web"] ){
-        //if (o2.widget.JavascriptEditor.runtimeEnvironment["web"] ){
-            var ev = Object.merge(o2.widget.JavascriptEditor.runtimeEnvironment["service"].environment,
-                o2.widget.JavascriptEditor.runtimeEnvironment["server"].environment,
-                o2.widget.JavascriptEditor.runtimeEnvironment["web"].environment)
-
-            //var ev = o2.widget.JavascriptEditor.runtimeEnvironment["web"].environment;
-
-            o2.widget.JavascriptEditor.runtimeEnvironment[runtime] = {
-                "environment": ev,
-                exec: function(code){
-                    return o2.Macro.exec(code, this.environment);
-                }
-            }
-            if (callback) callback();
-        }
-    }
-    o2.widget.JavascriptEditor.getServiceCompletionEnvironment("service", check);
-    o2.widget.JavascriptEditor.getServerCompletionEnvironment("server", check);
-    o2.widget.JavascriptEditor.getDefaultCompletionEnvironment("web", check);
-
-}
+}.init();

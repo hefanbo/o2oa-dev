@@ -96,10 +96,26 @@ MWF.xApplication.process.ProcessManager.Explorer = new Class({
             "text": this.app.options.application.name
         }).inject(this.toolbarNode);
     },
+    openFindDesigner: function(){
+        this.app.options.application.moduleType = "processPlatform";
+        var options = {
+            "filter": {
+                "moduleList": ["processPlatform"],
+                "appList": [this.app.options.application]
+            }
+        };
+        layout.openApplication(null, "FindDesigner", options);
+    },
     createSearchElementNode: function(){
-        this.searchElementNode = new Element("div", {
-            "styles": this.css.searchElementNode
+        debugger
+        this.searchElementNode = new Element("div.searchElementNode", {
+            "styles": this.css.searchElementNode,
+            "title": this.app.lp.findDesigner
         }).inject(this.toolbarNode);
+
+        this.searchElementNode.addEvent("click", function(){
+            this.openFindDesigner();
+        }.bind(this));
 
         //@todo
         return false;
@@ -180,10 +196,12 @@ MWF.xApplication.process.ProcessManager.Explorer = new Class({
         if (this.elementContentListNode){
             var toolbarSize = (this.toolbarNode) ? this.toolbarNode.getSize() : {"x": 0, "y": 0};
             var nodeSize = (this.node) ? this.node.getSize() : {"x": 0, "y": 0};
+            var categorySize = this.categoryElementNode ? this.categoryElementNode.getSize() : {"x": 0, "y": 0};
+
             var pt = this.elementContentNode.getStyle("padding-top").toFloat();
             var pb = this.elementContentNode.getStyle("padding-bottom").toFloat();
 
-            var height = nodeSize.y-toolbarSize.y-pt-pb;
+            var height = nodeSize.y-toolbarSize.y-categorySize.y-pt-pb;
             this.elementContentNode.setStyle("height", ""+height+"px");
 
             var count = (nodeSize.x/282).toInt();
@@ -226,6 +244,10 @@ MWF.xApplication.process.ProcessManager.Explorer = new Class({
                 }.bind(this));
             }
             this.loadCategoryList();
+            if( !this.isSetContentSize ){
+                this.setContentSize();
+                this.isSetContentSize = true;
+            }
         }.bind(this));
     },
     loadCategoryList: function(){

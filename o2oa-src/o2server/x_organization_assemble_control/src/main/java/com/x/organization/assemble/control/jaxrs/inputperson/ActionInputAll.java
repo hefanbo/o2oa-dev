@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,12 +66,11 @@ import com.x.organization.core.entity.PersonAttribute;
 import com.x.organization.core.entity.Role;
 import com.x.organization.core.entity.Unit;
 import com.x.organization.core.entity.UnitDuty;
-import com.x.base.core.project.cache.Cache.CacheKey;
 
 class ActionInputAll extends BaseAction {
 
 	private static Logger logger = LoggerFactory.getLogger(ActionInputAll.class);
-	
+	private static ReentrantLock lock = new ReentrantLock();
 	private  boolean dutyFlag = false;
 	
 	private  boolean wholeFlag = false;
@@ -92,6 +92,7 @@ class ActionInputAll extends BaseAction {
 
 	ActionResult<Wo> execute(EffectivePerson effectivePerson, byte[] bytes, FormDataContentDisposition disposition)
 			throws Exception {
+		lock.lock();
 		try (EntityManagerContainer emc = EntityManagerContainerFactory.instance().create();
 				InputStream is = new ByteArrayInputStream(bytes);
 				XSSFWorkbook workbook = new XSSFWorkbook(is);
@@ -113,6 +114,8 @@ class ActionInputAll extends BaseAction {
 			wo.setFlag(flag);
 			result.setData(wo);
 			return result;
+		}finally {
+			lock.unlock();
 		}
 	}
 
@@ -620,7 +623,7 @@ class ActionInputAll extends BaseAction {
 					validate = false;
 					continue;
 				}
-				this.setUnitMemo(workbook, configurator, o, "校验通过.");
+				//this.setUnitMemo(workbook, configurator, o, "校验通过.");
 			}
 		}
 		return validate;
@@ -633,6 +636,7 @@ class ActionInputAll extends BaseAction {
 		boolean validate = true;
 		for (PersonItem o : person) {
 			//System.out.println("正在校验用户:{}."+ o.getName());
+			this.setPersonMemo(workbook, configurator, o, "校验通过.");
 			if (StringUtils.isEmpty(o.getName())) {
 				this.setPersonMemo(workbook, configurator, o, "人员姓名不能为空.");
 				validate = false;
@@ -658,7 +662,6 @@ class ActionInputAll extends BaseAction {
 				validate = false;
 				continue;
 			}
-			this.setPersonMemo(workbook, configurator, o, "校验通过.");
 			/*if(o.getAttributes().isEmpty()|| StringUtils.isEmpty(o.getAttributes().get("idNumber"))){
 				this.setPersonMemo(workbook, configurator, o, "身份证号不能为空.");
 				validate = false;
@@ -702,7 +705,7 @@ class ActionInputAll extends BaseAction {
 					continue;
 				}
 				
-				this.setPersonMemo(workbook, configurator, o, "校验通过.");
+				//this.setPersonMemo(workbook, configurator, o, "校验通过.");
 			}
 		}
 		return validate;
@@ -732,6 +735,7 @@ class ActionInputAll extends BaseAction {
 				IdentityItem identityItem = new IdentityItem();
 				identityItem.setRow(i);
 				identitys.add(identityItem);
+				this.setIdentityMemo(workbook, configurator, identityItem, "校验通过.");
 				if (StringUtils.isEmpty(unique)) {
 					this.setIdentityMemo(workbook, configurator, identityItem, "员工唯一编码不能为空.");
 					validate = false;
@@ -788,7 +792,7 @@ class ActionInputAll extends BaseAction {
 				}
 				
 				//if (validate) {
-					this.setIdentityMemo(workbook, configurator, identityItem, "校验通过.");
+					//this.setIdentityMemo(workbook, configurator, identityItem, "校验通过.");
 				//}
 				
 			}

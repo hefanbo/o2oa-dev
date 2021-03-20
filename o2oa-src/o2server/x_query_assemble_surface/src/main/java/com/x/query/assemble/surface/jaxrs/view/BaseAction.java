@@ -9,7 +9,13 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.google.gson.reflect.TypeToken;
+import com.x.base.core.container.EntityManagerContainer;
+import com.x.base.core.container.factory.EntityManagerContainerFactory;
+import com.x.base.core.entity.annotation.CheckPersistType;
+import com.x.base.core.project.config.StorageMapping;
+import com.x.general.core.entity.GeneralFile;
 import com.x.processplatform.core.entity.element.Process;
+import com.x.query.assemble.surface.ThisApplication;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -47,16 +53,16 @@ abstract class BaseAction extends StandardJaxrsAction {
 			if (optional.isPresent()) {
 				plan = (Plan) optional.get();
 			} else {
-				plan = this.dealPlan(business, view, runtime);
+				plan = this.dealPlan(view, runtime);
 				CacheManager.put(business.cache(), cacheKey, plan);
 			}
 		} else {
-			plan = this.dealPlan(business, view, runtime);
+			plan = this.dealPlan(view, runtime);
 		}
 		return plan;
 	}
 
-	private Plan dealPlan(Business business, View view, Runtime runtime) throws Exception {
+	private Plan dealPlan(View view, Runtime runtime) throws Exception {
 		Plan plan = null;
 		switch (StringUtils.trimToEmpty(view.getType())) {
 		case View.TYPE_CMS:
@@ -67,7 +73,7 @@ abstract class BaseAction extends StandardJaxrsAction {
 			break;
 		default:
 			ProcessPlatformPlan processPlatformPlan = gson.fromJson(view.getData(), ProcessPlatformPlan.class);
-			this.setProcessEdition(business, processPlatformPlan);
+			this.setProcessEdition(processPlatformPlan);
 			processPlatformPlan.runtime = runtime;
 			processPlatformPlan.access();
 			plan = processPlatformPlan;
@@ -79,11 +85,15 @@ abstract class BaseAction extends StandardJaxrsAction {
 		return plan;
 	}
 
-	private void setProcessEdition(Business business, ProcessPlatformPlan processPlatformPlan) throws Exception {
+	private void setProcessEdition(ProcessPlatformPlan processPlatformPlan) throws Exception {
 		if(!processPlatformPlan.where.processList.isEmpty()){
 			List<String> _process_ids = ListTools.extractField(processPlatformPlan.where.processList, Process.id_FIELDNAME, String.class,
 					true, true);
-			List<Process> processList = business.process().listObjectWithProcess(_process_ids, true);
+			List<Process> processList;
+			try (EntityManagerContainer emc = EntityManagerContainerFactory.instance().create()) {
+				Business business = new Business(emc);
+				processList = business.process().listObjectWithProcess(_process_ids, true);
+			}
 			List<ProcessPlatformPlan.WhereEntry.ProcessEntry> listProcessEntry = gson.fromJson(gson.toJson(processList),
 					new TypeToken<List<ProcessPlatformPlan.WhereEntry.ProcessEntry>>(){}.getType());
 			if(!listProcessEntry.isEmpty()) {
@@ -102,7 +112,7 @@ abstract class BaseAction extends StandardJaxrsAction {
 			break;
 		default:
 			ProcessPlatformPlan processPlatformPlan = gson.fromJson(view.getData(), ProcessPlatformPlan.class);
-			this.setProcessEdition(business, processPlatformPlan);
+			this.setProcessEdition(processPlatformPlan);
 			processPlatformPlan.runtime = runtime;
 			os = processPlatformPlan.fetchBundles();
 			break;
@@ -160,7 +170,7 @@ abstract class BaseAction extends StandardJaxrsAction {
 
 	}
 
-	protected String girdWriteToExcel(EffectivePerson effectivePerson, Business business, Plan plan, View view)
+	protected String girdWriteToExcel(EffectivePerson effectivePerson, Business business, Plan plan, View view, String excelName)
 			throws Exception {
 		try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			XSSFSheet sheet = workbook.createSheet("grid");
@@ -191,19 +201,26 @@ abstract class BaseAction extends StandardJaxrsAction {
 					}
 				}
 			}
-			String name = view.getName() + ".xlsx";
+			if(StringUtils.isEmpty(excelName)) {
+				excelName = view.getName() + ".xlsx";
+			}
+			if(!excelName.toLowerCase().endsWith(".xlsx")){
+				excelName = excelName + ".xlsx";
+			}
 			workbook.write(os);
-			ExcelResultObject obj = new ExcelResultObject();
-			obj.setBytes(os.toByteArray());
-			obj.setName(name);
-			obj.setPerson(effectivePerson.getDistinguishedName());
-			String flag = StringTools.uniqueToken();
-			CacheKey cacheKey = new CacheKey(flag);
-			CacheManager.put(business.cache(), cacheKey, obj);
-			return flag;
+			try (EntityManagerContainer emc = EntityManagerContainerFactory.instance().create()) {
+				StorageMapping gfMapping = ThisApplication.context().storageMappings().random(GeneralFile.class);
+				GeneralFile generalFile = new GeneralFile(gfMapping.getName(), excelName, effectivePerson.getDistinguishedName());
+				generalFile.saveContent(gfMapping, os.toByteArray(), excelName);
+				emc.beginTransaction(GeneralFile.class);
+				emc.persist(generalFile, CheckPersistType.all);
+				emc.commit();
+				String key = generalFile.getId();
+				return key;
+			}
 		}
 	}
-    
+
 	protected String objectToString(Object object) {
 		String  str = "";
 		if (object instanceof Integer) {
@@ -222,7 +239,7 @@ abstract class BaseAction extends StandardJaxrsAction {
 		}
 		return str;
 	}
-	
+
 	protected Runtime runtime(EffectivePerson effectivePerson, Business business, View view,
 			List<FilterEntry> filterList, Map<String, String> parameter, Integer count, boolean isBundle) throws Exception {
 		Runtime runtime = new Runtime();
@@ -258,7 +275,8 @@ abstract class BaseAction extends StandardJaxrsAction {
 			runtime.unitAllList.addAll(list);
 			list.clear();
 		}
-		runtime.groupList = business.organization().group().listWithPerson(effectivePerson.getDistinguishedName());
+		runtime.groupList = business.organization().group().listWithPersonReference(
+				ListTools.toList(effectivePerson.getDistinguishedName()), true, true, true);
 		if(runtime.groupList!=null){
 			for(String item : runtime.groupList){
 				if(item.indexOf("@")>-1) {

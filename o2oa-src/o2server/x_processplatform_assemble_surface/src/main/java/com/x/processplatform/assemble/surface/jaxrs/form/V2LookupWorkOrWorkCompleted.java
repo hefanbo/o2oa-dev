@@ -14,6 +14,7 @@ import com.x.base.core.container.EntityManagerContainer;
 import com.x.base.core.container.factory.EntityManagerContainerFactory;
 import com.x.base.core.entity.JpaObject;
 import com.x.base.core.project.cache.Cache.CacheKey;
+import com.x.base.core.project.config.Config;
 import com.x.base.core.project.cache.CacheManager;
 import com.x.base.core.project.gson.XGsonBuilder;
 import com.x.base.core.project.http.ActionResult;
@@ -53,8 +54,9 @@ class V2LookupWorkOrWorkCompleted extends BaseAction {
 				CompletableFuture<List<String>> relatedScriptFuture = this
 						.relatedScriptFuture(this.form.getProperties());
 				list.add(this.form.getId() + this.form.getUpdateTime().getTime());
-				list.addAll(relatedFormFuture.get(10, TimeUnit.SECONDS));
-				list.addAll(relatedScriptFuture.get(10, TimeUnit.SECONDS));
+				list.addAll(relatedFormFuture.get(Config.processPlatform().getAsynchronousTimeout(), TimeUnit.SECONDS));
+				list.addAll(
+						relatedScriptFuture.get(Config.processPlatform().getAsynchronousTimeout(), TimeUnit.SECONDS));
 				list = list.stream().sorted().collect(Collectors.toList());
 				this.wo.setId(this.form.getId());
 				CRC32 crc = new CRC32();
@@ -99,10 +101,9 @@ class V2LookupWorkOrWorkCompleted extends BaseAction {
 			List<String> list = new ArrayList<>();
 			if (ListTools.isNotEmpty(properties.getRelatedFormList())) {
 				try (EntityManagerContainer emc = EntityManagerContainerFactory.instance().create()) {
-					Business business = new Business(emc);
 					Form f;
 					for (String id : properties.getRelatedFormList()) {
-						f = business.form().pick(id);
+						f = emc.find(id, Form.class);
 						if (null != f) {
 							list.add(f.getId() + f.getUpdateTime().getTime());
 						}
@@ -121,7 +122,7 @@ class V2LookupWorkOrWorkCompleted extends BaseAction {
 			if ((null != properties.getRelatedScriptMap()) && (properties.getRelatedScriptMap().size() > 0)) {
 				try (EntityManagerContainer emc = EntityManagerContainerFactory.instance().create()) {
 					Business business = new Business(emc);
-					list = convertScriptToCacheTag(business, properties.getMobileRelatedScriptMap());
+					list = convertScriptToCacheTag(business, properties.getRelatedScriptMap());
 				} catch (Exception e) {
 					logger.error(e);
 				}

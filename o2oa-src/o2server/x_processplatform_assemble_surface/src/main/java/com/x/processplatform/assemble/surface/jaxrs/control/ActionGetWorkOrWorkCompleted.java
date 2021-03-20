@@ -3,12 +3,15 @@ package com.x.processplatform.assemble.surface.jaxrs.control;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.BooleanUtils;
 
 import com.x.base.core.container.EntityManagerContainer;
 import com.x.base.core.container.factory.EntityManagerContainerFactory;
+import com.x.base.core.project.config.Config;
 import com.x.base.core.project.exception.ExceptionAccessDenied;
 import com.x.base.core.project.http.ActionResult;
 import com.x.base.core.project.http.EffectivePerson;
@@ -43,14 +46,17 @@ class ActionGetWorkOrWorkCompleted extends BaseAction {
 
 	private Boolean hasTaskCompletedWithJob = null;
 
+	private Boolean hasPauseTaskWithWork = null;
+
 	private Map<String, Boolean> hasTaskCompletedWithActivityToken = new HashMap<>();
 
 	ActionResult<Wo> execute(EffectivePerson effectivePerson, String workOrWorkCompleted) throws Exception {
 		ActionResult<Wo> result = new ActionResult<>();
 		CompletableFuture<Wo> getFuture = this.getFuture(effectivePerson, workOrWorkCompleted);
 		CompletableFuture<Boolean> checkControlFuture = this.checkControlFuture(effectivePerson, workOrWorkCompleted);
-		result.setData(getFuture.get(10, TimeUnit.SECONDS));
-		if (BooleanUtils.isFalse(checkControlFuture.get(10, TimeUnit.SECONDS))) {
+		result.setData(getFuture.get(Config.processPlatform().getAsynchronousTimeout(), TimeUnit.SECONDS));
+		if (BooleanUtils
+				.isFalse(checkControlFuture.get(Config.processPlatform().getAsynchronousTimeout(), TimeUnit.SECONDS))) {
 			throw new ExceptionAccessDenied(effectivePerson, workOrWorkCompleted);
 		}
 		return result;
@@ -94,31 +100,38 @@ class ActionGetWorkOrWorkCompleted extends BaseAction {
 
 		Activity activity = business.getActivity(work);
 
-		/* 是否可以看到 */
+		// 是否可以看到
 		wo.setAllowVisit(true);
-		/* 是否可以直接流转 */
+		// 是否可以直接流转
 		wo.setAllowProcessing(this.hasTaskWithWork(business, effectivePerson, work.getId()));
-		/* 是否可以处理待阅 */
+		// 是否可以处理待阅
 		wo.setAllowReadProcessing(this.hasReadWithJob(business, effectivePerson, work.getJob()));
-		/* 是否可以保存数据 */
+		// 是否可以保存数据
 		wo.setAllowSave(
 				this.canManageApplicationOrProcess(business, effectivePerson, work.getApplication(), work.getProcess())
 						|| this.hasTaskWithWork(business, effectivePerson, work.getId()));
-		/* 是否可以重置处理人 */
+		// 是否可以重置处理人
 		wo.setAllowReset(PropertyTools.getOrElse(activity, Manual.allowReset_FIELDNAME, Boolean.class, false)
 				&& wo.getAllowSave());
-
-		/* 是否可以调度 */
-		wo.setAllowReroute(PropertyTools.getOrElse(activity, Manual.allowReroute_FIELDNAME, Boolean.class, false)
+		// 是否可以调度
+		wo.setAllowReroute(PropertyTools.getOrElse(activity, Activity.allowReroute_FIELDNAME, Boolean.class, false)
 				&& this.canManageApplicationOrProcess(business, effectivePerson, work.getApplication(),
 						work.getProcess()));
-
-		/* 是否可以删除 */
+		// 是否可以删除
 		wo.setAllowDelete(PropertyTools.getOrElse(activity, Manual.allowDeleteWork_FIELDNAME, Boolean.class, false)
 				&& wo.getAllowSave());
+		// 是否可以挂起待办,暂停待办计时
+		if (PropertyTools.getOrElse(activity, Manual.allowPause_FIELDNAME, Boolean.class, false) && wo.getAllowSave()) {
+			// 如果已经处于挂起状态,那么允许恢复
+			if (this.hasPauseTaskWithWork(business, effectivePerson, work.getId())) {
+				wo.setAllowResume(true);
+			} else {
+				wo.setAllowPause(true);
+			}
+		}
 
-		/* 是否可以增加会签分支 */
-		if (PropertyTools.getOrElse(activity, Manual.allowAddSplit_FIELDNAME, Boolean.class, false)
+		// 是否可以增加会签分支
+		if (BooleanUtils.isTrue(PropertyTools.getOrElse(activity, Manual.allowAddSplit_FIELDNAME, Boolean.class, false))
 				&& BooleanUtils.isTrue(work.getSplitting())) {
 			Node node = this.workLogTree(business, work.getJob()).location(work);
 			if (null != node) {
@@ -134,8 +147,9 @@ class ActionGetWorkOrWorkCompleted extends BaseAction {
 				}
 			}
 		}
-		/* 是否可以召回 */
-		if (PropertyTools.getOrElse(activity, Manual.allowRetract_FIELDNAME, Boolean.class, false)) {
+		// 是否可以召回
+		if (BooleanUtils
+				.isTrue(PropertyTools.getOrElse(activity, Manual.allowRetract_FIELDNAME, Boolean.class, false))) {
 			Node node = this.workLogTree(business, work.getJob()).location(work);
 			if (null != node) {
 				Nodes ups = node.upTo(ActivityType.manual, ActivityType.agent, ActivityType.choice, ActivityType.delay,
@@ -149,14 +163,14 @@ class ActionGetWorkOrWorkCompleted extends BaseAction {
 				}
 			}
 		}
-		/* 是否可以回滚 */
+		// 是否可以回滚
 		wo.setAllowRollback(PropertyTools.getOrElse(activity, Manual.allowRollback_FIELDNAME, Boolean.class, false)
 				&& this.canManageApplicationOrProcess(business, effectivePerson, work.getApplication(),
 						work.getProcess()));
-		/* 是否可以提醒 */
+		// 是否可以提醒
 		wo.setAllowPress(PropertyTools.getOrElse(activity, Manual.allowPress_FIELDNAME, Boolean.class, false)
 				&& this.hasTaskCompletedWithJob(business, effectivePerson, work.getJob()));
-		/* 是否可以看到 */
+		// 是否可以看到
 		wo.setAllowVisit(true);
 
 		return wo;
@@ -164,15 +178,17 @@ class ActionGetWorkOrWorkCompleted extends BaseAction {
 	}
 
 	private boolean hasTaskCompletedWithActivityToken(Business business, EffectivePerson effectivePerson,
-			String activityToken) throws Exception {
-		Boolean o = this.hasTaskCompletedWithActivityToken.get(activityToken);
-		if (null == o) {
-			o = business.entityManagerContainer().countEqualAndEqual(TaskCompleted.class,
-					TaskCompleted.person_FIELDNAME, effectivePerson.getDistinguishedName(),
-					TaskCompleted.activityToken_FIELDNAME, activityToken) > 0;
-			this.hasTaskCompletedWithActivityToken.put(activityToken, o);
-		}
-		return o;
+			String activityToken) {
+		return this.hasTaskCompletedWithActivityToken.computeIfAbsent(activityToken, k -> {
+			try {
+				return business.entityManagerContainer().countEqualAndEqual(TaskCompleted.class,
+						TaskCompleted.person_FIELDNAME, effectivePerson.getDistinguishedName(),
+						TaskCompleted.activityToken_FIELDNAME, activityToken) > 0;
+			} catch (Exception e) {
+				logger.error(e);
+			}
+			return false;
+		});
 	}
 
 	private boolean hasTaskWithWork(Business business, EffectivePerson effectivePerson, String work) throws Exception {
@@ -181,6 +197,16 @@ class ActionGetWorkOrWorkCompleted extends BaseAction {
 					Task.person_FIELDNAME, effectivePerson.getDistinguishedName(), Task.work_FIELDNAME, work) > 0;
 		}
 		return this.hasTaskWithWork;
+	}
+
+	private boolean hasPauseTaskWithWork(Business business, EffectivePerson effectivePerson, String work)
+			throws Exception {
+		if (null == this.hasPauseTaskWithWork) {
+			this.hasPauseTaskWithWork = business.entityManagerContainer().countEqualAndEqualAndEqual(Task.class,
+					Task.person_FIELDNAME, effectivePerson.getDistinguishedName(), Task.work_FIELDNAME, work,
+					Task.pause_FIELDNAME, true) > 0;
+		}
+		return this.hasPauseTaskWithWork;
 	}
 
 	private boolean hasTaskCompletedWithJob(Business business, EffectivePerson effectivePerson, String job)
@@ -219,6 +245,8 @@ class ActionGetWorkOrWorkCompleted extends BaseAction {
 	}
 
 	public static class Wo extends AbstractControl {
+
+		private static final long serialVersionUID = -4677744478291468477L;
 
 	}
 

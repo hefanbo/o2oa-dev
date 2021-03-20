@@ -69,6 +69,7 @@ MWF.xDesktop.Actions.RestActions = new Class({
         MWF.restful(method, uri, data, callback, async, credentials);
     },
 	invoke: function(option){
+        if (window.importScripts && window.isCompletionEnvironment) return null;
         if (!this.address) this.getAddress();
         var res = null;
         this.getActions(function(){
@@ -367,13 +368,19 @@ MWF.xDesktop.Actions.RestActions = new Class({
                         }, xhr.responseText]);
                         break;
                     case "error":
+                        var messageId = (messageItem && messageItem.moduleMessage) ? messageItem.moduleMessage.data.id : "";
+                        if( messageId && xhr )xhr.messageId = messageId;
                         MWF.runCallback(callback, "failure", [xhr]);
                         break;
                 }
             }else{
+                var messageId = (messageItem && messageItem.moduleMessage) ? messageItem.moduleMessage.data.id : "";
+                if( messageId && xhr )xhr.messageId = messageId;
                 MWF.runCallback(callback, "failure", [xhr]);
             }
         }else{
+            var messageId = (messageItem && messageItem.moduleMessage) ? messageItem.moduleMessage.data.id : "";
+            if( messageId && xhr )xhr.messageId = messageId;
             MWF.runCallback(callback, "failure", [xhr]);
         }
     },
@@ -607,17 +614,17 @@ MWF.xDesktop.Actions.RestActions.Callback = new Class({
 				   break;
 			}
 		}else{
-			this.doError(null, responseText, "");
+            return this.doError(null, responseText, "");
 		}
 	},
 	onRequestFailure: function(xhr){
-		this.doError(xhr, "", "");
+		return this.doError(xhr, "", "");
 	},
-	onFailure: function(xhr){
-		this.doError(xhr, "", "");
+	onFailure: function(xhr, text, error){
+        return this.doError(xhr, text, error);
 	},
 	onError: function(text, error){
-		this.doError(null, text, error);
+        return this.doError(null, text, error);
 	},
 	doError: function(xhr, text, error){
 		if (this.appendFailure) this.appendFailure(xhr, text, error);
@@ -646,5 +653,6 @@ MWF.xDesktop.Actions.RestActions.Callback = new Class({
             }
 		//	throw "request error: "+errorText;
 		}
+		return Promise.reject(xhr);
 	}
 });

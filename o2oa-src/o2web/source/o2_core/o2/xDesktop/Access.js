@@ -43,7 +43,11 @@ MWF.xDesktop.Access = MWF.AC = {
         this.getRoleList();
         return this.isAdministrator() || (this.roleList.indexOf("messagemanager")!==-1);
     },
-
+    isServiceManager: function(){
+        if (!layout.desktop.session.user.roleList) return false;
+        this.getRoleList();
+        return this.isAdministrator() || (this.roleList.indexOf("servicemanager")!==-1);
+    },
 
     isUnitManager: function(){
         if (!layout.desktop.session.user.roleList) return false;
@@ -106,7 +110,7 @@ MWF.xDesktop.Access = MWF.AC = {
     },
     isBBSManager: function(){
         this.getRoleList();
-        return this.isAdministrator() || (this.roleList.indexOf("bbsmanager")!==-1);
+        return this.isAdministrator() || (this.roleList.indexOf("bbsmanager")!==-1) || (this.roleList.indexOf("bssmanager")!==-1);
     },
     isOKRManager: function(){
         this.getRoleList();

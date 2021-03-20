@@ -814,8 +814,11 @@ var _Actions = {
 };
 bind.Actions = _Actions;
 
-
-var oPrint = print;
+try{
+    oPrint = oPrint;
+}catch(e){
+    oPrint = print
+}
 print = function(str, type){
     var d = new Date();
     var t = (type || "PRINT").toUpperCase();
@@ -823,6 +826,8 @@ print = function(str, type){
     oPrint(d.format("db")+"."+d.getMilliseconds()+" "+t+" "+l+" "+str);
 }
 bind.print = print;
+echo = print;
+bind.echo = print;
 
 bind.library = library;
 bind.data = this.data;
@@ -867,8 +872,24 @@ bind.headers = {
     }
 };
 
-
-bind.parameters = this.parameters || null;
+bind.parameters = {
+    "put": function(name, value){
+        if ((typeof name)==="object"){
+            var _keys = Object.keys(name);
+            for (var i=0; i<_keys.length; i++){
+                if (parameters) parameters.put(_keys[i], name[_keys[i]]);
+            }
+        }else{
+            if (parameters) parameters.put(name, value);
+        }
+    },
+    "remove": function(name){
+        try{
+            if (parameters) parameters.remove(name);
+        }catch(e){}
+    }
+};
+//bind.parameters = this.parameters || null;
 bind.response = (function(){
     if (this.jaxrsResponse){
         if (this.jaxrsResponse.get()){
@@ -886,8 +907,28 @@ bind.response = (function(){
         }else{
             return {"status": this.jaxrsResponse.status};
         }
+    }else{
+        var _self = this;
+        return {
+            "get": function(){
+                if (_self.jaxrsResponse.get()){
+                    if (JSON.validate(_self.jaxrsResponse.get())){
+                        return {
+                            "status": _self.jaxrsResponse.status,
+                            "value": JSON.decode(_self.jaxrsResponse.get())
+                        };
+                    }else{
+                        return {
+                            "status": _self.jaxrsResponse.status,
+                            "value": _self.jaxrsResponse.value
+                        };
+                    }
+                }else{
+                    return {"status": _self.jaxrsResponse.status};
+                }
+            }
+        }
     }
-    return null;
 }).apply(this);
 
 bind.assginData = {

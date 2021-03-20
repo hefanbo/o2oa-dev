@@ -8,6 +8,20 @@ MWF.xApplication.process.Xform.LP = {
     "cancelDatagridLineEditTitle" : "取消编辑数据网格确认",
     "cancelDatagridLineEdit" : "是否确定取消编辑数据网格？",
 
+    "datagridImport" : "导入Excel",
+    "datagridExport" : "导出Excel",
+    "exportDefaultName" : "数据网格",
+    "importSuccess" : "导入成功！",
+    "validationInfor" : "校验信息",
+    "importFail" : "导入失败",
+    "importValidationColumnText" : "第{n}列：",
+    "importValidationColumnTextExcel" : "列{n}：",
+    "notValidNumber" : "不是数字",
+    "notValidDate" : "不是日期格式",
+    "fullstop" : "。",
+    "notExistInSystem" : "在系统中不存在",
+    "uploadedFilesCannotHaveSpaces" : "上传的文件不能带空格",
+
     "browserNotActiveX": "您的浏览器不支持ActiveX控件，不能加载Office控件，请使用IE浏览器",
 
     "activity": "活动",
@@ -239,7 +253,13 @@ MWF.xApplication.process.Xform.LP = {
     },
     "subjectEmpty": "标题不能为空",
     "issuanceUnitEmpty": "发文单位不能为空",
-    "fullWidth": "已启用半角空格自动转换为全角空格，如需输入半角空格，请使用：SHIFT+空格"
+    "fullWidth": "已启用半角空格自动转换为全角空格，如需输入半角空格，请使用：SHIFT+空格",
+
+    "pauseWork": "当前待办已进入挂起状态",
+    "resumeWork": "当前待办已从挂起状态中恢复",
+
+    "resume": "挂起恢复",
+    "pause": "挂起"
 
 };
 MWF.xApplication.process.Xform["lp."+o2.language] = MWF.xApplication.process.Xform.LP;

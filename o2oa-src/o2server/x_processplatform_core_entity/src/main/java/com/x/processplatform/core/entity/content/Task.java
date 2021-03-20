@@ -477,7 +477,7 @@ public class Task extends SliceJpaObject implements ProjectionInterface {
 	private String mediaOpinion;
 
 	public static final String first_FIELDNAME = "first";
-	@FieldDescribe("是否是第一条待办.")
+	@FieldDescribe("是否是第一条待办,用于却别待办和草稿.")
 	@CheckPersist(allowEmpty = true)
 	@Column(name = ColumnNamePrefix + first_FIELDNAME)
 	private Boolean first;
@@ -496,6 +496,12 @@ public class Task extends SliceJpaObject implements ProjectionInterface {
 	@CheckPersist(allowEmpty = true)
 	@Index(name = TABLE + IndexNameMiddle + series_FIELDNAME)
 	private String series;
+
+	public static final String pause_FIELDNAME = "pause";
+	@FieldDescribe("待办是否处于挂起暂停计时状态.")
+	@Column(name = ColumnNamePrefix + pause_FIELDNAME)
+	@CheckPersist(allowEmpty = true)
+	private Boolean pause;
 
 	public static final String workCreateType_FIELDNAME = "workCreateType";
 	@FieldDescribe("工作创建类型,surface,assign")
@@ -1304,6 +1310,14 @@ public class Task extends SliceJpaObject implements ProjectionInterface {
 
 	public void setRouteNameList(List<String> routeNameList) {
 		this.routeNameList = routeNameList;
+	}
+
+	public Boolean getPause() {
+		return pause;
+	}
+
+	public void setPause(Boolean pause) {
+		this.pause = pause;
 	}
 
 }

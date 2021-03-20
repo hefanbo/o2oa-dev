@@ -25,6 +25,7 @@ import com.x.processplatform.core.entity.content.Work;
 import com.x.processplatform.core.entity.content.WorkLog;
 import com.x.processplatform.core.entity.element.Activity;
 import com.x.processplatform.core.entity.element.Application;
+import com.x.processplatform.core.entity.element.Form;
 import com.x.processplatform.core.entity.element.Process;
 import com.x.processplatform.core.entity.element.util.WorkLogTree;
 import com.x.processplatform.core.entity.element.util.WorkLogTree.Node;
@@ -99,10 +100,13 @@ class V2Retract extends BaseAction {
 					}
 
 					if (StringUtils.isNotEmpty(activity.getForm())) {
-						work.setForm(activity.getForm());
+						Form form = business.element().get(activity.getForm(), Form.class);
+						if (null != form) {
+							work.setForm(activity.getForm());
+						}
 					}
 
-					update(work, workLog);
+					update(work, workLog, activity);
 
 					// 必然不为null
 					taskCompleted.setProcessingType(TaskCompleted.PROCESSINGTYPE_RETRACT);
@@ -166,11 +170,13 @@ class V2Retract extends BaseAction {
 		return work;
 	}
 
-	private void update(Work work, WorkLog workLog) {
-		work.setActivity(workLog.getFromActivity());
-		work.setActivityAlias(workLog.getFromActivityAlias());
-		work.setActivityName(workLog.getFromActivityName());
+	private void update(Work work, WorkLog workLog, Activity activity) {
+		work.setActivity(activity.getId());
+		work.setActivityAlias(activity.getAlias());
+		work.setActivityName(activity.getName());
+		work.setActivityDescription(activity.getDescription());
 		work.setActivityToken(workLog.getFromActivityToken());
+		work.setActivityDescription(DESC);
 		work.setSplitting(workLog.getSplitting());
 		work.setSplitToken(workLog.getSplitToken());
 		work.setSplitValue(workLog.getSplitValue());

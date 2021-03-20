@@ -431,29 +431,29 @@ Describe.createSampleO2= function(m) {
 			
 			if(m.type=="POST"){
 			   strSample += " \n var string = JSON.stringify(data);" + "\n";
-               strSample += " var applications = this.Action.applications;"+ "\n";
+               strSample += " var apps = this.applications;"+ "\n";
                strSample += " var serviceRoot = \"" + uri + "\";"+ "\n";
                strSample += " var path = \"" + address + "\";"+ "\n"; ;
-               strSample += " var resp = applications.postQuery( serviceRoot, path , string);"+ "\n";
+               strSample += " var resp = apps.postQuery( serviceRoot, path , string);"+ "\n";
 			}
 			if(m.type=="GET"){
-               strSample += " \n var applications = this.Action.applications;"+ "\n";
+               strSample += " \n var apps = this.applications;"+ "\n";
                strSample += " var serviceRoot = \"" + uri + "\";"+ "\n";
                 strSample += " var path = \"" + address + "\";"+ "\n"; ;
-               strSample += " var resp = applications.getQuery( serviceRoot, path );"+ "\n";
+               strSample += " var resp = apps.getQuery( serviceRoot, path );"+ "\n";
 			}
 			if(m.type=="PUT"){
 			   strSample += " \n var string = JSON.stringify(data)"+ "\n";
-               strSample += " var applications = this.Action.applications"+ "\n";
+               strSample += " var apps = this.applications"+ "\n";
                strSample += " var serviceRoot = \"" + uri + "\";"+ "\n";
                strSample += " var path = \"" + address+ "\";"+ "\n"; ;
-               strSample += " var resp = applications.putQuery( serviceRoot, path , string);"+ "\n";
+               strSample += " var resp = apps.putQuery( serviceRoot, path , string);"+ "\n";
 			}
 			if(m.type=="DELETE"){
-			   strSample += " \n var applications = this.Action.applications;"+ "\n";
+			   strSample += " \n var apps = this.applications;"+ "\n";
                strSample += " var serviceRoot = \" "+ uri + "\";"+ "\n";
                  strSample += " var path = \"" + address + "\";"+ "\n"; ;
-               strSample += " var resp = applications.deleteQuery( serviceRoot, path);"+ "\n";
+               strSample += " var resp = apps.deleteQuery( serviceRoot, path);"+ "\n";
 			}
 			
                strSample += " var json = JSON.parse( resp.toString() );"+ "\n";
@@ -670,10 +670,12 @@ Describe.createSampleCommon= function(m,className) {
 				
 	}else{
 			var formData = "var formData = new FormData();" + "\n";
+			var hasFile = false;
 			if (m.formParameters && m.formParameters.length > 0) {
 				$.each(m.formParameters, function(pi, p) {
 					if (p.type == "File") {
-					formData += '      formData.append("'+p.name+'", $("input[type=file]")[0].files[0]);' +  "\n";
+					formData += '      formData.append("'+p.name+'", $("input[type=file]").files[0]);' +  "\n";
+					hasFile = true;
 					} else {
 					formData += '      formData.append("'+p.name+'", "参数值'+pi+'");' +  "\n";
 					}
@@ -683,8 +685,14 @@ Describe.createSampleCommon= function(m,className) {
 		 strSample += "var action = this.Actions.load(\"" + root + "\");\n";
 		 //strSample += "action."+m.name+ "(//平台封装好的方法\n";
 		 strSample += "       action."+ className + "."+m.name+ "(//平台封装好的方法\n";
-		 strSample += "      "+parameter  +",//uri的参数\n";
-		 strSample +=  "      formData"+",//from参数\n";
+		  // strSample += "      "+parameter  +",//uri的参数\n";
+		  if(parameter!=""){
+	        strSample += "      " + parameter  +",//uri的参数\n";
+	       }
+		  strSample +=  "      formData"+",//from参数\n";
+		 if(hasFile == true){
+		    strSample +=  '      $("input[type=file]").files[0])'+",//file参数\n";	 
+		 }
 		 strSample +=  "function( json ){ //服务调用成功的回调函数, json为服务传回的数据\n";
 		 strSample +=  "      data = json.data; //为变量data赋值\n";
 		 strSample +=  "}.bind(this),\n";

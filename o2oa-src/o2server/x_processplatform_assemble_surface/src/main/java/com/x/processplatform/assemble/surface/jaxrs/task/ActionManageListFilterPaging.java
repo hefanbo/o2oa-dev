@@ -141,6 +141,11 @@ class ActionManageListFilterPaging extends BaseAction {
 			p = cb.and(p, cb.lessThanOrEqualTo(root.get(Task_.urgeTime),
 					DateTools.getAdjustTimeDay(null, 0, -urgeTime, 0, 0)));
 		}
+		if(BooleanUtils.isTrue(wi.getExcludeDraft())){
+			p = cb.and(p, cb.or(cb.isFalse(root.get(Task_.first)),
+					cb.isNull(root.get(Task_.first)),
+					cb.equal(root.get(Task_.workCreateType), Business.WORK_CREATE_TYPE_ASSIGN)));
+		}
 		if (StringUtils.isNoneBlank(wi.getKey())) {
 			String key = StringTools.escapeSqlLikeKey(wi.getKey());
 			p = cb.and(p, cb.like(root.get(Task_.title), "%" + key + "%", StringTools.SQL_ESCAPE_CHAR));
@@ -159,6 +164,9 @@ class ActionManageListFilterPaging extends BaseAction {
 
 		@FieldDescribe("是否查找同版本流程待办：true(默认查找)|false")
 		private Boolean relateEditionProcess = true;
+
+		@FieldDescribe("是否排除草稿待办：false(默认不排除)|true")
+		private Boolean isExcludeDraft;
 
 		@FieldDescribe("开始时间yyyy-MM-dd HH:mm:ss")
 		private String startTime;
@@ -415,6 +423,14 @@ class ActionManageListFilterPaging extends BaseAction {
 		public void setJobList(List<String> jobList) {
 			this.jobList = jobList;
 		}
+
+		public Boolean getExcludeDraft() {
+			return isExcludeDraft;
+		}
+
+		public void setExcludeDraft(Boolean excludeDraft) {
+			isExcludeDraft = excludeDraft;
+		}
 	}
 
 	public static class Wo extends Task {
@@ -422,7 +438,7 @@ class ActionManageListFilterPaging extends BaseAction {
 		private static final long serialVersionUID = 2279846765261247910L;
 
 		static WrapCopier<Task, Wo> copier = WrapCopierFactory.wo(Task.class, Wo.class,
-				JpaObject.singularAttributeField(Task.class, true, true), null);
+				JpaObject.singularAttributeField(Task.class, true, false), null);
 
 	}
 

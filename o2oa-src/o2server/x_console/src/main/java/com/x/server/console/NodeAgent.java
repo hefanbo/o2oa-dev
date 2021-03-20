@@ -23,6 +23,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import com.x.base.core.project.config.WebServers;
 import com.x.base.core.project.tools.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
@@ -92,11 +93,16 @@ public class NodeAgent extends Thread {
 		this.commandQueue = commandQueue;
 	}
 
+	private volatile boolean runFlag = true;
+
+	private ServerSocket serverSocket = null;
+
 	@Override
 	public void run() {
-		try (ServerSocket serverSocket = new ServerSocket(Config.currentNode().nodeAgentPort())) {
+		try{
+			serverSocket = new ServerSocket(Config.currentNode().nodeAgentPort());
 			Matcher matcher;
-			while (true) {
+			while (runFlag) {
 				try (Socket socket = serverSocket.accept()) {
 					try (DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 							DataInputStream dis = new DataInputStream(socket.getInputStream())) {
@@ -128,6 +134,12 @@ public class NodeAgent extends Thread {
 								fos.flush();
 							}
 							fos.close();
+							Config.flush();
+							if(syncFilePath.indexOf("web.json") > -1 || syncFilePath.indexOf("collect.json") > -1
+									|| syncFilePath.indexOf("portal.json") > -1 || syncFilePath.indexOf("person.json") > -1){
+								// 更新web服务配置信息
+								WebServers.updateWebServerConfigJson();
+							}
 							logger.info("同步完成");
 							continue;
 
@@ -261,6 +273,24 @@ public class NodeAgent extends Thread {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			if(serverSocket!=null){
+				try {
+					serverSocket.close();
+				} catch (IOException e) {
+				}
+			}
+		}
+	}
+
+	public void stopAgent(){
+		try {
+			this.runFlag = false;
+			if(serverSocket!=null) {
+				this.serverSocket.close();
+				this.serverSocket = null;
+			}
+		} catch (Exception e) {
 		}
 	}
 
@@ -355,7 +385,7 @@ public class NodeAgent extends Thread {
 						FileTools.forceMkdir(dist);
 					}
 					List<String> subs = new ArrayList<>();
-					JarTools.unjar(zipFile, subs, dist, asNew);
+					ZipTools.unZip(zipFile, subs, dist, asNew, null);
 
 					FileUtils.cleanDirectory(tempFile);
 					logger.print("upload resource {} success!", fileName);
@@ -457,65 +487,7 @@ public class NodeAgent extends Thread {
 	private void storeJar(String simpleName, byte[] bytes) throws Exception {
 		File jar = new File(Config.dir_store_jars(true), simpleName + ".jar");
 		FileUtils.writeByteArrayToFile(jar, bytes, false);
-		List<ClassInfo> classInfos = this.listModuleDependencyWith(simpleName);
-		List<String> contextPaths = new ArrayList<>();
-		for (ClassInfo info : classInfos) {
-			contextPaths.add("/" + info.getSimpleName());
-		}
 
-		if (Servers.applicationServerIsRunning()) {
-			GzipHandler gzipHandler = (GzipHandler) Servers.applicationServer.getHandler();
-			HandlerList hanlderList = (HandlerList) gzipHandler.getHandler();
-			for (Handler handler : hanlderList.getHandlers()) {
-				if (QuickStartWebApp.class.isAssignableFrom(handler.getClass())) {
-					QuickStartWebApp app = (QuickStartWebApp) handler;
-					if (contextPaths.contains(app.getContextPath())) {
-						logger.print("{} need restart because {} redeployed.", app.getDisplayName(), simpleName);
-						app.stop();
-					}
-				}
-			}
-		}
-		if (Servers.centerServerIsRunning()) {
-			GzipHandler gzipHandler = (GzipHandler) Servers.centerServer.getHandler();
-			HandlerList hanlderList = (HandlerList) gzipHandler.getHandler();
-			for (Handler handler : hanlderList.getHandlers()) {
-				if (QuickStartWebApp.class.isAssignableFrom(handler.getClass())) {
-					QuickStartWebApp app = (QuickStartWebApp) handler;
-					if (contextPaths.contains(app.getContextPath())) {
-						logger.print("{} need restart because {} redeployed.", app.getDisplayName(), simpleName);
-						app.stop();
-					}
-				}
-			}
-		}
-
-		if (Servers.applicationServerIsRunning()) {
-			GzipHandler gzipHandler = (GzipHandler) Servers.applicationServer.getHandler();
-			HandlerList hanlderList = (HandlerList) gzipHandler.getHandler();
-			for (Handler handler : hanlderList.getHandlers()) {
-				if (QuickStartWebApp.class.isAssignableFrom(handler.getClass())) {
-					QuickStartWebApp app = (QuickStartWebApp) handler;
-					if (contextPaths.contains(app.getContextPath())) {
-						logger.print("{} need restart because {} redeployed.", app.getDisplayName(), simpleName);
-						app.start();
-					}
-				}
-			}
-		}
-		if (Servers.centerServerIsRunning()) {
-			GzipHandler gzipHandler = (GzipHandler) Servers.centerServer.getHandler();
-			HandlerList hanlderList = (HandlerList) gzipHandler.getHandler();
-			for (Handler handler : hanlderList.getHandlers()) {
-				if (QuickStartWebApp.class.isAssignableFrom(handler.getClass())) {
-					QuickStartWebApp app = (QuickStartWebApp) handler;
-					if (contextPaths.contains(app.getContextPath())) {
-						logger.print("{} need restart because {} redeployed.", app.getDisplayName(), simpleName);
-						app.start();
-					}
-				}
-			}
-		}
 	}
 
 	private boolean customWarUninstall(String simpleName) throws Exception {
@@ -615,11 +587,11 @@ public class NodeAgent extends Thread {
 	private void customJar(String simpleName, byte[] bytes, boolean rebootApp) throws Exception {
 		File jar = new File(Config.dir_custom_jars(true), simpleName + ".jar");
 		FileUtils.writeByteArrayToFile(jar, bytes, false);
-		if (rebootApp) {
+		/*if (rebootApp) {
 			Servers.stopApplicationServer();
 			Thread.sleep(3000);
 			Servers.startApplicationServer();
-		}
+		}*/
 	}
 
 	private void customZip(String simpleName, byte[] bytes, boolean rebootApp) throws Exception {
@@ -632,7 +604,7 @@ public class NodeAgent extends Thread {
 		FileUtils.writeByteArrayToFile(zipFile, bytes);
 		File dist = Config.dir_custom(true);
 		List<String> subs = new ArrayList<>();
-		JarTools.unjar(zipFile, subs, dist, false);
+		ZipTools.unZip(zipFile, subs, dist, false, null);
 
 		FileUtils.cleanDirectory(tempFile);
 
