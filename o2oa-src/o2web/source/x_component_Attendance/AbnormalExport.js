@@ -43,7 +43,7 @@ MWF.xApplication.Attendance.AbnormalExport = new Class({
     },
     createYearSelectTd : function( tr ){
         var _self = this;
-        var td = new Element("td", {  "styles" : this.css.filterTableTitle, "text" : "年度"  }).inject(tr);
+        var td = new Element("td", {  "styles" : this.css.filterTableTitle, "text" : this.app.lp.annuaal }).inject(tr);
         var td = new Element("td", {  "styles" : this.css.filterTableValue }).inject(tr);
         this.yearString = new MDomItem( td, {
             "name" : "yearString",
@@ -61,7 +61,7 @@ MWF.xApplication.Attendance.AbnormalExport = new Class({
     },
     createMonthSelectTd : function( tr ){
         var _self = this;
-        var td = new Element("td", {  "styles" : this.css.filterTableTitle, "text" : "月份"  }).inject(tr);
+        var td = new Element("td", {  "styles" : this.css.filterTableTitle, "text" : this.app.lp.months }).inject(tr);
         var td = new Element("td", {  "styles" : this.css.filterTableValue }).inject(tr);
         this.monthString = new MDomItem( td, {
             "name" : "monthString",
@@ -73,7 +73,7 @@ MWF.xApplication.Attendance.AbnormalExport = new Class({
     createActionTd : function( tr ){
         var td = new Element("td", {  "styles" : this.css.filterTableValue }).inject(tr);
         var input = new Element("button",{
-            "text" : "导出",
+            "text" : this.app.lp.export,
             "styles" : this.css.filterButton
         }).inject(td);
         input.addEvent("click", function(){

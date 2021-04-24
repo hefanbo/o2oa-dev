@@ -47,7 +47,9 @@ MWF.xApplication.process.FormDesigner.Property = MWF.FCProperty = new Class({
                 if (this.htmlString){
                     this.JsonTemplate = new MWF.widget.JsonTemplate(this.data, this.htmlString);
                     this.propertyContent = new Element("div", {"styles": {"overflow": "hidden"}}).inject(this.propertyNode);
-                    this.propertyContent.set("html", this.JsonTemplate.load());
+                    var htmlStr = this.JsonTemplate.load();
+                    this.propertyContent.injectHtml(htmlStr, {"bind": {"lp": MWF.xApplication.process.FormDesigner.LP.propertyTemplate}});
+                    //this.propertyContent.set("html", );
 
                     this.setEditNodeEvent();
                     this.setEditNodeStyles(this.propertyContent);
@@ -1135,7 +1137,7 @@ debugger;
                 var htmlArea = new MWF.widget.HtmlEditorArea(node, {
                     "title": title,
                     //"maxObj": this.propertyNode.parentElement.parentElement.parentElement,
-                    "maxObj": this.designer.formContentNode,
+                    "maxObj": this.designer.formContentNode || this.designer.pageContentNode,
                     "onChange": function(){
                         this.data[name] = htmlArea.getValue();
                         this.changeData(name);

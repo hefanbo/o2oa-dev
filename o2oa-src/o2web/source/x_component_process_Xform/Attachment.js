@@ -4,6 +4,7 @@ MWF.xApplication.process.Xform.AttachmentController = new Class({
     Extends: MWF.widget.ATTER,
     "options": {
         "officeFiles": ["doc", "docx", "dotx", "dot", "xls", "xlsx", "xlsm", "xlt", "xltx", "pptx", "ppt", "pot", "potx", "potm", "pdf"],
+        "allowPreviewExtension" : ["zip","pdf", "ofd", "png", "jpg", "bmp", "jpeg", "gif", "js", "css", "java", "json", "xml", "php", "html", "htm", "xhtml", "log", "md", "txt"],
         "checkTextEnable": true
     },
     checkAttachmentDeleteAction: function () {
@@ -137,6 +138,31 @@ MWF.xApplication.process.Xform.AttachmentController = new Class({
             //         this.setActionDisabled(this.min_deleteAction);
             //     }
             // }
+        }
+    },
+    checkPreviewAttAction: function () {
+        if (!this.options.isPreviewAtt){
+            this.setActionDisabled(this.previewAttAction);
+            //this.setActionDisabled(this.min_downloadAction);
+        }else{
+            if (this.selectedAttachments.length){
+                var flag = false;
+                for (var i = 0; i < this.selectedAttachments.length; i++) {
+                    var att = this.selectedAttachments[i];
+                    if (this.options.allowPreviewExtension.contains(att.data.extension)) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if(flag){
+                    this.setActionEnabled(this.previewAttAction);
+                    //this.setActionEnabled(this.min_downloadAction);
+                }
+
+            }else{
+                this.setActionDisabled(this.previewAttAction);
+                //this.setActionDisabled(this.min_downloadAction);
+            }
         }
     },
     isAttDeleteAvailable: function (att) {
@@ -413,6 +439,7 @@ MWF.xApplication.process.Xform.AttachmentController = new Class({
         this.checkUploadAction();
         this.checkDeleteAction();
         this.checkReplaceAction();
+        this.checkPreviewAttAction();
         //this.checkOfficeAction();
         this.checkDownloadAction();
         this.checkSizeAction();
@@ -511,7 +538,9 @@ MWF.xApplication.process.Xform.AttachmentController = new Class({
         this.deleteAction = this.createAction(this.editActionsGroupNode, "delete", o2.LP.widget["delete"], function (e, node) {
             this.deleteAttachment(e, node);
         }.bind(this));
-
+        this.previewAttAction = this.createAction(this.editActionsGroupNode, "previewAtt", o2.LP.widget["previewAtt"], function (e, node) {
+            this.previewAttachment(e, node);
+        }.bind(this));
         if (!this.options.isReplaceHidden) {
             this.replaceAction = this.createAction(this.editActionsGroupNode, "replace", o2.LP.widget.replace, function (e, node) {
                 this.replaceAttachment(e, node);
@@ -1055,12 +1084,29 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
     Extends: MWF.APP$Module,
     options: {
         /**
-         * @event MWF.xApplication.process.Xform.Attachment#queryLoad
-         * @ignore
-         */
-        /**
          * @event MWF.xApplication.process.Xform.Attachment#postLoad
          * @ignore
+         */
+        /**附件组件（this.target）加载前触发。
+         * @event MWF.xApplication.process.Xform.Attachment#queryLoad
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**附件容器（this.target.attachmentController）初始化之前触发，可以通过this.event获取附件容器的选项。
+         * @event MWF.xApplication.process.Xform.Attachment#queryLoadController
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**附件容器（this.target.attachmentController）初始化之后，加载之前触发。
+         * @event MWF.xApplication.process.Xform.Attachment#loadController
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**附件容器（this.target.attachmentController）加载之后触发，但这时还未加载具体的附件。
+         * @event MWF.xApplication.process.Xform.Attachment#postLoadController
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
+         */
+        /**
+         * 附件组件（this.target）加载完成后触发。这时候附件容器和每个附件都已加载完成。
+         * @event MWF.xApplication.process.Xform.Attachment#load
+         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
          */
         /**
          * 附件上传后触发。本事件中可以通过this.event获取上传附件的数据
@@ -1078,11 +1124,6 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
          * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
          */
         /**
-         * 附件容器加载时触发。
-         * @event MWF.xApplication.process.Xform.Attachment#load
-         * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
-         */
-        /**
          * 附件有变化的时候会被触发，包括上传、删除、排序
          * @event MWF.xApplication.process.Xform.Attachment#change
          * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
@@ -1097,7 +1138,7 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
          * @event MWF.xApplication.process.Xform.Attachment#open
          * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
          */
-        "moduleEvents": ["upload", "delete", "afterDelete", "load", "change","download","open", "queryLoad "]
+        "moduleEvents": ["upload", "delete", "afterDelete", "load", "change","download","open", "queryLoad", "queryLoadController", "loadController", "postLoadController"]
     },
 
     initialize: function (node, json, form, options) {
@@ -1111,6 +1152,7 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
     _loadUserInterface: function () {
         this.node.empty();
         if (this.form.businessData.work.startTime){
+            this.fireEvent("queryLoad");
             this.loadAttachmentController();
             this.fireEvent("load");
         }
@@ -1125,7 +1167,7 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
         //MWF.require("MWF.widget.AttachmentController", function() {
         var options = {
             "style": this.json.style || "default",
-            "title": "附件区域",
+            "title": MWF.xApplication.process.Xform.LP.attachmentArea,
             "listStyle": this.json.listStyle || "icon",
             "size": this.json.size || "max",
             "resize": (this.json.resize === "y" || this.json.resize === "true"),
@@ -1134,6 +1176,7 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
             "isDelete": (this.json.isDelete === "y" || this.json.isDelete === "true"),
             "isReplace": (this.json.isReplace === "y" || this.json.isReplace === "true"),
             "isDownload": (this.json.isDownload === "y" || this.json.isDownload === "true"),
+            "isPreviewAtt": (this.json.isPreviewAtt === "y" || this.json.isPreviewAtt === "true"),
             "isSizeChange": (this.json.isSizeChange === "y" || this.json.isSizeChange === "true"),
             "readonly": (this.json.readonly === "y" || this.json.readonly === "true" || this.json.isReadonly ),
             "availableListStyles": this.json.availableListStyles ? this.json.availableListStyles : ["list", "seq", "icon", "preview"],
@@ -1150,16 +1193,24 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
         }
         //this.attachmentController = new MWF.widget.ATTER(this.node, this, options);
 
+        this.fireEvent("queryLoadController", [options]);
+
         /**
          * @summary 附件容器.
          * @member {MWF.xApplication.process.Xform.AttachmentController}
          * @example
-         * var attachmentController = this.form.get("fieldId").AttachmentController; //获取附件容器
+         * var attachmentController = this.form.get("fieldId").attachmentController; //获取附件容器
          * var attachmentList = attachmentController.attachments; //获取所有的附件
-         * var attachmentData = attachment[0].data; //获取第一个附件的数据
+         * var attachmentData = attachmentList[0].data; //获取第一个附件的数据
          */
+
         this.attachmentController = new MWF.xApplication.process.Xform.AttachmentController(this.node, this, options);
+
+        this.fireEvent("loadController");
+
         this.attachmentController.load();
+
+        this.fireEvent("postLoadController");
 
         this.form.businessData.attachmentList.each(function (att) {
             //if (att.site===this.json.id || (this.json.isOpenInOffice && this.json.officeControlName===att.site)) this.attachmentController.addAttachment(att);
@@ -1389,6 +1440,10 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
             this.close();
         }, null, null, this.form.json.confirmStyle);
     },
+    previewAttachment: function (attachments) {
+        var att = attachments[0];
+        new MWF.xApplication.process.Xform.AttachmenPreview(att,this);
+    },
     deleteAttachment: function (attachment) {
         this.fireEvent("delete", [attachment.data]);
         var id = attachment.data.id;
@@ -1568,7 +1623,7 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
                 } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.downloadAttachment) {
                     window.webkit.messageHandlers.downloadAttachment.postMessage({ "id": att.data.id, "site": (this.json.site || this.json.id) });
                 } else if (window.wx && window.__wxjs_environment === 'miniprogram' && this.checkMiniProgramFile(att.data.extension)) { //微信小程序
-                    wx.miniProgram.navigateTo({ 
+                    wx.miniProgram.navigateTo({
                         url: '../file/download?attId=' + att.data.id + '&type=work&work=' + this.form.businessData.work.id
                     });
                 } else {
@@ -1592,7 +1647,7 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
                 } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.downloadAttachment) {
                     window.webkit.messageHandlers.downloadAttachment.postMessage({ "id": att.data.id, "site": (this.json.site || this.json.id) });
                 } else if (window.wx && window.__wxjs_environment === 'miniprogram' && this.checkMiniProgramFile(att.data.extension)) { //微信小程序
-                    wx.miniProgram.navigateTo({ 
+                    wx.miniProgram.navigateTo({
                         url: '../file/download?attId=' + att.data.id + '&type=work&workCompleted=' + this.form.businessData.workCompleted.id
                     });
                 } else {
@@ -1619,7 +1674,7 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
                 } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.downloadAttachment) {
                     window.webkit.messageHandlers.downloadAttachment.postMessage({ "id": att.data.id, "site": (this.json.site || this.json.id) });
                 } else if (window.wx && window.__wxjs_environment === 'miniprogram' && this.checkMiniProgramFile(att.data.extension)) { //微信小程序
-                    wx.miniProgram.navigateTo({ 
+                    wx.miniProgram.navigateTo({
                         url: '../file/download?attId=' + att.data.id + '&type=work&work=' + this.form.businessData.work.id
                     });
                 } else {
@@ -1644,7 +1699,7 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
                 } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.downloadAttachment) {
                     window.webkit.messageHandlers.downloadAttachment.postMessage({ "id": att.data.id, "site": (this.json.site || this.json.id) });
                 } else if (window.wx && window.__wxjs_environment === 'miniprogram' && this.checkMiniProgramFile(att.data.extension)) { //微信小程序
-                    wx.miniProgram.navigateTo({ 
+                    wx.miniProgram.navigateTo({
                         url: '../file/download?attId=' + att.data.id + '&type=work&workCompleted=' + this.form.businessData.workCompleted.id
                     });
                 } else {
@@ -1875,14 +1930,280 @@ MWF.xApplication.process.Xform.Attachment = MWF.APPAttachment = new Class(
     }
 
 });
+MWF.xApplication.process.Xform.AttachmenPreview = new Class({
+    Implements: [Options, Events],
 
+    initialize : function(att,app ){
+        this.att = att;
+        this.app = app;
+        this.load();
+    },
+    load:function(){
+
+        var extension = this.att.data.extension;
+        if(extension === "ofd"){
+            //ofd预览暂时屏蔽ie，等兼容性改好了开启
+            if(Browser.name!=="ie"){
+                this.previewOfd();
+            }
+        }
+        if(extension === "zip"){
+            this.previewZip();
+        }
+        if(extension === "pdf"){
+            this.previewPdf();
+        }
+        if(["png","jpg","bmp","jpeg","gif"].contains(extension)){
+            this.previewImage();
+        }
+        if(extension === "js"){
+            this.previewAce("javascript");
+        }
+        if(extension === "css"){
+            this.previewAce("css");
+        }
+        if(extension === "java"){
+            this.previewAce("java");
+        }
+        if(extension === "json"){
+            this.previewAce("json");
+        }
+        if(extension === "xml"){
+            this.previewAce("xml");
+        }
+        if(extension === "php"){
+            this.previewAce("php");
+        }
+        if(["html","htm","xhtml"].contains(extension)){
+            this.previewAce("html");
+        }
+        if(["log","md","txt"].contains(extension)){
+            this.previewAce("text");
+        }
+    },
+    previewZip: function () {
+        debugger
+        //zip压缩包预览
+        var _self = this;
+        var zipViewNode = new Element("div",{"text":"loadding..."});
+        o2.load(["../o2_lib/jszip/jszip.min.js", "../o2_lib/jszip/jszip-utils.min.js"], function () {
+            this.app.getAttachmentUrl(this.att, function (url) {
+                o2.require("MWF.widget.Tree", function(){
+                    var dlg = o2.DL.open({
+                        "title": _self.att.data.name,
+                        "width": "660px",
+                        "height": "510px",
+                        "mask": true,
+                        "content": zipViewNode,
+                        "container": null,
+                        "positionNode": document.body,
+                        "onQueryClose": function () {
+                            zipViewNode.destroy();
+                        },
+                        "buttonList": [
+                            {
+                                "text": "关闭",
+                                "action": function () {
+                                    dlg.close();
+                                }
+                            }
+                        ],
+                        "onPostShow": function () {
+                            dlg.reCenter();
+                        },
+                        "onPostLoad" : function(){
+
+                        }
+                    });
+                }.bind(this));
+                zipViewNode.empty();
+                JSZipUtils.getBinaryContent(url, function (err, data) {
+                    JSZip.loadAsync(data).then(function (zip) {
+                        var nodeList = [];
+                        zip.forEach(function (relativePath, zipEntry) {
+                            nodeList.push(zipEntry.name);
+                        });
+                        var tree = new MWF.widget.Tree(zipViewNode, {"style":"form"});
+                        var treeData = _pathToTree(nodeList);
+                        tree.load(treeData);
+
+
+                    });
+                });
+
+            }.bind(this));
+        }.bind(this));
+        function _pathToTree(pathList) {
+            var pathJsonList = [];
+            for (var i = 0; i < pathList.length; i++) {
+                var chain = pathList[i].split("/");
+                var currentNode = pathJsonList;
+                for (var j = 0; j < chain.length; j++) {
+                    if (chain[j] === "") {
+                        break;
+                    }
+                    var wantedNode = chain[j];
+                    var lastNode = currentNode;
+                    for (var k = 0; k < currentNode.length; k++) {
+                        if (currentNode[k].name == wantedNode) {
+                            currentNode = currentNode[k].sub;
+                            break;
+                        }
+                    }
+                    if (lastNode == currentNode) {
+                        var obj = {
+                            key: pathList[i],
+                            name: wantedNode,
+                            title:wantedNode,
+                            text:wantedNode,
+                            sub: []
+                        };
+                        var newNode = (currentNode[k] = obj);
+                        if (wantedNode.indexOf(".") > -1) {
+                            obj.dir = false;
+                            obj.icon = "file.png";
+                            delete obj.sub;
+                        } else {
+                            obj.dir = true;
+                            obj.expand = false;
+                            currentNode = newNode.sub;
+                            //delete obj.sub;
+                        }
+                    } else {
+                        delete currentNode.sub;
+                    }
+                }
+            }
+            var nodes = [];
+
+            var folder = {
+                "title" : _self.att.name,
+                "text" : _self.att.name,
+                "sub" : []
+            };
+            pathJsonList.each(function(path){
+                folder.sub.push(path);
+            })
+            _sortPath(folder, nodes);
+            return nodes;
+        }
+        function _sortPath(pathJsonList, nodes) {
+            var folderList = [];
+            pathJsonList.sub.each(function (file) {
+                if (file.dir) {
+                    folderList.push(file);
+                }
+            });
+            pathJsonList.sub.each(function (file) {
+                if (!file.dir) {
+                    folderList.push(file);
+                }
+            });
+            folderList.each(function (file) {
+                var node = {
+                    text: file.name,
+                    title: file.name,
+                    expand : false
+                };
+                if (!file.dir) {
+                    node.icon = "file.png";
+                }
+                nodes.push(node);
+                if(file.sub && file.sub.length>0){
+                    node.sub = [];
+                    _sortPath(file,node.sub);
+                }
+
+            })
+        }
+    },
+    previewPdf : function(){
+        this.app.getAttachmentUrl(this.att, function (url) {
+            window.open("../o2_lib/pdfjs/web/viewer.html?file=" + url)
+        });
+    },
+    previewOfd : function(){
+        this.app.getAttachmentUrl(this.att,  function (url) {
+            window.open("../o2_lib/ofdjs/index.html?file=" + url)
+        });
+    },
+    previewImage : function(){
+        this.app.getAttachmentUrl(this.att, function (url) {
+            var imgNode = new Element("img",{"src":url,"alt":this.att.name}).inject(document.body).hide();
+            o2.loadCss("../o2_lib/viewer/viewer.css", document.body,function(){
+                o2.load("../o2_lib/viewer/viewer.js", function(){
+                    this.viewer = new Viewer(imgNode,{
+                        navbar : false,
+                        toolbar : false,
+                        hidden : function(){
+                            imgNode.destroy();
+                            this.viewer.destroy();
+                        }.bind(this)
+                    });
+                    this.viewer.show();
+                }.bind(this));
+            }.bind(this));
+        }.bind(this));
+    },
+    previewAce:function(type){
+        debugger
+        this.app.getAttachmentUrl(this.att,  function (url) {
+            o2.require("o2.widget.ace", null, false);
+            var fileRequest = new Request({
+                url: url,
+                method: 'get',
+                withCredentials: true,
+                onSuccess: function(responseText){
+                    var editorNode = new Element("div",{"style":"padding:10px"});
+                    editorNode.set("text",responseText);
+
+                    o2.widget.ace.load(function(){
+                        o2.load("../o2_lib/ace/src-min-noconflict/ext-static_highlight.js", function(){
+                            var highlight = ace.require("ace/ext/static_highlight");
+                            highlight(editorNode, {mode: "ace/mode/"+ type , theme: "ace/theme/tomorrow", "fontSize": 30,"showLineNumbers":true});
+                        }.bind(this));
+
+                    }.bind(this));
+                    var dlg = o2.DL.open({
+                        "title": this.att.data.name,
+                        "width": "960px",
+                        "height": "610px",
+                        "mask": true,
+                        "content": editorNode,
+                        "container": null,
+                        "positionNode": document.body,
+                        "onQueryClose": function () {
+                            editorNode.destroy();
+                        }.bind(this),
+                        "buttonList": [
+                            {
+                                "text": "关闭",
+                                "action": function () {
+                                    dlg.close();
+                                }.bind(this)
+                            }
+                        ],
+                        "onPostShow": function () {
+                            dlg.reCenter();
+                        }.bind(this)
+                    });
+                }.bind(this),
+                onFailure: function(){
+                    console.log('text', 'Sorry, your request failed :(');
+                }
+            });
+            fileRequest.send();
+        }.bind(this));
+
+    },
+});
 MWF.xApplication.process.Xform.AttachmentDg = MWF.APPAttachmentDg = new Class({
     Extends: MWF.APPAttachment,
     loadAttachmentController: function () {
         //MWF.require("MWF.widget.AttachmentController", function() {
         var options = {
             "style": this.json.style || "default",
-            "title": "附件区域DG",
+            "title": MWF.xApplication.process.Xform.LP.attachmentArea+"DG",
             "listStyle": this.json.listStyle || "icon",
             "size": this.json.size || "max",
             "resize": (this.json.resize === "y" || this.json.resize === "true"),

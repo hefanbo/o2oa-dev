@@ -990,7 +990,7 @@ MWFCalendarMonthView.Calendar.WholeDayWeek = new Class({
                     "padding-left" : "2px",
                     "float" : "left"
                 },
-                text : this.timeStart.format("%m-%d %H:%M") + "至" + this.timeEnd.format("%m-%d %H:%M")
+                text : this.timeStart.format("%m-%d %H:%M") + MWF.xApplication.Calendar.LP.to + this.timeEnd.format("%m-%d %H:%M")
             }).inject( node );
         }
 
@@ -1121,7 +1121,7 @@ MWFCalendarMonthView.Calendar.InOnDayDocument = new Class({
                 "padding-left" : "2px",
                 "float" : "left"
             },
-            text : this.timeStart.format("%H:%M") + "至" + this.timeEnd.format("%H:%M")
+            text : this.timeStart.format("%H:%M") + MWF.xApplication.Calendar.LP.to + this.timeEnd.format("%H:%M")
         }).inject( node );
 
         this.titleNode = new Element("div",{
@@ -1348,16 +1348,16 @@ MWFCalendarMonthView.MonthSelector = new Class({
             if ((this.year == todayY) && (idx == todayM)){
                 new Element("div", {
                     styles : _self.css.calendarMonthSelectTodayNode,
-                    text : ""+m+this.app.lp.month
+                    text : ""+m+ (MWF.language.substr(0,2) === "zh" ? this.app.lp.month : "")
                 }).inject( td );
             }else if ((this.year == thisY) && (idx == thisM)){
                 //td.setStyle("background-color", "#EEE");
                 new Element("div", {
                     styles : _self.css.calendarMonthSelectCurrentNode,
-                    text : ""+m+this.app.lp.month
+                    text : ""+m+ (MWF.language.substr(0,2) === "zh" ? this.app.lp.month : "")
                 }).inject( td );
             }else{
-                td.set("text", ""+m+this.app.lp.month);
+                td.set("text", ""+m+ (MWF.language.substr(0,2) === "zh" ? this.app.lp.month : ""));
             }
 
             td.addEvents({

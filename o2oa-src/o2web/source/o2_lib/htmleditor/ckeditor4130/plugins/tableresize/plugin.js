@@ -6,9 +6,25 @@
 ( function() {
 	var pxUnit = CKEDITOR.tools.cssLength,
 		needsIEHacks = CKEDITOR.env.ie && ( CKEDITOR.env.ie7Compat || CKEDITOR.env.quirks );
+	var thisEditor;
 
+	//var notCheckScale = (layout.userLayout && layout.userLayout.scale && layout.userLayout.scale!==1);
+	function getDomSize (el){
+		var size = el.getSize();
+		var scale = thisEditor.element.$.retrieve("scale");
+
+		if (layout && layout.userLayout && layout.userLayout.scale && layout.userLayout.scale!==1){
+			var scale = thisEditor.element.$.retrieve("scale");
+			if (scale && scale!==1){
+				size.x = size.x*scale;
+				size.y = size.y*scale;
+			}
+		}
+		return size;
+	}
 	function getWidth( el ) {
-		return CKEDITOR.env.ie ? el.$.clientWidth : parseInt( el.getComputedStyle( 'width' ), 10 );
+		return getDomSize(el.$).x;
+		//return CKEDITOR.env.ie ? el.$.clientWidth : parseInt( el.getComputedStyle( 'width' ), 10 );
 	}
 
 	function getBorderWidth( element, side ) {
@@ -34,7 +50,8 @@
 	function setPillarDimensions( nativeTableElement ) {
 		if ( nativeTableElement ) {
 			var tableElement = new CKEDITOR.dom.element( nativeTableElement );
-			return { height: tableElement.$.offsetHeight, position: tableElement.getDocumentPosition() };
+			//return { height: tableElement.$.offsetHeight, position: tableElement.getDocumentPosition() };
+			return { height: getDomSize(tableElement.$).y, position: tableElement.$.getPosition() };
 		}
 	}
 
@@ -70,22 +87,24 @@
 				// Calculate the pillar boundary positions.
 				var pillarLeft, pillarRight, pillarWidth;
 
-				var x = td.getDocumentPosition().x;
+				var x = td.$.getPosition().x;
 
 				// Calculate positions based on the current cell.
-				rtl ? pillarRight = x + getBorderWidth( td, 'left' ) : pillarLeft = x + td.$.offsetWidth - getBorderWidth( td, 'right' );
+				//rtl ? pillarRight = x + getBorderWidth( td, 'left' ) : pillarLeft = x + td.$.offsetWidth - getBorderWidth( td, 'right' );
+				rtl ? pillarRight = x + getBorderWidth( td, 'left' ) : pillarLeft = x + getDomSize(td.$).x - getBorderWidth( td, 'right' );
 
 				// Calculate positions based on the next cell, if available.
 				if ( nextTd ) {
-					x = nextTd.getDocumentPosition().x;
+					x = nextTd.$.getPosition().x;
 
-					rtl ? pillarLeft = x + nextTd.$.offsetWidth - getBorderWidth( nextTd, 'right' ) : pillarRight = x + getBorderWidth( nextTd, 'left' );
+					rtl ? pillarLeft = x + getDomSize(nextTd.$).x - getBorderWidth( nextTd, 'right' ) : pillarRight = x + getBorderWidth( nextTd, 'left' );
 				}
 				// Otherwise calculate positions based on the table (for last cell).
 				else {
-					x = table.getDocumentPosition().x;
+					x = table.$.getPosition().x;
 
-					rtl ? pillarLeft = x : pillarRight = x + table.$.offsetWidth;
+					//rtl ? pillarLeft = x : pillarRight = x + table.$.offsetWidth;
+					rtl ? pillarLeft = x : pillarRight = x + getDomSize(table.$).x;
 				}
 
 				pillarWidth = Math.max( pillarRight - pillarLeft, 3 );
@@ -242,6 +261,9 @@
 					if ( ++cellsSaved == cellsCount ) {
 						editor.fire( 'saveSnapshot' );
 					}
+
+					var module = editor.element.$.retrieve("module");
+					if (module) module.reLocationFiletextToolbar();
 				}, 0, this, [
 					leftCell, leftCell && getWidth( leftCell ),
 					rightCell, rightCell && getWidth( rightCell ),
@@ -268,14 +290,19 @@
 		}
 
 		function onMouseMove( evt ) {
-			move( evt.data.getPageOffset().x );
+			var x = evt.data.getPageOffset().x;
+			if (layout.userLayout && layout.userLayout.scale && layout.userLayout.scale!==1){
+				x = x/layout.userLayout.scale;
+			}
+
+			move( x );
 		}
 
 		document = editor.document;
 
 		resizer = CKEDITOR.dom.element.createFromHtml( '<div data-cke-temp=1 contenteditable=false unselectable=on ' +
 			'style="position:absolute;cursor:col-resize;filter:alpha(opacity=0);opacity:0;' +
-				'padding:0;background-color:#004;background-image:none;border:0px none;z-index:50000"></div>', document );
+			'padding:0;background-color:#004;background-image:none;border:0px none;z-index:50000"></div>', document );
 
 		// Clean DOM when editor is destroyed.
 		editor.on( 'destroy', function() {
@@ -308,10 +335,16 @@
 			resizerY = firstAligned.y;
 			resizerHeight = lastAligned.height + lastAligned.y - firstAligned.y;
 
+			resizerX = targetPillar.x;
+			// if (layout.userLayout && layout.userLayout.scale && layout.userLayout.scale!==1){
+			// 	resizerX = resizerX/layout.userLayout.scale;
+			// 	resizerY = resizerY/layout.userLayout.scale;
+			// }
+
 			resizer.setStyles( {
 				width: pxUnit( targetPillar.width ),
 				height: pxUnit( resizerHeight ),
-				left: pxUnit( targetPillar.x ),
+				left: pxUnit( resizerX ),
 				top: pxUnit( resizerY )
 			} );
 
@@ -330,29 +363,30 @@
 		};
 
 		move = this.move = function( posX, posY ) {
-				if ( !pillar )
-					return 0;
+			if ( !pillar )
+				return 0;
 
-				if ( !isResizing && !checkWithinDimensions( posX, posY, pillar ) ) {
-					detach();
-					return 0;
-				}
-				var resizerNewPosition = posX - Math.round( resizer.$.offsetWidth / 2 );
+			if ( !isResizing && !checkWithinDimensions( posX, posY, pillar ) ) {
+				detach();
+				return 0;
+			}
+			//var resizerNewPosition = posX - Math.round( resizer.$.offsetWidth / 2 );
+			var resizerNewPosition = posX - Math.round( getDomSize(resizer.$).x / 2 );
 
-				if ( isResizing ) {
-					if ( resizerNewPosition == leftShiftBoundary || resizerNewPosition == rightShiftBoundary )
-						return 1;
+			if ( isResizing ) {
+				if ( resizerNewPosition == leftShiftBoundary || resizerNewPosition == rightShiftBoundary )
+					return 1;
 
-					resizerNewPosition = Math.max( resizerNewPosition, leftShiftBoundary );
-					resizerNewPosition = Math.min( resizerNewPosition, rightShiftBoundary );
+				resizerNewPosition = Math.max( resizerNewPosition, leftShiftBoundary );
+				resizerNewPosition = Math.min( resizerNewPosition, rightShiftBoundary );
 
-					currentShift = resizerNewPosition - startOffset;
-				}
+				currentShift = resizerNewPosition - startOffset;
+			}
 
-				resizer.setStyle( 'left', pxUnit( resizerNewPosition ) );
+			resizer.setStyle( 'left', pxUnit( resizerNewPosition ) );
 
-				return 1;
-			};
+			return 1;
+		};
 	}
 
 	function clearPillarsCache( evt ) {
@@ -378,6 +412,7 @@
 		requires: 'tabletools',
 
 		init: function( editor ) {
+			thisEditor = editor;
 			editor.on( 'contentDom', function() {
 				var resizer,
 					editable = editor.editable();
@@ -394,10 +429,19 @@
 					if ( target.type != CKEDITOR.NODE_ELEMENT )
 						return;
 
+					var page1 = {
+						x: evt.getPageOffset().x,
+						y: evt.getPageOffset().y
+					};
+
 					var page = {
 						x: evt.getPageOffset().x,
 						y: evt.getPageOffset().y
 					};
+					if (layout.userLayout && layout.userLayout.scale && layout.userLayout.scale!==1){
+						page.x = page.x/layout.userLayout.scale;
+						page.y = page.y/layout.userLayout.scale;
+					}
 
 					// If we're already attached to a pillar, simply move the
 					// resizer.
@@ -420,14 +464,13 @@
 					if ( !editor.editable().contains( table ) ) {
 						return;
 					}
-
+					debugger;
 					if ( !( pillars = table.getCustomData( '_cke_table_pillars' ) ) ) {
 						// Cache table pillars calculation result.
 						table.setCustomData( '_cke_table_pillars', ( pillars = buildTableColumnPillars( table ) ) );
 						table.on( 'mouseout', clearPillarsCache );
 						table.on( 'mousedown', clearPillarsCache );
 					}
-
 					var pillar = getPillarAtPosition( pillars, page );
 					if ( pillar ) {
 						!resizer && ( resizer = new columnResizer( editor ) );

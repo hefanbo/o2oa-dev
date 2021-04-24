@@ -268,6 +268,42 @@ public class AttachmentAction extends StandardJaxrsAction {
 		asyncResponse.resume(ResponseFactory.getEntityTagActionResultResponse(request, result));
 	}
 
+	@JaxrsMethodDescribe(value = "下载指定附件", action = ActionDownload.class)
+	@GET
+	@Path("download/{id}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void download(@Suspended final AsyncResponse asyncResponse, @Context HttpServletRequest request,
+								 @JaxrsParameterDescribe("附件标识") @PathParam("id") String id,
+								 @JaxrsParameterDescribe("下载附件名称") @QueryParam("fileName") String fileName) {
+		ActionResult<ActionDownload.Wo> result = new ActionResult<>();
+		EffectivePerson effectivePerson = this.effectivePerson(request);
+		try {
+			result = new ActionDownload().execute(effectivePerson, id, fileName);
+		} catch (Exception e) {
+			logger.error(e, effectivePerson, request, null);
+			result.error(e);
+		}
+		asyncResponse.resume(ResponseFactory.getEntityTagActionResultResponse(request, result));
+	}
+
+	@JaxrsMethodDescribe(value = "下载指定附件,设定用stream输出", action = ActionDownloadStream.class)
+	@GET
+	@Path("download/{id}/stream")
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void downloadStream(@Suspended final AsyncResponse asyncResponse, @Context HttpServletRequest request,
+						 @JaxrsParameterDescribe("附件标识") @PathParam("id") String id,
+						 @JaxrsParameterDescribe("下载附件名称") @QueryParam("fileName") String fileName) {
+		ActionResult<ActionDownloadStream.Wo> result = new ActionResult<>();
+		EffectivePerson effectivePerson = this.effectivePerson(request);
+		try {
+			result = new ActionDownloadStream().execute(effectivePerson, id, fileName);
+		} catch (Exception e) {
+			logger.error(e, effectivePerson, request, null);
+			result.error(e);
+		}
+		asyncResponse.resume(ResponseFactory.getEntityTagActionResultResponse(request, result));
+	}
+
 	@JaxrsMethodDescribe(value = "根据Work下载附件", action = ActionDownloadWithWork.class)
 	@GET
 	@Path("download/{id}/work/{workId}")
@@ -730,6 +766,43 @@ public class AttachmentAction extends StandardJaxrsAction {
 		asyncResponse.resume(ResponseFactory.getEntityTagActionResultResponse(request, result));
 	}
 
+	@JaxrsMethodDescribe(value = "拷贝附件到指定的工作(不拷贝真实存储附件，共用附件，此接口拷贝的附件删除时只删除记录不删附件).", action = ActionCopyToWorkSoft.class)
+	@POST
+	@Path("copy/work/{workId}/soft")
+	@Produces(HttpMediaType.APPLICATION_JSON_UTF_8)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void copyToWorkSoft(@Suspended final AsyncResponse asyncResponse, @Context HttpServletRequest request,
+						   @JaxrsParameterDescribe("工作标识") @PathParam("workId") String workId, JsonElement jsonElement) {
+		ActionResult<List<ActionCopyToWorkSoft.Wo>> result = new ActionResult<>();
+		EffectivePerson effectivePerson = this.effectivePerson(request);
+		try {
+			result = new ActionCopyToWorkSoft().execute(effectivePerson, workId, jsonElement);
+		} catch (Exception e) {
+			logger.error(e, effectivePerson, request, null);
+			result.error(e);
+		}
+		asyncResponse.resume(ResponseFactory.getEntityTagActionResultResponse(request, result));
+	}
+
+	@JaxrsMethodDescribe(value = "拷贝附件到指定的工作(不拷贝真实存储附件，共用附件，此接口拷贝的附件删除时只删除记录不删附件).", action = ActionCopyToWorkCompletedSoft.class)
+	@POST
+	@Path("copy/workcompleted/{workCompletedId}/soft")
+	@Produces(HttpMediaType.APPLICATION_JSON_UTF_8)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void copyToWorkCompletedSoft(@Suspended final AsyncResponse asyncResponse, @Context HttpServletRequest request,
+									@JaxrsParameterDescribe("已完成工作标识") @PathParam("workCompletedId") String workCompletedId,
+									JsonElement jsonElement) {
+		ActionResult<List<ActionCopyToWorkCompletedSoft.Wo>> result = new ActionResult<>();
+		EffectivePerson effectivePerson = this.effectivePerson(request);
+		try {
+			result = new ActionCopyToWorkCompletedSoft().execute(effectivePerson, workCompletedId, jsonElement);
+		} catch (Exception e) {
+			logger.error(e, effectivePerson, request, null);
+			result.error(e);
+		}
+		asyncResponse.resume(ResponseFactory.getEntityTagActionResultResponse(request, result));
+	}
+
 	@JaxrsMethodDescribe(value = "更新附件.", action = ActionChangeSite.class)
 	@GET
 	@Path("{id}/work/{workId}/change/site/{site}")
@@ -1091,6 +1164,8 @@ public class AttachmentAction extends StandardJaxrsAction {
 			@JaxrsParameterDescribe("附件名称") @FormDataParam(FILENAME_FIELD) String fileName,
 			@JaxrsParameterDescribe("上传到指定用户") @FormDataParam("person") String person,
 			@JaxrsParameterDescribe("附件排序号") @FormDataParam("orderNumber") Integer orderNumber,
+			@JaxrsParameterDescribe("是否根据主工作软拷贝附件到其他工作，所有文档共享主文档的存储附件") @FormDataParam("isSoftUpload") Boolean isSoftUpload,
+			@JaxrsParameterDescribe("主工作标志(isSoftUpload为true时必填)") @FormDataParam("mainWork") String mainWork,
 			@JaxrsParameterDescribe("天印扩展字段") @FormDataParam("extraParam") String extraParam,
 			@FormDataParam(FILE_FIELD) final byte[] bytes,
 			@FormDataParam(FILE_FIELD) final FormDataContentDisposition disposition) {
@@ -1098,7 +1173,7 @@ public class AttachmentAction extends StandardJaxrsAction {
 		EffectivePerson effectivePerson = this.effectivePerson(request);
 		try {
 			result = new ActionManageBatchUpload().execute(effectivePerson, workIds, site, fileName, bytes, disposition,
-					extraParam, person, orderNumber);
+					extraParam, person, orderNumber, isSoftUpload, mainWork);
 		} catch (Exception e) {
 			logger.error(e, effectivePerson, request, null);
 			result.error(e);
@@ -1198,6 +1273,24 @@ public class AttachmentAction extends StandardJaxrsAction {
 		asyncResponse.resume(ResponseFactory.getEntityTagActionResultResponse(request, result));
 	}
 
+	@JaxrsMethodDescribe(value = "批量删除附件.", action = ActionManageBatchDelete.class)
+	@POST
+	@Path("batch/delete/manage")
+	@Produces(HttpMediaType.APPLICATION_JSON_UTF_8)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void manageBatchDelete(@Suspended final AsyncResponse asyncResponse, @Context HttpServletRequest request,
+								  JsonElement jsonElement) {
+		ActionResult<ActionManageBatchDelete.Wo> result = new ActionResult<>();
+		EffectivePerson effectivePerson = this.effectivePerson(request);
+		try {
+			result = new ActionManageBatchDelete().execute(effectivePerson, jsonElement);
+		} catch (Exception e) {
+			logger.error(e, effectivePerson, request, null);
+			result.error(e);
+		}
+		asyncResponse.resume(ResponseFactory.getEntityTagActionResultResponse(request, result));
+	}
+
 	@JaxrsMethodDescribe(value = "上传附件", action = ActionUploadWithUrl.class)
 	@POST
 	@Path("upload/with/url")
@@ -1215,4 +1308,23 @@ public class AttachmentAction extends StandardJaxrsAction {
 		}
 		asyncResponse.resume(ResponseFactory.getEntityTagActionResultResponse(request, result));
 	}
+
+	@JaxrsMethodDescribe(value = "html转图片工具类，转换后如果工作不为空通过downloadWithWork接口下载，为空downloadTransfer接口下载.", action = ActionHtmlToImage.class)
+	@POST
+	@Path("html/to/image")
+	@Produces(HttpMediaType.APPLICATION_JSON_UTF_8)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public void htmlToImage(@Suspended final AsyncResponse asyncResponse, @Context HttpServletRequest request,
+						  JsonElement jsonElement) {
+		ActionResult<ActionHtmlToImage.Wo> result = new ActionResult<>();
+		EffectivePerson effectivePerson = this.effectivePerson(request);
+		try {
+			result = new ActionHtmlToImage().execute(effectivePerson, jsonElement);
+		} catch (Exception e) {
+			logger.error(e, effectivePerson, request, null);
+			result.error(e);
+		}
+		asyncResponse.resume(ResponseFactory.getEntityTagActionResultResponse(request, result));
+	}
+
 }

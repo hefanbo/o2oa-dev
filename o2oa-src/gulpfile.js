@@ -46,13 +46,13 @@ var protocol = "https";
 var commonUrl = "/o2oa/evn-o2server-commons/-/archive/master/evn-o2server-commons-master.tar.gz?path=commons";
 var jvmUrls = {
     "all": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm",
-    "linux": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/linux",
-    "aix": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/aix",
-    "arm": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/arm",
-    "macos": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/macos",
-    "risc": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/risc",
-    "raspi": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/raspi",
-    "windows": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/windows"
+    "linux_java11": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/linux_java11",
+    "aix_java11": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/aix_java11",
+    "arm_java11": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/arm_java11",
+    "macos_java11": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/macos_java11",
+    "risc_java11": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/risc_java11",
+    "raspi_java11": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/raspi_java11",
+    "windows_java11": "/o2oa/evn-o2server-jvm/-/archive/master/evn-o2server-jvm-master.tar.gz?path=jvm/windows_java11"
 };
 
 var scripts = {
@@ -797,6 +797,7 @@ function build_concat_baseportal_action(){
     return gulp.src([
         "o2web/source/o2_core/o2/xAction/services/x_organization_assemble_authentication.json",
         "o2web/source/o2_core/o2/xAction/services/x_portal_assemble_surface.json",
+        "o2web/source/o2_core/o2/xAction/services/x_processplatform_assemble_surface.json",
         "o2web/source/o2_core/o2/xAction/services/x_organization_assemble_control.json",
         "o2web/source/o2_core/o2/xAction/services/x_query_assemble_surface.json",
         "o2web/source/o2_core/o2/xAction/services/x_cms_assemble_control.json",
@@ -863,6 +864,7 @@ function build_concat_baseportal_body() {
         'o2web/source/o2_core/o2/xScript/PageEnvironment.js',
 
         'o2web/source/o2_core/o2/xAction/services/x_organization_assemble_authentication.js',
+        'o2web/source/o2_core/o2/xAction/services/x_processplatform_assemble_surface.js',
         'o2web/source/o2_core/o2/xAction/services/x_cms_assemble_control.js',
         'o2web/source/o2_core/o2/xAction/services/x_organization_assemble_control.js',
         'o2web/source/o2_core/o2/xAction/services/x_query_assemble_surface.js',

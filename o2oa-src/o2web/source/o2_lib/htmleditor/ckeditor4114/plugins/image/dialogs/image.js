@@ -274,6 +274,7 @@
                                         "parameter": {"reference" : d.config.reference, "referencetype": d.config.referenceType, "scale" : 800 },
                                         "action": action,
                                         "method": "uploadImageByScale",
+                                        "accept": "image/*",
                                         "onEvery": function(json){
                                             var id = json.data ? json.data.id : json.id;
                                             var src = MWF.xDesktop.getImageSrc( id );
@@ -355,6 +356,7 @@
                 }, {
                     type: "hbox",
                     widths: ["100%"],
+                    hidden: !d.config.base64Encode,
                     children: [{
                         id: "base64enable",
                         type: "checkbox",

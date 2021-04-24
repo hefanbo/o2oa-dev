@@ -30,13 +30,15 @@ public class ThisApplication {
 
 	public static final DingdingConsumeQueue dingdingConsumeQueue = new DingdingConsumeQueue();
 
-	public static final EmailNotificationConsumeQueue emailNotificationConsumeQueue = new EmailNotificationConsumeQueue();
-
 	public static final WeLinkConsumeQueue weLinkConsumeQueue = new WeLinkConsumeQueue();
 
 	public static final PmsInnerConsumeQueue pmsInnerConsumeQueue = new PmsInnerConsumeQueue();
 
 	public static final MQConsumeQueue mqConsumeQueue = new MQConsumeQueue();
+
+	public static final MPWeixinConsumeQueue mpWeixinConsumeQueue = new MPWeixinConsumeQueue();
+
+	public static final EmailNotificationConsumeQueue emailNotificationConsumeQueue = new EmailNotificationConsumeQueue();
 
 	public static Context context() {
 		return context;
@@ -82,9 +84,6 @@ public class ThisApplication {
 		if (Config.dingding().getEnable() && Config.dingding().getMessageEnable()) {
 			context().startQueue(dingdingConsumeQueue);
 		}
-		if (Config.emailNotification().getEnable()) {
-			context().startQueue(emailNotificationConsumeQueue);
-		}
 		if (BooleanUtils.isTrue(Config.pushConfig().getEnable())) {
 			context().startQueue(pmsInnerConsumeQueue);
 		}
@@ -94,6 +93,12 @@ public class ThisApplication {
 
 		if (BooleanUtils.isTrue(Config.mq().getEnable())) {
 			context().startQueue(mqConsumeQueue);
+		}
+		if (BooleanUtils.isTrue(Config.mPweixin().getEnable()) && BooleanUtils.isTrue(Config.mPweixin().getMessageEnable())) {
+			context().startQueue(mpWeixinConsumeQueue);
+		}
+		if (Config.emailNotification().getEnable()) {
+			context().startQueue(emailNotificationConsumeQueue);
 		}
 	}
 

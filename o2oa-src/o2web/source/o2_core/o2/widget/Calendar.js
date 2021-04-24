@@ -14,6 +14,8 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		"before": null,
 		"after": null,
 		"timeOnly": false,
+		"yearOnly" : false,
+		"monthOnly": false,
 		"defaultDate": new Date(),
 
 		"beforeCurrent": true,
@@ -185,7 +187,13 @@ o2.widget.Calendar = o2.Calendar = new Class({
 				this.changeViewToYear();
 				break;
 			case "year" :
-				this.changeViewToDay();
+				if( this.options.yearOnly ){
+					break;
+				}else if( this.options.monthOnly ){
+					this.changeViewToMonth();
+				}else{
+					this.changeViewToDay();
+				}
 				break;
 			case "time" :
 				this.changeViewToDay();
@@ -258,7 +266,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 	showMonthYearButton : function(){
 		if( this.buttonArea && !this.clearButton_month ){
 			this.container.setStyle("height","auto");
-			this.clearButton_month = new Element("div", {"text": "清除"}).inject(this.buttonArea);
+			this.clearButton_month = new Element("div", {"text": o2.LP.widget.clear }).inject(this.buttonArea);
 			this.clearButton_month.addEvent("click", function(){
 				var t = this.node.get("value");
 				this.node.set("value", "");
@@ -401,10 +409,15 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		if(this.visible) {
 			var elementCoords = this.container.getCoordinates();
 			var targetCoords  = this.node.getCoordinates();
-			if(((e.page.x < elementCoords.left || e.page.x > (elementCoords.left + elementCoords.width)) ||
-				(e.page.y < elementCoords.top || e.page.y > (elementCoords.top + elementCoords.height))) &&
-				((e.page.x < targetCoords.left || e.page.x > (targetCoords.left + targetCoords.width)) ||
-				(e.page.y < targetCoords.top || e.page.y > (targetCoords.top + targetCoords.height))) ) this.hide();
+			var page = e.page;
+			if (layout.userLayout && layout.userLayout.scale && layout.userLayout.scale!==1){
+				page.x = page.x/layout.userLayout.scale;
+				page.y = page.y/layout.userLayout.scale;
+			}
+			if(((page.x < elementCoords.left || page.x > (elementCoords.left + elementCoords.width)) ||
+				(page.y < elementCoords.top || page.y > (elementCoords.top + elementCoords.height))) &&
+				((page.x < targetCoords.left || page.x > (targetCoords.left + targetCoords.width)) ||
+				(page.y < targetCoords.top || page.y > (targetCoords.top + targetCoords.height))) ) this.hide();
 		}
 	},
 
@@ -431,7 +444,6 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		}
 	},
 	show: function(){
-		;
 		if (!this.visible){
 			var dStr = this.node.get("value");
 			if (dStr && Date.isValid(dStr)){
@@ -453,7 +465,11 @@ o2.widget.Calendar = o2.Calendar = new Class({
 					this.changeViewToMonth();
 					break;
 				case "year" :
-					this.showYear();
+					if( this.options.yearOnly ){
+						this.changeViewToYear()
+					}else{
+						this.showYear();
+					}
 					break;
 				case "time" :
 					//this.showTime(this.options.baseDate);
@@ -469,7 +485,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 //			}
 			this.container.setStyle("display", "block");
 
-			if (this.container.position ){
+			if (this.container.position && (!layout || !layout.userLayout || !layout.userLayout.scale || !layout.userLayout.scale===1) ){
 				this.container.position({
 					relativeTo: this.node,
 					position: 'bottomLeft',
@@ -638,7 +654,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		var thisMonth = (month!=undefined) ? month : this.options.baseDate.getMonth();
 		thisMonth++;
 
-		var text = thisYear+"年"+thisMonth+"月";
+		var text = thisYear+ o2.LP.widget.year +thisMonth+ o2.LP.widget.month;
 		var thisNode = node || this.currentTextNode;
 		thisNode.set("text", text);
 
@@ -762,7 +778,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		var y = thisDate.getFullYear();
 		var m = thisDate.getMonth()+1;
 		var d = thisDate.getDate();
-		var text = "" + y + "年" + m + "月" + d + "日";
+		var text = "" + y + o2.LP.widget.year + m + o2.LP.widget.month + d + o2.LP.widget.date;
 
 		if (this.options.timeOnly){
 			thisNode.hide();
@@ -864,7 +880,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		}
 
 		if (!this.okButton){
-			this.okButton = new Element("button", {"text": "确定"}).inject(this.showActionNode);
+			this.okButton = new Element("button", {"text": o2.LP.widget.ok }).inject(this.showActionNode);
 			this.okButton.addEvent("click", function(){
 				this._selectTime();
 				this.hide();
@@ -873,7 +889,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		}
 
 		if (!this.clearButton){
-			this.clearButton = new Element("button", {"text": "清除"}).inject(this.showActionNode);
+			this.clearButton = new Element("button", {"text": o2.LP.widget.clear }).inject(this.showActionNode);
 			this.clearButton.addEvent("click", function(){
 				var t = this.node.get("value");
 				this.node.set("value", "");
@@ -996,7 +1012,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		}
 
 		if (!this.okButton){
-			this.okButton = new Element("button", {"text": "确定"}).inject(this.showActionNode);
+			this.okButton = new Element("button", {"text": o2.LP.widget.ok}).inject(this.showActionNode);
 			this.okButton.addEvent("click", function(){
 				this._selectTime();
 				this.hide();
@@ -1005,7 +1021,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		}
 
 		if (!this.clearButton){
-			this.clearButton = new Element("button", {"text": "清除"}).inject(this.showActionNode);
+			this.clearButton = new Element("button", {"text": o2.LP.widget.clear }).inject(this.showActionNode);
 			this.clearButton.addEvent("click", function(){
 				var t = this.node.get("value");
 				this.node.set("value", "");
@@ -1041,7 +1057,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		if (!this.options.beforeCurrent){
 			var now = new Date();
 			if (date.getTime()-now.getTime()<0){
-				alert("选择的日期必须大于当前日期!");
+				alert( o2.LP.widget.dateGreaterThanCurrentNotice );
 				this.node.focus();
 				return false;
 			}
@@ -1062,6 +1078,11 @@ o2.widget.Calendar = o2.Calendar = new Class({
 		}
 	},
 	_selectDate: function(dateStr){
+		if( this.options.yearOnly ){
+			dateStr = dateStr+"-1-1"
+		}else if( this.options.monthOnly ){
+			dateStr = dateStr+"-1"
+		}
 		var date = new Date(dateStr);
 		this.options.baseDate = date;
 		var dv = date.format(this.options.format);
@@ -1072,7 +1093,7 @@ o2.widget.Calendar = o2.Calendar = new Class({
 				var now = new Date();
 				date.setHours(23,59,59);
 				if (date.getTime()-now.getTime()<0){
-					alert("选择的日期必须大于当前日期!");
+					alert( o2.LP.widget.dateGreaterThanCurrentNotice );
 					this.node.focus();
 					return false;
 				}
@@ -1164,10 +1185,18 @@ o2.widget.Calendar = o2.Calendar = new Class({
 						break;
 					case "month" :
 						debugger;
-						calendar.changeViewToDay(this.retrieve("year"), this.retrieve("month"));
+						if( calendar.options.monthOnly ){
+							calendar._selectDate(this.retrieve("year")+"-"+( this.retrieve("month").toInt() + 1 ), this);
+						}else{
+							calendar.changeViewToDay(this.retrieve("year"), this.retrieve("month"));
+						}
 						break;
 					case "year" :
-						calendar.changeViewToMonth(this.retrieve("year"));
+						if( calendar.options.yearOnly ){
+							calendar._selectDate(this.retrieve("year"), this);
+						}else{
+							calendar.changeViewToMonth(this.retrieve("year"));
+						}
 						break;
 					case "time" :
 						//nothing

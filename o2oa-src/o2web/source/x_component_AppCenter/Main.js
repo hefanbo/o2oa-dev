@@ -597,23 +597,34 @@ MWF.xApplication.AppCenter.Exporter = new Class({
         // //this.processArea = new Element("div", {"styles": this.css.moduleSetupListAreaNode}).inject(this.contentNode);
         //
         // this.listAreaNode = new Element("div").inject(this.contentAreaNode);
-        this.processAreaTitle = new Element("div", {"styles": this.css.moduleSetupListAreaTitleNode, "text": this.lp.process}).inject(this.contentAreaNode);
-        this.processAreaContent = new Element("div", {"styles": this.css.moduleSetupListAreaContentNode}).inject(this.contentAreaNode);
+        this.processAreaTitle = new Element("div.moduleSetupListAreaTitle", {"styles": this.css.moduleSetupListAreaTitleNode, "text": this.lp.process}).inject(this.contentAreaNode);
+        this.processAreaContent = new Element("div.", {"styles": this.css.moduleSetupListAreaContentNode}).inject(this.contentAreaNode);
 
-        this.portalAreaTitle = new Element("div", {"styles": this.css.moduleSetupListAreaTitleNode, "text": this.lp.portal}).inject(this.contentAreaNode);
+        this.portalAreaTitle = new Element("div.moduleSetupListAreaTitle", {"styles": this.css.moduleSetupListAreaTitleNode, "text": this.lp.portal}).inject(this.contentAreaNode);
         this.portalAreaContent = new Element("div", {"styles": this.css.moduleSetupListAreaContentNode}).inject(this.contentAreaNode);
 
-        this.cmsAreaTitle = new Element("div", {"styles": this.css.moduleSetupListAreaTitleNode, "text": this.lp.cms}).inject(this.contentAreaNode);
+        this.cmsAreaTitle = new Element("div.moduleSetupListAreaTitle", {"styles": this.css.moduleSetupListAreaTitleNode, "text": this.lp.cms}).inject(this.contentAreaNode);
         this.cmsAreaContent = new Element("div", {"styles": this.css.moduleSetupListAreaContentNode}).inject(this.contentAreaNode);
 
-        this.queryAreaTitle = new Element("div", {"styles": this.css.moduleSetupListAreaTitleNode, "text": this.lp.query}).inject(this.contentAreaNode);
+        this.queryAreaTitle = new Element("div.moduleSetupListAreaTitle", {"styles": this.css.moduleSetupListAreaTitleNode, "text": this.lp.query}).inject(this.contentAreaNode);
         this.queryAreaContent = new Element("div", {"styles": this.css.moduleSetupListAreaContentNode}).inject(this.contentAreaNode);
 
 
-        this.serviceAreaTitle = new Element("div", {"styles": this.css.moduleSetupListAreaTitleNode, "text": this.lp.service}).inject(this.contentAreaNode);
+        this.serviceAreaTitle = new Element("div.moduleSetupListAreaTitle", {"styles": this.css.moduleSetupListAreaTitleNode, "text": this.lp.service}).inject(this.contentAreaNode);
         this.serviceAreaContent = new Element("div", {"styles": this.css.moduleSetupListAreaContentNode}).inject(this.contentAreaNode);
 
-
+        this.contentAreaNode.getElements(".moduleSetupListAreaTitle").each(function (node){
+            var spanNode = new Element("span",{"text":"︽","style":"float:right;font-size:16px;padding-right:15px;cursor:pointer"}).inject(node);
+            spanNode.addEvent("click",function (){
+                if(spanNode.get("text") === "︽"){
+                    node.getNext().hide();
+                    spanNode.set("text","︾");
+                }else {
+                    node.getNext().show();
+                    spanNode.set("text","︽");
+                }
+            }.bind(this));
+        }.bind(this));
 
     },
     loadProcessList: function(){
@@ -970,11 +981,11 @@ MWF.xApplication.AppCenter.Exporter.QueryElement = new Class({
                 selectData.tableList.length===this.data.tableList.length &&
                 selectData.revealList.length===this.data.revealList.length){
                 selectData =  {
-                    "viewList": this.data.viewList,
-                    "statList": this.data.statList,
-                    "revealList": this.data.revealList,
-                    "statementList": this.data.statementList,
-                    "tableList": this.data.tableList
+                    "viewList": [],
+                    "statList": [],
+                    "revealList": [],
+                    "statementList": [],
+                    "tableList": []
                 };
             }else{
                 selectData =  {
@@ -1041,7 +1052,7 @@ MWF.xApplication.AppCenter.Exporter.ServiceElement = new Class({
     selectAll: function(){
         var selectData = this.postData;
         if (selectData.agentList.length  || selectData.invokeList.length){
-            if (selectData.agentList.length===this.data.invokeList.length ){
+            if (selectData.agentList.length===this.data.agentList.length  || selectData.invokeList.length===this.data.invokeList.length){
                 selectData =  {
                     "agentList": [],
                     "invokeList": []
@@ -1347,8 +1358,8 @@ MWF.xApplication.AppCenter.Exporter.Element.QuerySelector = new Class({
         this.selectData.viewList = this.getCheckedList(this.listViewContent);
         this.selectData.statList = this.getCheckedList(this.listStatContent);
         this.selectData.revealList = this.getCheckedList(this.listRevealContent);
-        this.selectData.statementList = this.getCheckedList(this.listTableContent);
-        this.selectData.tableList = this.getCheckedList(this.listStatementContent);
+        this.selectData.statementList = this.getCheckedList(this.listStatementContent);
+        this.selectData.tableList = this.getCheckedList(this.listTableContent);
         this.element.checkSelect(this.selectData);
         this.hide();
     },
@@ -1572,7 +1583,7 @@ MWF.xApplication.AppCenter.Module.SetupLocal = new Class({
     loadCompare: function(){
         var formData = new FormData();
         formData.append('file', this.file);
-debugger;
+        debugger;
         this.app.actions.compareUpload(formData, this.file, function(json){
             this.clearLoading();
             this.setupData.flag = json.data.flag;

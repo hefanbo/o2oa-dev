@@ -62,9 +62,12 @@
  * <b>textValue</b> ：文本。<br/>
  * <b>numberValue</b> ：数字。<br/>
  * <b>dateTimeValue</b> ：日期时间。<br/>
+ * <b>dateValue</b> ：仅日期。<br/>
+ * <b>timeValue</b> ：仅时间。<br/>
  * <b>booleanValue</b> ：布尔值。<br/>
  * </div>
- * @property {(String|Number|Boolean)} value - 过滤的值，根据formatType提供匹配的数据类型的值，如果是dateTimeValue数据类型，则提供日期格式的字符串，格式如“YYYY-MM-DD HH:MM:SS”。
+ * @property {(String|Number|Boolean)} value - 过滤的值，根据formatType提供匹配的数据类型的值。如果是dateTimeValue数据类型，则提供日期格式的字符串，格式如“YYYY-MM-DD HH:MM:SS”。
+ * 如果是dateValue数据类型，则提供日期格式的字符串，格式如“YYYY-MM-DD”。如果是timeValue数据类型，则提供时间格式的字符串，格式如“HH:MM:SS”。
  * @example
  *{
  *    "path":"o.title",
@@ -2846,7 +2849,8 @@ MWF.xScript.ViewEnvironment = function (ev) {
          *       }
          *   ]
          *}, function(data){
-         *   var result = data.grid; //得到过滤后的数据
+         *   var grid = data.grid; //得到过滤后的数据
+         *   var groupGrid = data.groupGrid; //如果有分类，得到带分类的数据
          *   //......
          *});
          * @example
@@ -2873,13 +2877,14 @@ MWF.xScript.ViewEnvironment = function (ev) {
          *       },
          *   ]
          *}, function(data){
-         *   var result = data.grid; //得到过滤后的数据
+         *   var grid = data.grid; //得到过滤后的数据
+         *   var groupGrid = data.groupGrid; //如果有分类，得到带分类的数据
          *   //......
          *});
          */
         "lookup": function (view, callback, async) {
             var filterList = { "filterList": (view.filter || null) };
-            MWF.Actions.get("x_query_assemble_surface").loadView(view.view, view.application, filterList, function (json) {
+            MWF.Actions.load("x_query_assemble_surface").ViewAction.executeWithQuery(view.view, view.application, filterList, function (json) {
                 var data = {
                     "grid": json.data.grid || json.data.groupGrid,
                     "groupGrid": json.data.groupGrid
@@ -3423,7 +3428,7 @@ MWF.xScript.ViewEnvironment = function (ev) {
      */
 
     /**
-     * 当查询视图被嵌入到门户页面、流程表单或内容管理表单的时候，可以通过这个方法来获取页面或表单的上下文。
+     * 当查询视图被嵌入到门户页面、流程表单或内容管理表单的时候，可以在查询视图写脚本的地方通过这个方法来获取页面或表单的上下文。
      * @method getParentEnvironment
      * @memberOf module:queryStatement
      * @static
@@ -3566,7 +3571,7 @@ MWF.xScript.ViewEnvironment = function (ev) {
      */
     this.page = this.form = this.queryView = this.queryStatement = {
         /**
-         * 当视图被嵌入到门户页面、流程表单或内容管理表单的时候，可以通过这个方法来获取页面或表单的上下文。
+         * 当视图被嵌入到门户页面、流程表单或内容管理表单的时候，可以在视图可以写脚本的地方中通过这个方法来获取页面或表单的上下文。
          * @method getParentEnvironment
          * @static
          * @return {MWF.xScript.Environment|MWF.xScript.CMSEnvironment} 页面或表单的上下文.

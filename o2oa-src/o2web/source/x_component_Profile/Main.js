@@ -71,7 +71,7 @@ MWF.xApplication.Profile.Main = new Class({
                     this.getSiblings().map(function(otabNode) {
 
                         otabNode.getChildren().removeClass("mainColor_color");
-                    })
+                    });
 
                 }.bind(tabNode));
             }.bind(this));
@@ -130,6 +130,14 @@ MWF.xApplication.Profile.Main = new Class({
         }).addEvent("blur",function(){
             this.removeClass("mainColor_border mainColor_color");
         });
+
+        this.languageSelectNode = this.tab.pages[0].contentNode.getElement("select");
+        this.languageSelectNode.empty();
+        if (!this.personData.language) this.personData.language = "zh-cn";
+        Object.keys(this.lp.lps).each(function(key){
+            var option = new Element("option", {"value": key, "text": this.lp.lps[key]}).inject(this.languageSelectNode);
+            if (this.personData.language === key) option.set("selected", true);
+        }.bind(this));
 
         this.content.getElement(".o2_profile_saveInforAction").addEvent("click", function(){
             this.savePersonInfor();
@@ -317,7 +325,7 @@ MWF.xApplication.Profile.Main = new Class({
                 "startTime" : null,
                 "endTime" : null,
                 "isWholeday" : false,
-                "title" : "新建外出授权",
+                "title" : this.lp.createEmpower,
                 "defaultCalendarId" : ""
             }, {
                 app: this,
@@ -451,7 +459,7 @@ MWF.xApplication.Profile.Main = new Class({
         if(!this[type+"NoDataDiv"]){
             this[type+"NoDataDiv"] = new Element("div.o2_profile_emPower_noData").adopt(
                 new Element("img",{src:"../x_component_Profile/$Main/newVersion/icon_wuweituo.png"}),
-                new Element("div",{text:"无待办"})
+                new Element("div",{text: this.lp.noTask })
             ).inject(content.getElement(".profile_common_tableDiv"));
         }
         if(content.getElements("tr").length==1){
@@ -512,7 +520,7 @@ MWF.xApplication.Profile.Main = new Class({
 
 
         if(type=="myEmPower"){
-            th.adopt(new Element("th",{width:"25%"}).adopt(new Element("div",{text:"操作"})));
+            th.adopt(new Element("th",{width:"25%"}).adopt(new Element("div",{text: this.lp.action })));
         }
         this.emPowerTable.adopt(th);
         data.forEach(function(item){
@@ -636,7 +644,7 @@ MWF.xApplication.Profile.Main = new Class({
             this[type+"NoDataDiv"] = new Element("div.o2_profile_emPower_noData").adopt(
                 new Element("img",{src:"../x_component_Profile/$Main/newVersion/icon_wuweituo.png"}),
                 new Element("div",{text:this.lp.empower.noData}),
-                type=="myEmPower"?new Element("div.o2_profile_emPower_Add.mainColor_color",{text:"新建委托"}).addEvent("click",function(){
+                type=="myEmPower"?new Element("div.o2_profile_emPower_Add.mainColor_color",{text: this.lp.createAuthorize }).addEvent("click",function(){
                     var popForm = new MWF.xApplication.Profile.emPowerPopupForm(null, {}, {
                         "style": "empower",
                         "width": "550",
@@ -652,7 +660,7 @@ MWF.xApplication.Profile.Main = new Class({
                         "startTime" : null,
                         "endTime" : null,
                         "isWholeday" : false,
-                        "title" : "新建外出授权",
+                        "title" : this.lp.createEmpower,
                         "defaultCalendarId" : ""
                     }, {
                         app: this,
@@ -840,6 +848,8 @@ MWF.xApplication.Profile.Main = new Class({
         this.personData.qq = this.qqInputNode.get("value");
         this.personData.ipAddress = this.ipAddressInputNode.get("value");
         this.personData.signature = this.signatureInputNode.get("value");
+        this.personData.language = this.languageSelectNode.options[this.languageSelectNode.selectedIndex].value;
+
         this.action.updatePerson(this.personData, function(){
             this.notice(this.lp.saveInforOk, "success");
         }.bind(this));

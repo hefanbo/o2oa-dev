@@ -65,18 +65,18 @@ MWF.xApplication.ForumDocument.Vote = new Class({
             var now = new Date();
             var end = new Date( this.data.voteLimitTime.replace(/-/g,"/") );
             if( now < end ){
-                dateStr = "，距结束还有" + this.diffTime( now , end ) + "";
+                dateStr = this.lp.timeToEndText.replace("{time}",this.diffTime( now , end ));
             }else{
                 overTime = true;
-                dateStr = "，投票已经结束"
+                dateStr = this.lp.voteCompleteText
             }
         }
 
         var personStr = "";
         if( this.data.voteUserCount || this.data.voteCount ){
-            personStr = "，目前已有"+ this.data.voteUserCount || this.data.voteCount +"人参与"
+            personStr = this.lp.votedPersonCountText.replace("{count}", (this.data.voteUserCount || this.data.voteCount) )
         }else{
-            personStr = "，目前还没有人参与"
+            personStr = this.lp.noPersonVoteText
         }
 
         var inforNode = new Element("div", {
@@ -117,7 +117,7 @@ MWF.xApplication.ForumDocument.Vote = new Class({
             if( !this.data.voteResultVisible && this.data.creatorName != this.userName){
                 new Element("div",{
                     "styles" : { "margin-bottom" : "5px" },
-                    "text" : "此为不公开投票，只有发帖人能看到投票结果"
+                    "text" : this.lp.privateVoteText
                 }).inject( this.container );
             }
         }
@@ -128,7 +128,7 @@ MWF.xApplication.ForumDocument.Vote = new Class({
                 var button = new Element( "input", {
                     "type" : "button",
                     styles : this.css.submitButton,
-                    value : "提交"
+                    value : this.lp.submit
                 }).inject( bottomContainer );
                 button.addEvent("click", function(){
                     this.submitVote();
@@ -144,23 +144,24 @@ MWF.xApplication.ForumDocument.Vote = new Class({
                 if( this.data.votePersonVisible ){
                     new Element("span", {
                         styles : { "margin-left" : "10px" },
-                        text : "(此为公开投票，其他人可以看到您的投票项目)"
+                        text : this.lp.publicVoteText
                     }).inject( bottomContainer )
                 }else{
                     new Element("span", {
                         styles : { "margin-left" : "10px" },
-                        text : "(此为匿名投票，他人无法查看您的投票项目)"
+                        text : this.lp.anonymousVoteText
                     }).inject( bottomContainer )
                 }
             }
         }else{
             new Element("span",{
-                "text" : "您已经投过票，谢谢您的参与"
+                "text" : this.lp.youAreVoted
             }).inject( this.container );
         }
 
     },
     createGroupVoted : function(data, idx){
+        var _self = this;
         var bgColor = this.getRandomColor();
         var maxWidth = "800";
         var sum = 0;
@@ -168,7 +169,7 @@ MWF.xApplication.ForumDocument.Vote = new Class({
         var contentUsePicture = false;
         data.voteOptions.each( function(opt){
             sum += parseInt( opt.chooseCount );
-            if( opt.optionContentType == "图片" ){
+            if( opt.optionContentType == _self.lp.picture ){
                 contentUsePicture = true;
             }
         });
@@ -177,7 +178,8 @@ MWF.xApplication.ForumDocument.Vote = new Class({
                 styles : this.css.groupTitle
             }).inject( this.groupContainer );
 
-            var str = parseInt( data.voteChooseCount ) > 1 ? "多选（最多可选" + data.voteChooseCount + "项）：" : "单选：";
+
+            var str = parseInt( data.voteChooseCount ) > 1 ? this.lp.multiSelectText.replace("{n}", data.voteChooseCount) : this.lp.singleSelectText;
             new Element( "span", { styles : this.css.groupSubject , text : str }).inject( groupTitle );
             new Element( "span", { styles : this.css.groupSubject , text : data.groupName } ).inject( groupTitle );
 
@@ -316,13 +318,13 @@ MWF.xApplication.ForumDocument.Vote = new Class({
             styles : this.css.groupTitle
         }).inject( this.groupContainer );
 
-        var str = parseInt(data.voteChooseCount) > 1 ? "多选（最多可选" + data.voteChooseCount + "项）：" : "单选：";
+        var str = parseInt(data.voteChooseCount) > 1 ? this.lp.multiSelectText.replace("{n}", data.voteChooseCount) : this.lp.singleSelectText;
         new Element( "span", { styles : this.css.groupSubject , text : str }).inject( groupTitle );
         new Element( "span", { styles : this.css.groupSubject , text : data.groupName } ).inject( groupTitle );
 
         var contentUsePicture = false;
         for( var i=0; i<data.voteOptions.length; i++ ){
-            if( data.voteOptions[i].optionContentType == "图片" ){
+            if( data.voteOptions[i].optionContentType === this.lp.picture ){
                 contentUsePicture = true;
                 break;
             }
@@ -456,10 +458,10 @@ MWF.xApplication.ForumDocument.Vote = new Class({
     loadContent_edit : function(){
         var html = "<table width='100%' bordr='0' cellpadding='5' cellspacing='0' style='margin-top:15px;'>" +
             "<tr>" +
-            "   <td styles='formTableTitleRight'  lable='voteLimitTime' width='7%'></td>" +
+            "   <td styles='formTableTitleRight'  lable='voteLimitTime' width='13%'></td>" +
             "   <td styles='formTableValue' item='voteLimitTime' width='20%'></td>" +
             "   <td styles='formTableTitleRight' lable='voteResultVisible' width='16%'></td>" +
-            "   <td styles='formTableValue' item='voteResultVisible' width='20%'></td>" +
+            "   <td styles='formTableValue' item='voteResultVisible' width='14%'></td>" +
             "   <td styles='formTableTitleRight' lable='votePersonVisible' width='16%'></td>" +
             "   <td styles='formTableValue' item='votePersonVisible' width='20%'></td>" +
             "</tr>"+
@@ -505,7 +507,7 @@ MWF.xApplication.ForumDocument.Vote = new Class({
         var contentUsePicture = false;
         if( data.voteOptions ){
             for( var i=0; i<data.voteOptions.length; i++ ){
-                if( data.voteOptions[i].optionContentType == "图片" ){
+                if( data.voteOptions[i].optionContentType === this.lp.picture ){
                     contentUsePicture = true;
                     break;
                 }
@@ -586,7 +588,7 @@ MWF.xApplication.ForumDocument.Vote = new Class({
                         }
                     },
                     voteChooseCount : {text: this.lp.voteCountLimit, defaultValue : 1,  className : "inputTextNoWidth", tType : "number", style : { width : "30px" } },
-                    voteContentType : { type : "checkbox", defaultValue : contentUsePicture ? "true" : "",  selectValue: ["true"], selectText : ["上传图片"], event : {
+                    voteContentType : { type : "checkbox", defaultValue : contentUsePicture ? "true" : "",  selectValue: ["true"], selectText : [ this.lp.uploadPicture ], event : {
                         change : function( item, ev ){ this.obj.setPicture( item.getValue(), this.grid ) }.bind( { obj : this, grid : vote_grid} )
                     }},
                     removeVoteGroup : {
@@ -642,7 +644,7 @@ MWF.xApplication.ForumDocument.Vote = new Class({
                 if( !gridResult )flag = false;
                 if( flag ){
                     for( var i=0; i<gridResult.length;i++ ){
-                        gridResult[i].optionContentType = (formResult.voteContentType == "true") ? "图片" : "文字";
+                        gridResult[i].optionContentType = (formResult.voteContentType === "true") ? this.lp.picture : this.lp.word;
                     }
                     formResult.voteOptions = gridResult;
                     result.optionGroups.push( formResult );
@@ -675,9 +677,9 @@ MWF.xApplication.ForumDocument.Vote = new Class({
         if( !flag ){
             //this.app.notice("请至少选择一组投票再提交","error");
             if( this.data.voteOptionGroupList.length >= 1 ){
-                this.app.notice("请对每组选择至少一项再提交","error");
+                this.app.notice( this.lp.notSelectGroupNotice ,"error");
             }else{
-                this.app.notice("请至少选择一项再提交","error");
+                this.app.notice( this.lp.notSelectItemNotice,"error");
             }
             return null;
         }else{
@@ -725,15 +727,15 @@ MWF.xApplication.ForumDocument.Vote = new Class({
         var leave3=leave2%(60*1000);      //计算分钟数后剩余的毫秒数
         var seconds=Math.round(leave3/1000);
 
-        var returnStr = seconds + "秒";
+        var returnStr = seconds + this.lp.second;
         if(minutes>0) {
-            returnStr = minutes + "分" + returnStr;
+            returnStr = minutes + this.lp.minute + returnStr;
         }
         if(hours>0) {
-            returnStr = hours + "小时" + returnStr;
+            returnStr = hours + this.lp.hour + returnStr;
         }
         if(days>0) {
-            returnStr = days + "天" + returnStr;
+            returnStr = days + this.lp.day + returnStr;
         }
         return returnStr;
     },
@@ -769,7 +771,7 @@ MWF.xApplication.ForumDocument.VoteLog = new Class({
         "hasTopIcon" : true,
         "hasTopContent" : true,
         "hasBottom": false,
-        "title": "查看投票参与人",
+        "title": MWF.xApplication.Forum.LP.seeVotedPerson,
         "draggable": true,
         "closeAction": true,
         "closeByClickMask" : true
@@ -791,7 +793,7 @@ MWF.xApplication.ForumDocument.VoteLog = new Class({
         var groupNames = [], groupIds = [], optionNames = [], optionIds = [], currentGroup, currentOption;
         this.data.voteOptionGroupList.each( function( d, i ){
             var flag = false;
-            groupNames.push( "组"+ (i+1) + "：" + d.groupName );
+            groupNames.push(  MWF.xApplication.Forum.LP.group + (i+1) + "：" + d.groupName );
             groupIds.push( d.id );
             if(  this.optionData ){
                 if ( this.optionData.optionGroupId == d.id ){
@@ -820,7 +822,7 @@ MWF.xApplication.ForumDocument.VoteLog = new Class({
                 isEdited: true || this.isEdited || this.isNew,
                 itemTemplate: {
                     group :{ type : "select",
-                        text : "组别：",
+                        text : MWF.xApplication.Forum.LP.group1,
                         selectText : groupNames,
                         selectValue : groupIds,
                         defaultValue : currentGroup,
@@ -841,7 +843,7 @@ MWF.xApplication.ForumDocument.VoteLog = new Class({
                         }.bind(this)}
                     },
                     option :{ type : "select",
-                        text : "选项：",
+                        text : MWF.xApplication.Forum.LP.option1,
                         selectText : optionNames,
                         selectValue : optionIds,
                         defaultValue : currentOption,

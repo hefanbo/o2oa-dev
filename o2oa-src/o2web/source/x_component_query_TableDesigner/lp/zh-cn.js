@@ -62,7 +62,7 @@ MWF.xApplication.query.TableDesigner.LP = {
     "statusDraft_success": "当前数据表已从编译环境取消，下次“全部编译”时会删除从数据库中删除表",
     "buildAllViewTitle": "编译所有数据表",
     "tableExplodeTitle": "导出数据",
-    "tableExplodeInfo": "默认最多导出1000行。确认是否导出？",
+    "tableExplodeInfo": "默认最多导出2000行。确认是否导出？",
     "tableExplode_success": "导出成功",
 
     "tableImplodeTitle": "导入数据",
@@ -73,6 +73,7 @@ MWF.xApplication.query.TableDesigner.LP = {
     "tableClearTitle": "清空数据",
     "tableClearInfo": "清空的数据不能恢复！！确认是否清空？",
     "tableClear_success": "清空成功",
+    "exportExcelFileName" : "导出数据",
 
 
     "buildAllViewInfor": "即将编译所有数据表，包括所有数据应用中的数据表，编译后您可能需要重启服务器后才能使用此数据表。您确定要执行此操作吗？",

@@ -6,7 +6,7 @@ MWF.xApplication.Profile.LP = {
     "passwordConfig": "修改密码",
     "ssoConfig": "单点登录",
     "facelogin": "人脸登录",
-    "openFaceSet": "打开人脸登录设置",
+    "openFaceSet": "点击此处，打开人脸登录设置",
 
     "clear": "清除界面数据",
     "setDefault": "设置为默认界面",
@@ -36,6 +36,11 @@ MWF.xApplication.Profile.LP = {
     "ipAddress" : "登录IP",
     "ipAddressPlaceHolder" : "如果不为空，匹配的ip地址才能登录，用,分隔多值",
     "ipAddressIncorrectNotice" : "IP地址格式不正确：",
+    "language": "语言设置",
+    "lps": {
+        "zh-CN": "简体中文",
+        "en": "English"
+    },
 
     "passwordRule" : "密码规则",
     "oldPassword": "原密码",
@@ -102,5 +107,12 @@ MWF.xApplication.Profile.LP = {
     "myEmPowerLog": "委托的待办",
     "receiveEmPowerLog": "收到的待办",
     "ok":"保存",
-    "cancel":"关闭"
+    "cancel":"关闭",
+    "pageText" : "第{n}页",
+    "search" : "搜索",
+    "cancel1" : "取消",
+    "createEmpower" : "新建外出授权",
+    "noTask" : "无待办",
+    "action" : "操作",
+    "createAuthorize" : "新建委托"
 };

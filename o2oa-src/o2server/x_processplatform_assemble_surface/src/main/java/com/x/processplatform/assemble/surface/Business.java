@@ -1042,6 +1042,9 @@ public class Business {
 
 	public boolean readableWithWorkOrWorkCompleted(EffectivePerson effectivePerson, String workOrWorkCompleted,
 			PromptException entityException) throws Exception {
+		if(effectivePerson.isManager()){
+			return true;
+		}
 		Work work = emc.fetch(workOrWorkCompleted, Work.class, ListTools.toList(Work.job_FIELDNAME,
 				Work.application_FIELDNAME, Work.process_FIELDNAME, Work.creatorPerson_FIELDNAME));
 		WorkCompleted workCompleted = null;
@@ -1107,6 +1110,9 @@ public class Business {
 	}
 
 	public boolean readableWithJob(EffectivePerson effectivePerson, String job) throws Exception {
+		if(effectivePerson.isManager()){
+			return true;
+		}
 		String creatorPerson = null;
 		String applicationId = null;
 		String processId = null;
@@ -1133,16 +1139,16 @@ public class Business {
 		if (effectivePerson.isPerson(creatorPerson)) {
 			return true;
 		}
-		if (emc.countEqualAndEqual(TaskCompleted.class, TaskCompleted.person_FIELDNAME,
-				effectivePerson.getDistinguishedName(), TaskCompleted.job_FIELDNAME, job) == 0) {
-			if (emc.countEqualAndEqual(ReadCompleted.class, ReadCompleted.person_FIELDNAME,
-					effectivePerson.getDistinguishedName(), ReadCompleted.job_FIELDNAME, job) == 0) {
-				if (emc.countEqualAndEqual(Task.class, Task.person_FIELDNAME, effectivePerson.getDistinguishedName(),
-						Task.job_FIELDNAME, job) == 0) {
-					if (emc.countEqualAndEqual(Read.class, Read.person_FIELDNAME,
-							effectivePerson.getDistinguishedName(), Read.job_FIELDNAME, job) == 0) {
-						if (emc.countEqualAndEqual(Review.class, Review.person_FIELDNAME,
-								effectivePerson.getDistinguishedName(), Review.job_FIELDNAME, job) == 0) {
+		if (emc.countEqualAndEqual(Review.class, Review.person_FIELDNAME,
+				effectivePerson.getDistinguishedName(), Review.job_FIELDNAME, job) == 0) {
+			if (emc.countEqualAndEqual(TaskCompleted.class, TaskCompleted.person_FIELDNAME,
+					effectivePerson.getDistinguishedName(), TaskCompleted.job_FIELDNAME, job) == 0) {
+				if (emc.countEqualAndEqual(ReadCompleted.class, ReadCompleted.person_FIELDNAME,
+						effectivePerson.getDistinguishedName(), ReadCompleted.job_FIELDNAME, job) == 0) {
+					if (emc.countEqualAndEqual(Task.class, Task.person_FIELDNAME, effectivePerson.getDistinguishedName(),
+							Task.job_FIELDNAME, job) == 0) {
+						if (emc.countEqualAndEqual(Read.class, Read.person_FIELDNAME,
+								effectivePerson.getDistinguishedName(), Read.job_FIELDNAME, job) == 0) {
 							Application application = application().pick(applicationId);
 							Process process = process().pick(processId);
 							if (!canManageApplicationOrProcess(effectivePerson, application, process)) {

@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.x.base.core.container.EntityManagerContainer;
 import com.x.base.core.container.factory.EntityManagerContainerFactory;
 import com.x.base.core.entity.dataitem.ItemCategory;
+import com.x.base.core.project.config.Config;
 import com.x.base.core.project.gson.GsonPropertyObject;
 import com.x.base.core.project.tools.ListTools;
 import com.x.cms.core.entity.AppInfo;
@@ -121,8 +122,7 @@ public class CmsPlan extends Plan {
 
 	/**
 	 * 过滤信息类型的文档
-	 * 
-	 * @param emc
+	 *
 	 * @return
 	 * @throws Exception
 	 */
@@ -142,7 +142,7 @@ public class CmsPlan extends Plan {
 	private List<String> listBundle_accessible(List<String> docIds, String person) throws Exception {
 		List<String> list = new TreeList<>();
 		List<CompletableFuture<List<String>>> futures = new TreeList<>();
-		for (List<String> documentId : ListTools.batch(docIds, SQL_STATEMENT_IN_BATCH)) {
+		for (List<String> documentId : ListTools.batch(docIds, Config.query().getPlanQueryBatchSize())) {
 			CompletableFuture<List<String>> future = CompletableFuture.supplyAsync(() -> {
 				try (EntityManagerContainer emc = EntityManagerContainerFactory.instance().create()) {
 					EntityManager em = emc.get(Review.class);
@@ -176,7 +176,7 @@ public class CmsPlan extends Plan {
 	private List<String> listBundle_filterEntry(List<String> docIds, List<FilterEntry> filterEntries) throws Exception {
 		/** 运行FilterEntry */
 		List<String> partDocIds = new TreeList<>();
-		List<List<String>> batch_docIds = ListTools.batch(docIds, SQL_STATEMENT_IN_BATCH);
+		List<List<String>> batch_docIds = ListTools.batch(docIds, Config.query().getPlanQueryBatchSize());
 		for (int i = 0; i < filterEntries.size(); i++) {
 			FilterEntry f = filterEntries.get(i);
 			List<String> os = new TreeList<>();
@@ -188,8 +188,8 @@ public class CmsPlan extends Plan {
 						CriteriaBuilder cb = em.getCriteriaBuilder();
 						CriteriaQuery<String> cq = cb.createQuery(String.class);
 						Root<Item> root = cq.from(Item.class);
-						Predicate p = f.toPredicate(cb, root, this.runtime, ItemCategory.cms);
-						p = cb.and(p, cb.isMember(root.get(Item_.bundle), cb.literal(_batch)));
+						Predicate p = root.get(Item_.bundle).in(_batch);
+						p = f.toPredicate(cb, root, this.runtime, p);
 						cq.select(root.get(Item_.bundle)).where(p);
 						List<String> parts = em.createQuery(cq).getResultList();
 						return parts.stream().distinct().collect(Collectors.toList());
@@ -258,7 +258,7 @@ public class CmsPlan extends Plan {
 
 		/**
 		 * 从组织查询条件，信息类文档
-		 * 
+		 *
 		 * @param cb
 		 * @param root
 		 * @return
@@ -271,6 +271,7 @@ public class CmsPlan extends Plan {
 			ps.add(this.documentPredicate_appInfo(cb, root));
 			ps.add(this.documentPredicate_date(cb, root));
 			ps.add(this.documentPredicate_Filter(cb, root, runtime, filterList));
+			ps.add(this.documentPredicate_draft(cb, root));
 
 			Predicate predicate = this.documentPredicate_typeScope(cb, root);
 			if (predicate != null) {
@@ -371,6 +372,13 @@ public class CmsPlan extends Plan {
 				return cb.equal(root.get(Document_.documentType), "数据");
 			} else if (StringUtils.equals(this.scope, SCOPE_CMS_INFO)) {
 				return cb.equal(root.get(Document_.documentType), "信息");
+			}
+			return null;
+		}
+
+		private Predicate documentPredicate_draft(CriteriaBuilder cb, Root<Document> root) {
+			if (BooleanUtils.isFalse(this.draft)) {
+				return cb.isNotNull(root.get(Document_.publishTime));
 			}
 			return null;
 		}

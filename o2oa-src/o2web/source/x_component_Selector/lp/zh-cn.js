@@ -15,6 +15,7 @@ MWF.xApplication.Selector.LP = MWF.SelectorLP = {
     "selectView": "选择视图",
     "selectStatement" : "选择查询",
     "selectTable": "选择数据表",
+    "selectList" : "选择列表",
     "selectFormStyle" : "选择表单样式",
     "selectCMSApplication": "选择内容管理应用",
     "selectCMSCategory": "选择内容管理栏目",
@@ -39,6 +40,7 @@ MWF.xApplication.Selector.LP = MWF.SelectorLP = {
     "role" : "角色",
     "group" : "群组",
     "unit" : "组织",
+    "systemList" : "系统列表",
 
     "appType" : {
         "process": "流程管理",
@@ -56,5 +58,13 @@ MWF.xApplication.Selector.LP = MWF.SelectorLP = {
     "portal": "门户管理",
     "query": "数据中心",
     "service": "服务管理",
+
+    "systemStyle" : "系统样式",
+    "customStyle" : "自定义样式（脚本）",
+    "selectAll" : "全选",
+    "selectChildren" : "全选下级",
+    "selectItemMaxText" : "最多可选择{count}个选项",
+    "service1" : "服务",
+    "agent" : "代理"
 };
 MWF.xApplication.Selector["lp."+o2.language] = MWF.xApplication.Selector.LP;

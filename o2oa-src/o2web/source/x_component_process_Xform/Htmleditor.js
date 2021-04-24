@@ -47,6 +47,16 @@ MWF.xApplication.process.Xform.Htmleditor = MWF.APPHtmleditor =  new Class(
                 "-webkit-user-select": "text",
                 "-moz-user-select": "text"
             });
+            //移动端设置图片宽度为100%
+            if( layout.mobile ){
+                this.node.getElements("img").each( function( img ){
+                    //if( img.height )img.erase("height");
+                    img.setStyles({
+                        "height": "auto",
+                        "max-width" : "100%"
+                    });
+                }.bind(this))
+            }
         }else{
             var config = Object.clone(this.json.editorProperties);
             if (this.json.config){
@@ -84,6 +94,7 @@ MWF.xApplication.process.Xform.Htmleditor = MWF.APPHtmleditor =  new Class(
                 }
             }
 
+            editorConfig.base64Encode = (this.json.base64Encode === "y");
             editorConfig.localImageMaxWidth = 800;
             editorConfig.reference = this.form.businessData.work.job;
             editorConfig.referenceType = "processPlatformJob";
@@ -106,7 +117,7 @@ MWF.xApplication.process.Xform.Htmleditor = MWF.APPHtmleditor =  new Class(
                 }.bind(this)
             });
             this.editor.ui.add('ecnet', CKEDITOR.UI_BUTTON, {
-                label:'智能纠错',
+                label:MWF.xApplication.process.Xform.LP.intelligentCorrection,
                 icon: '../x_component_process_Xform/$Form/default/icon/ecnet.png',
                 command:"ecnet"
             });

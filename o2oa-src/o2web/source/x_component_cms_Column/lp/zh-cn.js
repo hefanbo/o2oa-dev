@@ -15,6 +15,7 @@ MWF.xApplication.cms.Column.LP = {
 	"close" : "关闭",
 	"cancel" : "取消",
 	"export_ok" : "确定",
+	"allApp": "全部栏目",
 	"column" : {
 		"title" :"栏目管理",
 		"create" : "新建栏目",
@@ -43,7 +44,8 @@ MWF.xApplication.cms.Column.LP = {
 		"noElement" : "系统没有栏目或者没有您有权限管理的栏目",
 		"category" : "分类",
 		"form" : "表单",
-		"export" : "导出栏目"
+		"export" : "导出栏目",
+		"changeIcon" : "更改图标"
 	},
 
 	"category" : {

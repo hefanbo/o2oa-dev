@@ -61,6 +61,8 @@ MWF.xApplication.cms.Xform.Htmleditor = MWF.CMSHtmleditor =  new Class({
     // },
     loadCkeditor: function(config){
         _self = this;
+        // o2.load("../o2_lib/htmleditor/ckeditor4130/ckeditor.js", function(){
+
         COMMON.AjaxModule.loadDom("ckeditor", function(){
             CKEDITOR.disableAutoInline = true;
             var editorDiv = new Element("div").inject(this.node);
@@ -94,9 +96,12 @@ MWF.xApplication.cms.Xform.Htmleditor = MWF.CMSHtmleditor =  new Class({
             //    _self.selectCloudFilesImage( e, callback );
             //};
 
+            editorConfig.base64Encode = (this.json.base64Encode === "y");
             editorConfig.localImageMaxWidth = 800;
             editorConfig.reference = this.form.businessData.document.id;
             editorConfig.referenceType = "cmsDocument";
+
+            if(!editorConfig.language)editorConfig.language = MWF.language;
 
             if( editorConfig.skin )editorConfig.skin = "moono-lisa";
             this.editor = CKEDITOR.replace(editorDiv, editorConfig);

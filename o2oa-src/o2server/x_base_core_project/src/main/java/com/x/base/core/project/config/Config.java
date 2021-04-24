@@ -19,6 +19,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.poi.hslf.util.SystemTimeUtils;
 import org.eclipse.jetty.http.MimeTypes;
 
 import com.google.gson.JsonElement;
@@ -36,6 +38,17 @@ public class Config {
 
 	public Config() {
 	}
+
+	public static final String JAVAVERSION_JAVA8 = "java8";
+	public static final String JAVAVERSION_JAVA11 = "java11";
+
+	public static final String OS_WINDOWS = "windows";
+	public static final String OS_AIX = "aix";
+	public static final String OS_LINUX = "linux";
+	public static final String OS_MACOS = "macos";
+	public static final String OS_RASPI = "raspi";
+	public static final String OS_ARM = "arm";
+	public static final String OS_MIPS = "mips";
 
 	public static final String PATH_VERSION = "version.o2";
 	public static final String PATH_LOCAL_NODE = "local/node.cfg";
@@ -65,6 +78,7 @@ public class Config {
 	public static final String PATH_CONFIG_WELINK = "config/weLink.json";
 	public static final String PATH_CONFIG_ZHENGWUDINGDING = "config/zhengwuDingding.json";
 	public static final String PATH_CONFIG_QIYEWEIXIN = "config/qiyeweixin.json";
+	public static final String PATH_CONFIG_MPWEIXIN = "config/mpweixin.json";
 	public static final String PATH_CONFIG_EMAILNOTIFICATION = "config/emailNotification.json";
 	public static final String PATH_CONFIG_MQ = "config/mq.json";
 	public static final String PATH_CONFIG_LOGLEVEL = "config/logLevel.json";
@@ -78,6 +92,7 @@ public class Config {
 	public static final String PATH_CONFIG_COMMUNICATE = "config/communicate.json";
 	public static final String PATH_CONFIG_EXMAIL = "config/exmail.json";
 	public static final String PATH_CONFIG_PORTAL = "config/portal.json";
+	public static final String PATH_CONFIG_ORGANIZATION = "config/organization.json";
 	public static final String PATH_CONFIG_CACHE = "config/cache.json";
 	public static final String PATH_CONFIG_COMPONENTS = "config/components.json";
 	public static final String PATH_CONFIG_EMAIL = "config/email.json";
@@ -87,6 +102,7 @@ public class Config {
 	public static final String DIR_COMMONS = "commons";
 	public static final String DIR_COMMONS_TESS4J_TESSDATA = "commons/tess4j/tessdata";
 	public static final String DIR_COMMONS_EXT = "commons/ext";
+	public static final String DIR_COMMONS_LANGUAGE = "commons/language";
 	public static final String DIR_CONFIG = "config";
 	public static final String DIR_CONFIG_COVERTOWEBSERVER = "config/coverToWebServer";
 	public static final String DIR_CONFIGSAMPLE = "configSample";
@@ -201,8 +217,16 @@ public class Config {
 		return new File(base(), DIR_COMMONS_TESS4J_TESSDATA);
 	}
 
-	public static File dir_commons_ext() throws Exception {
-		return new File(base(), DIR_COMMONS_EXT);
+//	public static File dir_commons_ext() throws Exception {
+//		return new File(base(), DIR_COMMONS_EXT);
+//	}
+
+	public static Path dir_commons_ext() throws Exception {
+		if (SystemUtils.IS_JAVA_11) {
+			return Paths.get(base()).resolve(DIR_COMMONS_EXT + "_java11");
+		} else {
+			return Paths.get(base()).resolve(DIR_COMMONS_EXT);
+		}
 	}
 
 	public static File dir_config() throws Exception {
@@ -263,24 +287,9 @@ public class Config {
 		return new File(base(), DIR_JVM);
 	}
 
-	public static File dir_jvm_aix() throws Exception {
-		return new File(base(), DIR_JVM_AIX);
-	}
-
-	public static File dir_jvm_linux() throws Exception {
-		return new File(base(), DIR_JVM_LINUX);
-	}
-
-	public static File dir_jvm_neokylin_loongson() throws Exception {
-		return new File(base(), DIR_JVM_NEOKYLIN_LOONGSON);
-	}
-
-	public static File dir_jvm_macos() throws Exception {
-		return new File(base(), DIR_JVM_MACOS);
-	}
-
-	public static File dir_jvm_windows() throws Exception {
-		return new File(base(), DIR_JVM_WINDOWS);
+	public static Path command_java_path() throws Exception {
+		Path dir = Paths.get(System.getProperty("java.home"));
+		return SystemUtils.IS_OS_WINDOWS ? dir.resolve("bin/java.exe") : dir.resolve("bin/java");
 	}
 
 	public static File dir_local() throws Exception {
@@ -972,6 +981,19 @@ public class Config {
 		return instance().weLink;
 	}
 
+	private MPweixin mPweixin;
+
+	public static synchronized MPweixin mPweixin() throws Exception {
+		if (null == instance().mPweixin) {
+			MPweixin obj = BaseTools.readConfigObject(PATH_CONFIG_MPWEIXIN, MPweixin.class);
+			if (null == obj) {
+				obj = MPweixin.defaultInstance();
+			}
+			instance().mPweixin = obj;
+		}
+		return instance().mPweixin;
+	}
+
 	private Qiyeweixin qiyeweixin;
 
 	public static synchronized Qiyeweixin qiyeweixin() throws Exception {
@@ -1207,17 +1229,30 @@ public class Config {
 	public Map<String, JsonObject> customConfig = new HashMap<>();
 
 	public static synchronized JsonObject customConfig(String configName) throws Exception {
-		if(StringUtils.isBlank(configName)){
+		if (StringUtils.isBlank(configName)) {
 			return null;
-		}else{
-			if(instance().customConfig.get(configName)==null){
-				JsonObject obj = BaseTools.readConfigObject(DIR_CONFIG+"/"+configName+".json", JsonObject.class);
-				if(obj!=null){
+		} else {
+			if (instance().customConfig.get(configName) == null) {
+				JsonObject obj = BaseTools.readConfigObject(DIR_CONFIG + "/" + configName + ".json", JsonObject.class);
+				if (obj != null) {
 					instance().customConfig.put(configName, obj);
 				}
 			}
 			return instance().customConfig.get(configName);
 		}
+	}
+
+	private Organization organization;
+
+	public static synchronized Organization organization() throws Exception {
+		if (null == instance().organization) {
+			Organization obj = BaseTools.readConfigObject(PATH_CONFIG_ORGANIZATION, Organization.class);
+			if (null == obj) {
+				obj = Organization.defaultInstance();
+			}
+			instance().organization = obj;
+		}
+		return instance().organization;
 	}
 
 	public static Object resource(String name) throws Exception {

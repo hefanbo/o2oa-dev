@@ -21,7 +21,7 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
          * @event MWF.xApplication.process.Xform.Documenteditor#loadPage
          * @see {@link https://www.yuque.com/o2oa/ixsnyt/hm5uft#i0zTS|组件事件说明}
          */
-        "moduleEvents": ["load", "queryLoad", "beforeLoad", "postLoad", "afterLoad", "loadPage"],
+        "moduleEvents": ["load", "queryLoad", "beforeLoad", "postLoad", "afterLoad", "loadPage", "fullScreen", "returnScreen"],
         "docPageHeight": 850.4,
         "docPageFullWidth": 794,
         "pageShow": "single"
@@ -87,6 +87,18 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                     // }
                     this._checkScale();
                 }.bind(this));
+
+                o2.UD.getDataJson("documenteditorScale", function(json){
+                    if (json){
+                        this.scaleTo(json.scale);
+                        this.documenteditorScale = json.scale
+                    }
+                    this.addEvent("loadPage", function(){
+                        if (this.documenteditorScale) this.scaleTo(this.documenteditorScale);
+                    }.bind(this));
+
+                }.bind(this));
+
             }.bind(this));
             this._loadStyles();
 
@@ -777,8 +789,9 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                 //     "mso-border-bottom-alt": "solid windowtext 0.75pt"
                 // });
             }
+
             if ((!control.editionUnit || !this.layout_edition_issuance_unit) && (!control.editionDate || !this.layout_edition_issuance_date)){
-                if (this.layout_editionArea && (this.layout_edition_issuance_date || this.layout_edition_issuance_unit)){
+                if (this.layout_editionArea && (this.contentNode.getElement(".doc_layout_edition_issuance_date") || this.contentNode.getElement(".doc_layout_edition_issuance_unit"))){
                     var trs = this.layout_editionArea.getElement("table").rows;
                     trs.item(trs.length-1).destroy();
                     // trs = this.layout_editionArea.getElement("table").rows;
@@ -980,8 +993,11 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
             this.form.addEvent("beforeSave", function(){
                 this.resetData();
                 this.checkSaveNewEdition();
-                //if (!this.notSaveResetData) this.resetData();
             }.bind(this));
+
+            // this.form.addEvent("beforeProcess", function(){
+            //     this.checkSaveNewHistroy();
+            // }.bind(this));
 
             if (this.json.toWord=="y"){
                 if (this.json.toWordTrigger=="open") this.docToWord();
@@ -1013,25 +1029,41 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
         this.form.documenteditorList.push(this);
     },
 
+    getFiletextText: function(data){
+        var div = new Element("div", {
+            "html": data
+        });
+        var text = div.get("text");
+        div.destroy();
+        return text;
+    },
     checkSaveNewEdition: function(callback){
-
+        debugger;
         if (!this.allowEdit || !this.data.filetext || this.data.filetext == this.json.defaultValue.filetext) return false;
         if (this.form.businessData.work){
             var originaData = this.form.businessData.originalData[this.json.id];
             var editionData = {"category": this.json.id};
+
             if (!originaData || !originaData.filetext || !this.originaHistoryData){
                 //保存原始版本
-                this.originaHistoryData = {"data": this.data.filetext};
-                editionData.data = JSON.stringify({"data": this.data.filetext});
+                this.originaHistoryData = {"data": this.data.filetext, "v": "6"};
+                editionData.data = JSON.stringify({"data": this.data.filetext, "v": "6"});
             }else if (originaData.filetext!=this.data.filetext){
                 //保存历史版本
-                var data = this.data.filetext;
-                var earlyData = originaData.filetext;
+                var data = this.getFiletextText(this.data.filetext);
+                var earlyData = this.getFiletextText(originaData.filetext);
+                //var data = this.data.filetext;
+                //var earlyData = originaData.filetext;
                 var dmp = new diff_match_patch();
                 var diff_d = dmp.diff_main(earlyData, data);
                 dmp.diff_cleanupSemantic(diff_d);
                 var patch_list = dmp.patch_make(earlyData, data, diff_d);
-                editionData.data = JSON.stringify({"patchs": dmp.patch_toText(patch_list)});
+                var d = {
+                    "patchs": dmp.patch_toText(patch_list),
+                    "data": this.data.filetext,
+                    "v": "6"
+                };
+                editionData.data = JSON.stringify(d);
             }else{
                 return false;
             }
@@ -1041,30 +1073,24 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
             }.bind(this));
         }
     },
-    // saveNewDataEdition: function(callback){
-    //     if (this.form.businessData.work){
-    //         var editionData = {"category": this.json.id};
-    //         if (this.form.businessData.originalData[this.json.id] && this.form.businessData.originalData[this.json.id].filetext){
-    //             var data = this.data.filetext;
-    //             var earlyData = this.form.businessData.originalData[this.json.id].filetext;
-    //             var dmp = new diff_match_patch();
-    //             var diff_d = dmp.diff_main(earlyData, data);
-    //             dmp.diff_cleanupSemantic(diff_d);
-    //             var patch_list = dmp.patch_make(earlyData, data, diff_d);
-    //             editionData.data = {"patchs": dmp.patch_toText(patch_list)};
-    //
-    //         }else{
-    //             editionData.data = {"data": this.data.filetext};
-    //         }
-    //         o2.Actions.load("x_processplatform_assemble_surface").DocumentVersionAction.create(this.form.businessData.work.id, editionData, function(json){
-    //             this.form.businessData.originalData[this.json.id] = this.data.filetext;
-    //             if (callback) callback();
-    //         }.bind(this));
-    //     }
-    // },
-    resizeToolbar: function(){
+    checkSaveNewHistroy: function(){
+        var p = o2.Actions.load("x_processplatform_assemble_surface").DocumentRevisionAction.getLast(this.form.businessData.work.job, this.json.id);
+        p.then(function(json){
+            if (!json.data || json.data.data!=this.data.filetext){
+                var data = {
+                    "category": this.json.id,
+                    "data":this.data.filetext
+                }
+                return o2.Actions.load("x_processplatform_assemble_surface").DocumentRevisionAction.create(this.form.businessData.work.id, data);
+            }
+        }.bind(this));
+        return p;
+    },
+
+    resizeToolbar: function(node){
+        debugger;
         if (this.toolbarNode){
-            var p = this.toolNode.getPosition(this.scrollNode);
+            var p = this.toolNode.getPosition(node || this.scrollNode);
             var size = this.toolNode.getSize();
             var pl = this.toolbarNode.getStyle("padding-left").toInt();
             var pr = this.toolbarNode.getStyle("padding-right").toInt();
@@ -1072,7 +1098,7 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
 
             //var pNode = this.toolNode.getOffsetParent();
 
-            var paddingTop = this.form.node.getStyle("padding-top");
+            var paddingTop = (this.isFullScreen) ? 0 : (node || this.form.node).getStyle("padding-top");
             try {
                 paddingTop = paddingTop.toInt();
             }catch (e) {
@@ -1080,7 +1106,7 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
             }
 
             if (p.y<paddingTop && this.toolNode.offsetParent){
-                this.toolbarNode.inject(this.scrollNode);
+                this.toolbarNode.inject(node || this.scrollNode);
                 this.toolbarNode.setStyles({
                     "position": "absolute",
                     "width": ""+x+"px",
@@ -1090,7 +1116,7 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                 });
             }else{
                 this.toolbarNode.inject(this.toolNode);
-                this.toolbarNode.setStyles({"position": "static"});
+                this.toolbarNode.setStyles({"position": "static", "width": "auto"});
             }
         }
     },
@@ -1202,6 +1228,10 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
             "overflow": "auto",
             "width": ""+w+"px"
         });
+
+        if (this.filetextEditor && this.filetextEditor.element) {
+            this.filetextEditor.element.$.store("scale", this.scale);
+        }
     },
 
     _switchReadOrEdit: function(){
@@ -1407,6 +1437,7 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                 var className = "cke_editor_" + this.filetextEditor.name;
                 var filetextToolbarNode = $$("." + className)[0];
                 this.filetextToolbarNode = filetextToolbarNode;
+
                 //filetextToolbarNode.destroy();
             }
         }
@@ -1445,6 +1476,13 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
             var position = this.layout_filetext.getPosition();
             var size = this.layout_filetext.getSize();
             var contentSize = this.filetextScrollNode.getSize();
+
+            if (layout.userLayout && layout.userLayout.scale && layout.userLayout.scale!==1){
+                var x = this.filetextEditor.editable().$.getPosition().x;
+                this.filetextToolbarNode.setStyle("left", ""+x+"px");
+            }
+            this.filetextToolbarNode.setStyle("min-width", "530px");
+
 
             if (position.y<0 && size.y+position.y+h<contentSize.y){
                 // var top = size.y+position.y;
@@ -1547,7 +1585,7 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
 
     _loadToolbars: function(){
         var html ="";
-        var editdoc, printdoc, history;
+        var editdoc, printdoc, history, fullscreen=MWF.xApplication.process.Xform.LP.fullScreen;
 
         if (layout.mobile){
             editdoc = MWF.xApplication.process.Xform.LP.editdoc_mobile;
@@ -1568,6 +1606,9 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
         }
         if (this.allowHistory){
            html += "<span MWFnodetype=\"MWFToolBarButton\" MWFButtonImage=\"../x_component_process_Xform/$Form/default/icon/versions.png\" title=\""+history+"\" MWFButtonAction=\"_historyDoc\" MWFButtonText=\""+history+"\"></span>";
+        }
+        if (this.json.canFullScreen!=="n"){
+            html += "<span MWFnodetype=\"MWFToolBarButton\" MWFButtonImage=\"../x_component_process_Xform/$Form/default/icon/fullscreen.png\" title=\""+fullscreen+"\" MWFButtonAction=\"fullScreen\" MWFButtonText=\""+fullscreen+"\"></span>";
         }
 
         // if (this.json.fullWidth=="y"){
@@ -1601,10 +1642,8 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                     //this._singlePage();
                 }
             }.bind(this));
-            if (this.json.canDoublePage!=="n" && !layout.mobile) this.doublePageAction.hide();
+            if (this.json.canDoublePage==="n" && !layout.mobile) this.doublePageAction.hide();
         //}
-
-
 
         this.zoomActionArea =  new Element("div", {"styles": {"float": "right", "margin-right": "10px"}}).inject(this.toolbarNode);
         if (this.json.isScale !== "y") this.zoomActionArea.hide();
@@ -1690,6 +1729,8 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
         this.zoomSelectAction.set("html", options);
         this.zoomSelectAction.addEvent("change", function(e){
             this.scaleTo(e.target.options[e.target.selectedIndex].value);
+            o2.UD.putData("documenteditorScale", {"scale": this.scale});
+            this.documenteditorScale = this.scale;
         }.bind(this));
 
         this.zoomAddAction.addEvent("click", function(){
@@ -1702,6 +1743,8 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
             if (v<0.5) v = 0.5;
             if (v>2) v = 2;
             this.scaleTo(v);
+            o2.UD.putData("documenteditorScale", {"scale": this.scale});
+            this.documenteditorScale = this.scale;
         }.bind(this));
         this.zoomSubAction.addEvent("click", function(){
             var i = (this.scale/0.05).toInt();
@@ -1712,7 +1755,72 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
             if (v<0.5) v = 0.5;
             if (v>2) v = 2;
             this.scaleTo(v);
+            o2.UD.putData("documenteditorScale", {"scale": this.scale});
+            this.documenteditorScale = this.scale;
         }.bind(this));
+    },
+    fullScreen: function(bt){
+        var text = bt.node.get("text");
+        var content = this.form.app.content;
+
+        var stopFun = function(e){ e.stopPropagation(); };
+        if (text===MWF.xApplication.process.Xform.LP.returnScreen){
+            this.form.node.getParent().show();
+            this.node.inject(this.positionNode, "before");
+            this.positionNode.destroy();
+
+            // var styles = content.retrieve("tmpStyles");
+            // content.setStyles({
+            //     "position": styles.position,
+            //     "overflow": styles.overflow
+            // });
+            //this.node.setStyles(this.css.returnScreen);
+            this.node.setStyle("min-height", "");
+            this.fireEvent("returnScreen");
+            bt.setText(MWF.xApplication.process.Xform.LP.fullScreen);
+
+            // this.fullScreenScrollNode = this.node.getOffsetParent().getFirst().getParentSrcollNode();
+            // if (this.fullScreenScrollNode){
+            //     if (this.fullScreenScrollResizeToolbarFun) this.fullScreenScrollNode.removeEvent("scroll", this.fullScreenScrollResizeToolbarFun);
+            // }
+
+            //this.node.removeEvent("wheel", stopFun);
+            this.isFullScreen = false;
+            this.resizeToolbar();
+        }else{
+            // this.positionNode = new Element("div").inject(this.node, "after");
+            // this.node.inject(content, "top");
+            // this.form.node.hide();
+
+            this.positionNode = new Element("div").inject(this.node, "after");
+            this.node.inject(this.scrollNode, "top");
+            this.form.node.getParent().hide();
+
+            // var position = content.getStyle("poaition");
+            // var overflow = content.getStyle("overflow");
+            // content.store("tmpStyles", {"position": position, "overflow": overflow});
+            // content.setStyles({
+            //     "position": "relative",
+            //     "overflow": "auto"
+            // });
+            //this.node.setStyles(this.css.fullScreen);
+            this.node.setStyle("min-height", "100%");
+            this.fireEvent("fullScreen");
+
+            // this.fullScreenScrollNode = this.node.getOffsetParent().getFirst().getParentSrcollNode();
+            // if (this.fullScreenScrollNode){
+            //     this.fullScreenScrollResizeToolbarFun = function(){this.resizeToolbar(this.fullScreenScrollNode);}.bind(this);
+            //     this.fullScreenScrollResizeToolbarFun();
+            //     this.fullScreenScrollNode.addEvent("scroll", this.fullScreenScrollResizeToolbarFun);
+            // }
+
+            bt.setText(MWF.xApplication.process.Xform.LP.returnScreen);
+
+            this.isFullScreen = true;
+            //this.node.addEvent("wheel", stopFun);
+            this.resizeToolbar();
+        }
+        this.reload();
     },
     /**缩放文件内容
      * @param scale{Number} 缩放的比率
@@ -1720,12 +1828,16 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
      * this.form.get("fieldId").scaleTo(0.5);
     */
     scaleTo: function(scale){
+        debugger;
         this._returnScale();
         this.scale = scale;
         this.zoom();
-        var w = this.contentNode.getSize().x;
+        //var w = this.contentNode.getSize().x*this.scale;
+        var w = this.contentNode.offsetWidth*this.scale;
+        //if (layout.userLayout && layout.userLayout.scale) w = w*layout.userLayout.scale;
         var count = 1;
         var docPageFullWidth = (this.scale) ? this.scale*this.options.docPageFullWidth : this.options.docPageFullWidth;
+        //if (layout.userLayout && layout.userLayout.scale) docPageFullWidth = docPageFullWidth*layout.userLayout.scale;
         var pageWidth = count * docPageFullWidth;
         var margin = (w-pageWidth)/(count+1);
         if (this.isScale){
@@ -1803,9 +1915,10 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
         this.doublePageAction.set("text", MWF.xApplication.process.Xform.LP.doublePage);
     },
     resetNodeSize: function(){
-        var contentSize = this.contentNode.getSize();
+        //var contentSize = this.contentNode.getSize();
+        var contentHeight = this.contentNode.offsetHeight;
         var toolbarSize = this.toolNode.getSize();
-        contentHeight = contentSize.y;
+        contentHeight = contentHeight*(this.scale || 1);
         var h = contentHeight+toolbarSize.y+20;
         //h = h - contentSize.y*(1-this.scale);
 
@@ -1988,6 +2101,8 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
             qtPreviewBorder: '4px double black', // preview table border
             qtPreviewSize: '4px', // Preview table cell size
             qtPreviewBackground: '#c8def4', // preview table background (hover)
+
+            language: o2.language,
 
             // format_tags: '标题一;标题二;标题三;标题四;正文', // entries is displayed in "Paragraph format"
             format_tags: '标题一;标题二;正文(标题三,四)', // entries is displayed in "Paragraph format"
@@ -2227,6 +2342,11 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                     window.setTimeout(this.reLocationFiletextToolbar.bind(this), 10);
                 }.bind(this) );
 
+                this.filetextEditor.on( 'loaded', function( e ) {
+                    this.filetextEditor.element.$.store("module", this);
+                    this.filetextEditor.element.$.store("scale", this.scale);
+                }.bind(this) );
+
                 this.filetextEditor.on( 'paste', function( e ) {
                     var html = e.data.dataValue;
                     //if (this.json.fullWidth=="y") html = html.replace(/\x20/g, "　");
@@ -2251,9 +2371,44 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                         //    if (textIndent.toInt()) p.appendText("　　","top");
                         //}
                     }.bind(this));
+
+                    var tableList = tmp.getElements("table");
+                    if (tableList && tableList.length){
+                        var w = this.layout_filetext.offsetWidth.toFloat();
+                        tableList.each(function(table){
+                            debugger;
+                            var twstyle = table.getStyle("width");
+                            var tws = (twstyle) ? (twstyle.toFloat() || 0) : 0;
+                            var twatt = table.get("width");
+                            var twa = (twatt) ? (twatt.toFloat() || 0) : 0;
+                            var tw = Math.max(tws, twa);
+                            if (tw===0 || tw>w){
+                                table.setStyle("width", ""+w+"px");
+                            }
+                        });
+                        tableList.setStyles({
+                            "margin-left": "",
+                            "margin-right": "",
+                            "word-break": "break-all"
+                        });
+                    }
+                    var tdList = tmp.getElements("td");
+                    tdList.each(function(td){
+                        var tbw_top = td.getStyle("border-top-width").toFloat() || 0;
+                        var tbw_bottom = td.getStyle("border-bottom-width").toFloat() || 0;
+                        var tbw_left = td.getStyle("border-left-width").toFloat() || 0;
+                        var tbw_right = td.getStyle("border-right-width").toFloat() || 0;
+
+                        td.setStyles({
+                            "border-top-width": (tbw_top/2)+"px",
+                            "border-bottom-width": (tbw_bottom/2)+"px",
+                            "border-left-width": (tbw_left/2)+"px",
+                            "border-right-width": (tbw_right/2)+"px",
+                        });
+                    });
+
                     e.data.dataValue = tmp.get("html");
                     tmp.destroy();
-
                     this.fireEvent("paste");
                 }.bind(this) );
 
@@ -2262,6 +2417,41 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                     this.fireEvent("afterPaste");
                 }.bind(this) );
 
+                this.filetextEditor.on( 'change', function( e ) {
+                    this.filetextEditor.on( 'change', function( e ) {
+                        var h = document.documentElement.scrollTop;
+                        var scrollNode = this.contentNode;
+                        while (scrollNode && (scrollNode.getScrollSize().y<=scrollNode.getSize().y || (scrollNode.getStyle("overflow")!=="auto" &&  scrollNode.getStyle("4-y")!=="auto"))){
+                            scrollNode = scrollNode.getParent();
+                        }
+                        if (scrollNode){
+                            var top = scrollNode.scrollTop.toFloat();
+                            scrollNode.scrollTop = h+top;
+                        }
+                        document.documentElement.scrollTop = 0;
+                    }.bind(this) );
+                }.bind(this) );
+
+
+
+                this.filetextEditor.on( 'insertElement', function( e ) {
+                    if (e.data.$.tagName.toString().toLowerCase()=="table"){
+                        e.data.$.setStyles({
+                            "margin-left": "",
+                            "margin-right": "",
+                            "word-break": "break-all"
+                        });
+                    }
+
+                    var tr = e.data.$.getElement("tr");
+                    if (tr){
+                        var tds = tr.getElements("td");
+                        if (tds && tds.length){
+                            var p = 100/tds.length;
+                            tds.setStyle("width", ""+p+"%");
+                        }
+                    }
+                }.bind(this) );
 
                 if (this.json.textIndent!=="n"){
                     this.layout_filetext.addEvent("keyup", function(ev){
@@ -2343,7 +2533,8 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                                 var m = d.getMonth();
                                 var day = d.getDate();
                                 m = m +1;
-                                this.data[name] = ""+y+"年"+m+"月"+day+"日";
+                                var lp = MWF.xApplication.process.Xform.LP;
+                                this.data[name] = ""+y+lp.year+m+lp.month+day+lp.date;
                             }else{
                                 this.data[name] = v;
                             }
@@ -2383,7 +2574,8 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                                     var m = d.getMonth();
                                     var day = d.getDate();
                                     m = m +1;
-                                    return ""+y+"年"+m+"月"+day+"日";
+                                    var lp = MWF.xApplication.process.Xform.LP;
+                                    return ""+y+lp.year+m+lp.month+day+lp.date;
                                 }else{
                                     return n;
                                 }
@@ -2433,7 +2625,8 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                             var m = d.getMonth();
                             var day = d.getDate();
                             m = m +1;
-                            this.data[name] = ""+y+"年"+m+"月"+day+"日";
+                            var lp = MWF.xApplication.process.Xform.LP;
+                            this.data[name] = ""+y+lp.year+m+lp.month+day+lp.date;
                         }else{
                             this.data[name] = v;
                         }
@@ -2689,6 +2882,17 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
             }else if (this.layout_filetext){
                 //this.layout_filetext.set("placeholder", this.json.defaultValue.filetext);
                 this.layout_filetext.set("html", data.filetext || "　　");
+
+                var tableList = this.layout_filetext.getElements("table");
+                if (tableList && tableList.length){
+                    // var w = this.layout_filetext.offsetWidth;
+                    // tableList.setStyle("width", ""+w+"px");
+                    tableList.setStyles({
+                        "margin-left": "",
+                        "margin-right": "",
+                        "word-break": "break-all"
+                    });
+                }
             }
             if (this.layout_signer) this.layout_signer.set("text", data.signer || "");
             if (this.layout_attachmentTitle) this.layout_attachmentTitle.set("text", data.attachmentTitle || " ");
@@ -2970,6 +3174,23 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
      * var html = this.form.get("fieldId").getDocumentHtml();
     */
     getDocumentHtml: function(){
+        var docNode = this.contentNode.getFirst().getFirst();
+        var filetextNode = docNode.getElement(".doc_layout_filetext");
+        var tables = filetextNode.getElements("table");
+        tables.each(function(table){
+            var tableWidth = table.offsetWidth;
+            table.set("data-o2-width", tableWidth);
+
+            // var tr = table.getElement("tr");
+            // if (tr){
+            table.getElements("td").each(function(td){
+                var tdx = td.offsetWidth;
+                var p = (tdx/tableWidth)*100;
+                td.set("data-o2-width", tdx);
+            });
+            //}
+        });
+
         var tmpNode = this.contentNode.getFirst().getFirst().clone(true);
         var htmlNode = tmpNode.getLast();
         htmlNode = this.removeDisplayNone(htmlNode);
@@ -2989,6 +3210,21 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                 });
             }
         }
+
+        var filetextNode = tmpNode.getElement(".doc_layout_filetext");
+        filetextNode.getElements("td").setStyle("width", "");
+        //var tables = filetextNode.getElements("table");
+
+        var tables = tmpNode.querySelectorAll("table[data-o2-width]");
+        for (var i=0; i<tables.length; i++){
+            tables[i].setStyle("width", tables[i].dataset["o2Width"]+"px");
+        }
+
+        var tds = tmpNode.querySelectorAll("td[data-o2-width]");
+        for (var i=0; i<tds.length; i++){
+            tds[i].setStyle("width", tds[i].dataset["o2Width"]+"px");
+        }
+
         var htmlStr = tmpNode.get("html");
         tmpNode.destroy();
         return "<html xmlns:v=\"urn:schemas-microsoft-com:vml\"><head><meta charset=\"UTF-8\" /></head><body>"+htmlStr+"</body></html>";
@@ -3028,7 +3264,7 @@ MWF.xApplication.process.Xform.Documenteditor = MWF.APPDocumenteditor =  new Cla
                 "height":"auto"
             });
         }.bind(this), function(){
-            var content = this.getDocumentHtml();
+            var content = encodeURIComponent(this.getDocumentHtml());
             //var content = "<html xmlns:v=\"urn:schemas-microsoft-com:vml\"><head><meta charset=\"UTF-8\" /></head><body>"+tmpNode.get("html")+"</body></html>";
 
             var fileName = docNmae || this.json.toWordFilename || "$doc";

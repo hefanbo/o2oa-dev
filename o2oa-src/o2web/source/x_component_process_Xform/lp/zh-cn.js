@@ -50,6 +50,8 @@ MWF.xApplication.process.Xform.LP = {
     "rerouteTo": "调度到",
     "rollback": "流程回溯",
     "rollbackTo": "流程回溯到",
+    "selectRollbackActivity" : "请选择文件要回溯到的位置：",
+    "tryToProcess" : "并尝试继续流转",
     "in": "在",
 
     "andSoForth" : "等",
@@ -81,6 +83,10 @@ MWF.xApplication.process.Xform.LP = {
 
     "deleteAttachmentTitle":"删除附件确认",
     "deleteAttachment": "是否确定要删除您选中的附件？",
+
+    "sendTaskNotice" : "已经向待办人：{users}, 发送了提醒",
+    "setReadedConfirmContent" : "您确定要将“{title}”标记为已阅吗？",
+    "setReadedConfirmTitle" : "标记已阅确认",
 
     "replaceAttachmentTitle":"替换附件确认",
     "replaceAttachment": "是否确定要替换您选中的附件？",
@@ -150,6 +156,11 @@ MWF.xApplication.process.Xform.LP = {
     "menu_file": "打开正文",
     "completed": "结束",
     "openOfficeInfor": "点击此处打开{type}文件",
+    "seeVersion" : "查看版本",
+    "selectVersionToRestore" : "请选择要恢复的正文版本：",
+    "restoreFile" : "恢复正文",
+    "installNTKOWebChromePluginNotice_xpi" : "尚未安装NTKO Web Chrome跨浏览器插件。请点击<a href=\"../o2_lib/officecontrol/ntkoplugins.xpi\">安装组件</a>",
+    "installNTKOWebChromePluginNotice_crx" : "尚未安装NTKO Web Chrome跨浏览器插件。请点击<a href=\"../o2_lib/officecontrol/ntkoplugins.crx\">安装组件</a>",
 
     "showReadCompletedTitle": "已阅人",
     "showReadTitle": "待阅人",
@@ -186,6 +197,8 @@ MWF.xApplication.process.Xform.LP = {
     "editdocCompleted": "编辑完成",
     "printdoc": "打印正文",
     "history": "正文痕迹审查",
+    "fullScreen": "全屏",
+    "returnScreen": "还原",
 
     "editdoc_mobile": "编辑",
     "editdocCompleted_mobile": "编辑完成",
@@ -202,6 +215,7 @@ MWF.xApplication.process.Xform.LP = {
     "selectEmpower" : "授权人员替换选择",
     "empowerDlgText" : "下列人员对工作进行了授权，选择后文件将发送给被授权人，取消选择后文件将发送给授权者本人",
     "empowerTo" : "授权给",
+    "empowerToHtml" : "<font style='color:#ff5400;'>{person}</font>（{department}）授权给<font style='color:#ff5400;'>{empowerTo}</font>处理。（{time}）</font>",
     "selectAll" : "全选",
     "computePage": "正在计算分页，请稍候……",
     "keyLockTitle": "文件编辑已锁定",
@@ -249,7 +263,10 @@ MWF.xApplication.process.Xform.LP = {
         "exit": "退出痕迹审查",
         "diff_patch_count": "共有{history}个历史版本，{diff}处修订。",
         "original": "原始版本",
-        "nodiff": "目前还没有历史修改信息"
+        "nodiff": "目前还没有历史修改信息",
+        "word": "字",
+        "diff": "对比",
+        "diffTitle": "与上一版本对比"
     },
     "subjectEmpty": "标题不能为空",
     "issuanceUnitEmpty": "发文单位不能为空",
@@ -259,7 +276,61 @@ MWF.xApplication.process.Xform.LP = {
     "resumeWork": "当前待办已从挂起状态中恢复",
 
     "resume": "挂起恢复",
-    "pause": "挂起"
+    "pause": "挂起",
+
+    "selectItemCountNotice" : "请至少选择{count}项",
+    "setReaded" : "标记为已阅",
+    "readed" : "已阅",
+
+    "attachmentArea": "附件区域",
+    "intelligentCorrection" : "智能纠错",
+
+    "form": {
+        "close":"关闭",
+        "closeTitle": "关闭文档",
+        "save": "保存",
+        "saveTitle": "保存文档",
+        "flow": "继续流转",
+        "flowTitle": "继续流转文档",
+        "reroute": "调度",
+        "rerouteTitle": "调度文档",
+        "reset": "重置处理人",
+        "resetTitle": "重置处理人",
+        "split": "增加分支",
+        "splitTitle": "增加拆分分支",
+        "retract": "撤回",
+        "retractTitle": "待办撤回",
+        "rollback": "流程回溯",
+        "rollbackTitle": "回溯到指定的环节，不保留流程记录",
+        "delete": "删除文档",
+        "deleteTitle": "删除文件",
+        "print": "打印",
+        "printTitle": "打印文档",
+        "press": "催促办理",
+        "pressTitle": "催促办理",
+        "pause": "挂起",
+        "pauseTitle": "待办挂起",
+        "resume": "挂起恢复",
+        "resumeTitle": "从挂起状态恢复",
+        "downloadAll": "一键下载",
+        "downloadAllTitle": "一键下载",
+
+        "rerouteActivity": "调度到：",
+        "reroutePerson": "调度给：",
+        "selectPerson": "选择人员",
+        "retouteOpinion": "调度意见：",
+
+        "resetPerson": "重置给：",
+        "resetOpinion": "重置意见：",
+        "keepTask": "保留我的待办",
+
+        "rollbackInfo": "请选择文件要回溯到的位置",
+        "addSplitInfo": "根据您的业务设置拆分数据，此处设置的数据应与流程中设置的拆分依据匹配。<br/>多个值请用半角逗号(,)分隔",
+        "selectUnit": "选择组织或人员",
+        "excludeBranches": "排除已有分支",
+        "yes": "是",
+        "no": "否"
+    }
 
 };
 MWF.xApplication.process.Xform["lp."+o2.language] = MWF.xApplication.process.Xform.LP;

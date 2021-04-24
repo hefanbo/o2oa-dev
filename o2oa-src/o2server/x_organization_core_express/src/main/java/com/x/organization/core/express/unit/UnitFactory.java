@@ -211,4 +211,24 @@ public class UnitFactory {
 	public List<String> listWithUnitSupNested(String... values) throws Exception {
 		return ActionListWithUnitSupNested.execute(context, Arrays.asList(values));
 	}
+
+	/** 根据组织获取排序号 */
+	public Integer getOrderNumber(String value, Integer defaultValue) throws Exception {
+		List<? extends Unit> os = ActionListObject.execute(context, Arrays.asList(value));
+		if (os.isEmpty()) {
+			return defaultValue;
+		} else {
+			return (os.get(0).getOrderNumber() == null) ? defaultValue : os.get(0).getOrderNumber();
+		}
+	}
+
+	/** 根据组织获取层级排序号 */
+	public String getLevelOrderNumber(String value, String defaultValue) throws Exception {
+		List<? extends Unit> os = ActionListObject.execute(context, Arrays.asList(value));
+		if (os.isEmpty()) {
+			return defaultValue;
+		} else {
+			return (os.get(0).getLevelOrderNumber() == null) ? defaultValue : os.get(0).getLevelOrderNumber();
+		}
+	}
 }

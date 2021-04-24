@@ -425,38 +425,40 @@ MWF.xApplication.process.Xform.DatagridMobile = new Class(
                     cell.set("MWFId", tds[index].get("id"));
 
                     var cellData = data[th.get("id")];
-                    if (cellData){
-                        for (key in cellData){
-                            var v = cellData[key];
+                    if( typeOf( cellData ) !== "array" ){
+                        if ( cellData ){
+                            for (key in cellData){
+                                var v = cellData[key];
 
-                            var module = this.editModules[index];
-                            if( module && module.json.type == "ImageClipper" ){
-                                this._createImage( cell, module, v )
-                            }else if( module && (module.json.type == "Attachment" || module.json.type == "AttachmentDg") ){
-                                this._createAttachment( cell, module, v );
-                            }else{
-                                text = this._getValueText(index, v);
-                                if( module && module.json.type == "Textarea" ){
-                                    cell.set("html", text);
+                                var module = this.editModules[index];
+                                if( module && module.json.type == "ImageClipper" ){
+                                    this._createImage( cell, module, v )
+                                }else if( module && (module.json.type == "Attachment" || module.json.type == "AttachmentDg") ){
+                                    this._createAttachment( cell, module, v );
                                 }else{
-                                    cell.set("text", text);
+                                    text = this._getValueText(index, v);
+                                    if( module && module.json.type == "Textarea" ){
+                                        cell.set("html", text);
+                                    }else{
+                                        cell.set("text", text);
+                                    }
+                                    //cell.set("text", text);
                                 }
-                                //cell.set("text", text);
-                            }
 
-                            // if (typeOf(v)==="object"){
-                            //     cell.set("text", v.name+((v.unitName) ? "("+v.unitName+")" : ""));
-                            // }else{
-                            //     cell.set("text", v);
-                            // }
-                            break;
-                            //
-                            // cell.set("text", cellData[key]);
-                            // break;
+                                // if (typeOf(v)==="object"){
+                                //     cell.set("text", v.name+((v.unitName) ? "("+v.unitName+")" : ""));
+                                // }else{
+                                //     cell.set("text", v);
+                                // }
+                                break;
+                                //
+                                // cell.set("text", cellData[key]);
+                                // break;
+                            }
+                        }else{ //Sequence
+                            cell.setStyle("text-align", "left");
+                            cell.set("text", idx+1);
                         }
-                    }else{ //Sequence
-                        cell.setStyle("text-align", "left");
-                        cell.set("text", idx+1);
                     }
 
                     var json = this.form._getDomjson(th);
@@ -550,7 +552,7 @@ MWF.xApplication.process.Xform.DatagridMobile = new Class(
         cell.empty();
         var options = {
             "style": module.json.style || "default",
-            "title": "附件区域",
+            "title": MWF.xApplication.process.Xform.LP.attachmentArea,
             "listStyle": module.json.dg_listStyle || "icon",
             "size": module.json.dg_size || "min",
             "resize": (module.json.dg_resize === "y" || this.json.dg_resize === "true"),
@@ -595,7 +597,7 @@ MWF.xApplication.process.Xform.DatagridMobile = new Class(
         var n = idx+1;
         var titleDiv = new Element("div", {"styles": this.json.itemTitleStyles}).inject(node);
         titleDiv.setStyle("overflow", "hidden");
-        var textNode = new Element("div", {
+        var textNode = new Element("div.sequenceDiv", {
             "styles": {"float": "left"},
             "text": MWF.xApplication.process.Xform.LP.item+n
         }).inject(titleDiv);
@@ -1325,6 +1327,11 @@ MWF.xApplication.process.Xform.DatagridMobile = new Class(
                 }
             }.bind(this));
         }.bind(this));
+
+        var sequenceDivs = this.node.getElements(".sequenceDiv");
+        sequenceDivs.each( function(div, index){
+            div.set("text", MWF.xApplication.process.Xform.LP.item+(index+1))
+        })
     },
 
     _loadBorderStyle: function(){
