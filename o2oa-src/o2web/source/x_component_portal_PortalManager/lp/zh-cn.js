@@ -16,6 +16,13 @@ MWF.xApplication.portal.PortalManager.LP = {
     "copyConfirm_skip": "跳过",
     "copyConfirm_cancel": "取消",
     "copynew": "新",
+
+    "pageConfig": "页面配置",
+    "widgetConfig": "部件配置",
+    "scriptConfig": "脚本配置",
+    "fileConfig": "资源文件",
+    "applicationConfig": "门户属性",
+
     "edit": "编辑",
     "save": "保存",
     "cancel": "取消",
@@ -98,7 +105,15 @@ MWF.xApplication.portal.PortalManager.LP = {
         "mobileClient": "移动端",
         "true": "启用",
         "false": "禁用",
-        "anonymousAccess" : "匿名访问"
+        "anonymousAccess" : "匿名访问",
+
+        "changeIcon" : "更改图标",
+        "setManager" : "设置管理者",
+        "setAppManager" : "设置应用管理者",
+        "setUsableIdentity" : "设置可用身份",
+        "setUsableUnit" : "设置可用组织",
+        "setAppUsableIdentity" : "设置应用可用身份",
+        "setAppUsableUnit" : "设置应用可用组织"
     },
     "createSelectTemplate": "新建：选择模板",
     "templateCategory": "模板分类：",

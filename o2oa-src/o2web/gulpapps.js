@@ -27,8 +27,6 @@ var apps = [
     { "folder": "x_component_Deployment", "tasks": ["move", "min"] },
     { "folder": "x_component_DesignCenter", "tasks": ["move", "min"] },
     { "folder": "x_component_Empty", "tasks": ["move", "min"] },
-    { "folder": "x_component_Execution", "tasks": ["move", "min"] },
-    { "folder": "x_component_ExeManager", "tasks": ["move", "min"] },
     { "folder": "x_component_FaceSet", "tasks": ["move", "min"] },
     { "folder": "x_component_File", "tasks": ["move", "min"] },
     { "folder": "x_component_FindDesigner", "tasks": ["move", "min"] },
@@ -67,6 +65,7 @@ var apps = [
     { "folder": "x_component_process_Work", "tasks": ["move", "min"] },
     { "folder": "x_component_process_Xform", "tasks": ["move", "min"] },
     { "folder": "x_component_Profile", "tasks": ["move", "min"] },
+    { "folder": "x_component_query_ImporterDesigner", "tasks": ["move", "min"] },
     { "folder": "x_component_query_Query", "tasks": ["move", "min"] },
     { "folder": "x_component_query_QueryExplorer", "tasks": ["move", "min"] },
     { "folder": "x_component_query_QueryManager", "tasks": ["move", "min"] },
@@ -74,22 +73,16 @@ var apps = [
     { "folder": "x_component_query_ViewDesigner", "tasks": ["move", "min"] },
     { "folder": "x_component_query_TableDesigner", "tasks": ["move", "min"] },
     { "folder": "x_component_query_StatementDesigner", "tasks": ["move", "min"] },
-    { "folder": "x_component_Report", "tasks": ["move", "min"] },
-    { "folder": "x_component_ReportDocument", "tasks": ["move", "min"] },
-    { "folder": "x_component_ReportMinder", "tasks": ["move", "min"] },
     { "folder": "x_component_Search", "tasks": ["move", "min"] },
     { "folder": "x_component_Selector", "tasks": ["move", "min"] },
     { "folder": "x_component_service_AgentDesigner", "tasks": ["move", "min"] },
     { "folder": "x_component_service_InvokeDesigner", "tasks": ["move", "min"] },
     { "folder": "x_component_service_ServiceManager", "tasks": ["move", "min"] },
     { "folder": "x_component_Setting", "tasks": ["move", "min"] },
-    { "folder": "x_component_Strategy", "tasks": ["move", "min"] },
     { "folder": "x_component_Template", "tasks": ["move", "min"] },
-    { "folder": "x_component_TeamWork", "tasks": ["move", "min"] },
     { "folder": "x_desktop", "tasks": ["move", "min"] },
     { "folder": "x_component_IMV2", "tasks": ["move", "min"] },
-    { "folder": "x_component_ConfigDesigner", "tasks": ["move", "min"] },
-    { "folder": "x_test", "tasks": ["move"] }
+    { "folder": "x_component_ConfigDesigner", "tasks": ["move", "min"] }
 ];
 
 module.exports = apps;

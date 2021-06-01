@@ -130,7 +130,7 @@ o2.addReady(function () {
                 if (json.data.language && (json.data.language !== o2.languageName)){
                     o2.language = json.data.language.toLowerCase();
                     o2.languageName = json.data.language;
-                    var lp = o2.session.path + "/lp/" + o2.language + ".js";
+                    var lp = "../x_desktop/js/base_lp_" + o2.language +((o2.session.isDebugger) ? "" : ".min")+ ".js";
                     o2.load(lp, {"reload": true}, function(){
                         if (resolve) resolve(json.data);
                     });
@@ -218,7 +218,8 @@ o2.addReady(function () {
     var configLoaded = false;
     var lpLoaded = false;
     var commonLoaded = false;
-    var lp = o2.session.path + "/lp/" + o2.language + ".js";
+    //var lp = o2.session.path + "/lp/" + o2.language + ".js";
+    var lp = "../x_desktop/js/base_lp_" + o2.language +((o2.session.isDebugger) ? "" : ".min")+ ".js";
 
     if (o2.session.isDebugger && (o2.session.isMobile || layout.mobile)) o2.load("../o2_lib/eruda/eruda.js");
     var loadModuls = function () {

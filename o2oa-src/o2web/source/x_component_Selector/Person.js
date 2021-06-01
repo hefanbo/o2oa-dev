@@ -1,5 +1,5 @@
 MWF.xApplication.Selector = MWF.xApplication.Selector || {};
-MWF.xDesktop.requireApp("Selector", "lp."+MWF.language, null, false);
+//MWF.xDesktop.requireApp("Selector", "lp."+MWF.language, null, false);
 //MWF.xDesktop.requireApp("Selector", "Actions.RestActions", null, false);
 MWF.xApplication.Selector.Person = new Class({
     Extends: MWF.widget.Common,
@@ -8,10 +8,11 @@ MWF.xApplication.Selector.Person = new Class({
     options: {
         "style": "default",
         "count": 0,
-        "title": MWF.xApplication.Selector.LP.selectPerson,
+        "title": "",
         "groups": [],
         "roles": [],
         "values": [],
+        "exclude" : [],
         "exclude" : [],
         "zIndex": 1000,
         "expand": true,
@@ -47,9 +48,14 @@ MWF.xApplication.Selector.Person = new Class({
 
         "showEmptyText" : true
     },
+    setInitTitle: function(){
+        this.setOptions({"title": MWF.xApplication.Selector.LP.selectPerson});
+    },
     initialize: function(container, options){
         this.active = true;
+
         this.setOptions(options);
+        if (!this.options.title) this.setInitTitle();
 
         this.path = "../x_component_Selector/$Selector/";
         this.cssPath = "../x_component_Selector/$Selector/"+this.options.style+"/css.wcss";

@@ -127,6 +127,10 @@ o2.LP.process = {
 };
 o2.LP.desktop = {
 	"homepage": "Homepage",
+	"taskCenter": "TaskCenter",
+	"info": "Information",
+	"calendar": "Calendar",
+	"profile": "Profile",
 	"loadding": "System is loadding, please wait......",
 	"lowBrowser": " Your browser version is too low! ~ IE8 and the following versions are not supported!",
 	"upgradeBrowser": "Please upgrade your browser：",
@@ -431,9 +435,9 @@ o2.LP.authentication = {
 	"inputYourMobile": "Please Input your Mobile Number",
 	"inputPicVerificationCode": "Please enter the verification code on the right",
 	"inputComfirmPassword": "Please confirm your password",
-	"inputVerificationCode": "Please enter the mobile verification code",
+	"inputVerificationCode": "Verification Code",
 	"confirmPassword": "Confirm Password",
-	"sendVerification": "Send Code",
+	"sendVerification": "Send",
 	"resendVerification": "ReSend",
 	"passwordIsSimple": "Please use alphanumeric mix and at least 7 bits",
 	"mobileIsRegisted": "Mobile phone number has been registered",
@@ -449,11 +453,11 @@ o2.LP.authentication = {
 	"changeVerification": "Change",
 	"mail": "mail",
 	"genderType": "Gender",
-	"genderTypeText": ",Men, Female",
+	"genderTypeText": ",Male, Female",
 	"genderTypeValue": ",m,f",
 	"selectGenderType": "Please select Gender",
 	"registeSuccess": "Registration Successful",
-	"codeLogin": "QRCode Login",
+	"codeLogin": "SMS Login",
 	"passwordLogin": "Password Login",
 	"bindLogin": "QRCode Login",
 	"bingLoginTitle": "Scanning the QR code",
@@ -480,8 +484,8 @@ o2.LP.authentication = {
 	"newPassword" : "New Password",
 	"inputYourNewPassword" : "Enter a new password",
 	"changePasswordSuccess" : "Successfully change password",
-	"userAppCameraHtml" : "<div>open <div styles='bindTipLinkArea'>APP </div> and scan QR code</div>",
-	"loginToPage": "Login to the web page"
+	"userAppCameraHtml" : "<div>open <div styles='bindTipLinkArea'>APP </div> and scan</div>",
+	"loginToPage": "Login to the page"
 
 };
 o2.LP.script = {

@@ -178,7 +178,7 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
         if (Browser.firefox) this.container.setStyle("opacity", 0);
 
         this.data = data;
-        var jsonData = JSON.parse(data)
+        //var jsonData = JSON.parse(data)
 
         /**
          * @summary 表单的配置信息，比如表单名称，提交方式等等.
@@ -188,8 +188,8 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
          * var json = this.form.getApp().appForm.json; //表单配置信息
          * var name = json.name; //表单名称
          */
-        this.json = jsonData.json;
-        this.html = jsonData.html;
+        this.json = data.json;
+        this.html = data.html;
 
         this.path = "../x_component_process_Xform/$Form/";
         this.cssPath = this.options.cssPath || "../x_component_process_Xform/$Form/" + this.options.style + "/css.wcss";
@@ -364,18 +364,10 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
         this.loadMacro(function () {
             debugger;
             this.loadLanguage(function(flag){
-                if (flag){
-                    var data = o2.bindJson(this.data,  {"lp": MWF.xApplication.process.Xform.LP.form});
+                if (flag && this.formDataText){
+                    var data = o2.bindJson(this.formDataText,  {"lp": MWF.xApplication.process.Xform.LP.form});
                     this.data = JSON.parse(data);
 
-                    /**
-                     * @summary 表单的配置信息，比如表单名称，提交方式等等.
-                     * @member {Object}
-                     * @example
-                     *  //可以在脚本中获取表单配置信息
-                     * var json = this.form.getApp().appForm.json; //表单配置信息
-                     * var name = json.name; //表单名称
-                     */
                     this.json = this.data.json;
                     this.html = this.data.html;
                 }
@@ -433,6 +425,13 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
         }.bind(this));
     },
     loadLanguage: function(callback){
+        debugger;
+        //formDataText
+        if (this.json.languageType!=="script" && this.json.languageType!=="default"){
+            if (callback) callback();
+            return true;
+        }
+
         var language = MWF.xApplication.process.Xform.LP.form;
         var languageJson = null;
 
@@ -440,8 +439,30 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
             if (this.json.languageScript && this.json.languageScript.code){
                 languageJson = this.Macro.exec(this.json.languageScript.code, this);
             }
-        }else{
-            if (this.app.relatedLanguage) languageJson = JSON.parse(this.app.relatedLanguage);
+        }else if (this.json.languageType=="default") {
+            var name = "lp-"+o2.language;
+
+            if (this.options.macro==="PageContext"){
+                var portal = this.app.portal.id;
+                languageJson = this.workAction.getScriptByNameV2(portal, name, function(d){
+                    return this.Macro.exec(d.data.text, this);
+                }.bind(this), function(){});
+            }else{
+                var application = (this.businessData.work || this.businessData.workCompleted).application;
+                var p1 = this.workAction.getDictRoot(name, application, function(d){
+                    return d.data;
+                }, function(){});
+                var p2 = new Promise(function(resolve, reject){
+                    this.workAction.getScriptByNameV2(name, application, function(d){
+                        if (d.data.text) {
+                            resolve(this.Macro.exec(d.data.text, this));
+                        }else{
+                            reject("");
+                        }
+                    }.bind(this), function(){reject("");});
+                }.bind(this));
+                languageJson = Promise.any([p1, p2]);
+            }
         }
 
         if (languageJson){
@@ -450,14 +471,14 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
                     MWF.xApplication.process.Xform.LP.form = Object.merge(MWF.xApplication.process.Xform.LP.form, json);
                     if (callback) callback(true);
                 }, function(){
-                    if (callback) callback(false);
+                    if (callback) callback(true);
                 })
             }else{
                 MWF.xApplication.process.Xform.LP.form = Object.merge(MWF.xApplication.process.Xform.LP.form, languageJson);
                 if (callback) callback(true);
             }
         }else{
-            if (callback) callback();
+            if (callback) callback(true);
         }
 
     },
@@ -692,12 +713,18 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
         var tools = [];
         this._loadMobileDefaultTools(function () {
             if (this.json.defaultTools) {
+                var jsonStr = JSON.stringify(this.json.defaultTools);
+                jsonStr = o2.bindJson(jsonStr, {"lp": MWF.xApplication.process.Xform.LP.form});
+                this.json.defaultTools = JSON.parse(jsonStr);
                 this.json.defaultTools.each(function (tool) {
                     var flag = this._checkDefaultMobileActionItem(tool, this.options.readonly);
                     if (flag) tools.push(tool);
                 }.bind(this));
             }
             if (this.json.tools) {
+                var jsonStr = JSON.stringify(this.json.tools);
+                jsonStr = o2.bindJson(jsonStr, {"lp": MWF.xApplication.process.Xform.LP.form});
+                this.json.tools = JSON.parse(jsonStr);
                 this.json.tools.each(function (tool) {
                     var flag = this._checkCustomMobileActionItem(tool, this.options.readonly);
                     if (flag) tools.push(tool);
@@ -844,6 +871,7 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
             this.css.html5ActionButton.width = "100%";
             if (count == 2) this.css.html5ActionButton.width = "49%";
             tools.each(function (tool) {
+
                 var action = new Element("div", { "styles": this.css.html5ActionButton, "text": tool.text }).inject(node);
                 action.store("tool", tool);
                 action.addEvent("click", function (e) {
@@ -1142,22 +1170,22 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
                 }
         }
     },
-    _getModuleNodes: function (dom) {
+    _getModuleNodes: function (dom, dollarFlag ) {
         var moduleNodes = [];
         var subDom = dom.getFirst();
         while (subDom) {
             var mwftype = subDom.get("MWFtype") || subDom.get("mwftype");
             if (mwftype) {
                 var type = mwftype;
-                if (type.indexOf("$") === -1) {
+                if (type.indexOf("$") === -1 || dollarFlag===true) {
                     moduleNodes.push(subDom);
                 }
                 // && mwftype !== "tab$Content"
-                if (mwftype !== "datagrid" && mwftype !== "subSource" && mwftype !== "tab$Content") {
-                    moduleNodes = moduleNodes.concat(this._getModuleNodes(subDom));
+                if (mwftype !== "datagrid" && mwftype !== "datatable" && mwftype !== "subSource" && mwftype !== "tab$Content" && mwftype !== "datatemplate") {
+                    moduleNodes = moduleNodes.concat(this._getModuleNodes(subDom, dollarFlag));
                 }
             } else {
-                moduleNodes = moduleNodes.concat(this._getModuleNodes(subDom));
+                moduleNodes = moduleNodes.concat(this._getModuleNodes(subDom, dollarFlag));
             }
             subDom = subDom.getNext();
         }
@@ -1248,6 +1276,10 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
         //var data = Object.clone(this.businessData.data);
         var data = this.businessData.data;
         Object.each(this.forms, function (module, id) {
+
+            //对id类似于 xx..0..xx 的字段 不处理
+            if( id.indexOf("..") > 0 )return;
+
             if (module.json.type === "Opinion") {
 
                 if (issubmit) {
@@ -3657,10 +3689,10 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
                         //_self.addRetractMessage(json.data);
                         _self.app.notice(MWF.xApplication.process.Xform.LP.workRetract, "success");
                         _self.app.content.unmask();
+                        if (_self.mask) { _self.mask.hide(); _self.mask = null; }
                         _self.app.reload();
                         //}, null, _self.businessData.work.id);
                         this.close();
-                        if (_self.mask) { _self.mask.hide(); _self.mask = null; }
                     }.bind(this), function (xhr, text, error) {
                         _self.app.content.unmask();
                         var errorText = error + ":" + text;
@@ -4404,6 +4436,32 @@ MWF.xApplication.process.Xform.Form = MWF.APPForm = new Class(
                     o2.filterUrl("../x_desktop/appMobile.html?app=process.TaskCenter").toURI().go();
                 }
             }
+        }
+    },
+    /**
+     * @summary 获取组件的类型(小写).
+     * @param {Object|String} module - 组件或组件Id
+     * @return {String} 组件类型（小写）
+     * @example
+     * //假设有一个文本输入组件id为subject
+     * var module = this.form.get("subject");
+     * //moduleType 为 textfield;
+     * var moduleType = this.form.getApp().appForm.getModuleType();
+     * @example
+     * //假设有一个附件组件id为att,
+     * var moduleType = this.form.getApp().appForm.getModuleType("att");
+     * //moduleType 为 attachment;
+     */
+    getModuleType : function (module) {
+        if( typeOf(module) === "string" )module = this.all[module];
+        if( module ){
+            var moduleType = module.json.moduleName || "";
+            if( !moduleType ){
+                moduleType = typeOf(module.json.type) === "string" ? module.json.type.toLowerCase() : "";
+            }
+            return moduleType.toLowerCase();
+        }else{
+            return "";
         }
     }
 

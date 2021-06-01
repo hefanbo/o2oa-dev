@@ -1529,6 +1529,9 @@ MWF.xApplication.cms.ColumnManager.CategoryExplorer.Form = new Class({
             var _self = this;
             var options = {
                 "style": layout.desktop.formDesignerStyle,
+                "appId": "cms.FormDesigner"+_self.data.id,
+                "id": _self.data.id,
+                "application": _self.explorer.app.options.column.id,
                 "onQueryLoad": function(){
                     this.actions = _self.explorer.actions;
                     this.category = _self;
@@ -1788,7 +1791,7 @@ MWF.xApplication.cms.ColumnManager.CategoryExplorer.ViewExplorer =  new Class({
             this.saveExtContent();
         }
         if( repeated.length > 0 ){
-            var text = MWF.xApplication.cms.ColumnManager.LP.conflictedListNotice.replace("{text}", repeated.join("、"));
+            var text = MWF.xApplication.cms.ColumnManager.LP.conflictedListNotice.replace("{text}", repeated.join(","));
             this.app.notice( text, "error" );
         }
     },
@@ -1840,7 +1843,7 @@ MWF.xApplication.cms.ColumnManager.CategoryExplorer.ViewExplorer =  new Class({
             this.saveExtContent();
         }
         if( repeated.length > 0 ){
-            var text = MWF.xApplication.cms.ColumnManager.LP.conflictedViewNotice.replace("{text}", repeated.join("、"));
+            var text = MWF.xApplication.cms.ColumnManager.LP.conflictedViewNotice.replace("{text}", repeated.join(","));
             this.app.notice( text , "error");
         }
     },
@@ -2163,6 +2166,9 @@ MWF.xApplication.cms.ColumnManager.CategoryExplorer.View = new Class({
 
         }else if( this.data.type == "list" ){
             var options = {
+                "appId": "cms.ViewDesigner"+_self.data.id,
+                "id": _self.data.id,
+                "application": _self.explorer.app.options.column.id,
                 "onQueryLoad": function(){
                     this.actions = _self.explorer.actions;
                     this.category = _self;

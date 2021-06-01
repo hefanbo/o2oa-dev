@@ -1,5 +1,5 @@
 {
-  "name": "默认样式",
+  "name": MWF.xApplication.cms.FormDesigner.LP.formStyle.defaultStyle,
   "form": {
     "styles":{
       "background-color": "#f0f0f0"
@@ -7,7 +7,7 @@
   },
   "label": {
     "banner": {
-      "name": "横幅",
+      "name": MWF.xApplication.cms.FormDesigner.LP.formStyle.banner,
       "styles": {
         "background-color": "#3c76b7",
         "height": "40px",
@@ -20,7 +20,7 @@
     },
 
     "title": {
-      "name": "标题",
+      "name": MWF.xApplication.cms.FormDesigner.LP.formStyle.title,
       "styles": {
         "text-align": "center",
         "font-size": "24px",
@@ -32,7 +32,7 @@
     },
 
     "section": {
-      "name": "区段标题",
+      "name": MWF.xApplication.cms.FormDesigner.LP.formStyle.sectionTitle,
       "styles": {
         "height": "40px",
         "background-color": "#666666",
@@ -47,7 +47,7 @@
 
   "div": {
     "banner": {
-      "name": "横幅",
+      "name": MWF.xApplication.cms.FormDesigner.LP.formStyle.banner,
       "styles": {
         "background-color": "#3c76b7",
         "height": "40px",
@@ -60,7 +60,7 @@
     },
 
     "title": {
-      "name": "标题",
+      "name": MWF.xApplication.cms.FormDesigner.LP.formStyle.title,
       "styles": {
         "text-align": "center",
         "font-size": "24px",
@@ -71,7 +71,7 @@
       }
     },
     "section": {
-      "name": "区段",
+      "name": MWF.xApplication.cms.FormDesigner.LP.formStyle.section,
       "styles": {
         "background-color": "#FFF",
         "border": "1px solid #cccccc"
@@ -236,6 +236,74 @@
     }
   },
   "datagrid$Title": {
+    "styles": {
+      "background-color": "#dedede"
+    }
+  },
+  "datatable": {
+    "styles": {},
+    "tableStyles": {
+      "border-top": "1px solid #666666",
+      "border-left": "1px solid #666666"
+    },
+    "titleStyles": {
+      "height": "28px",
+      "cursor": "pointer",
+      "line-height": "28px",
+      "overflow": "hidden",
+      "opacity": 1,
+      "border-bottom": "1px solid #666666",
+      "background-color": "#dedede",
+      "border-right": "1px solid #666666"
+    },
+    "contentStyles": {
+      "text-align": "center",
+      "height": "30px",
+      "line-height": "30px",
+      "color": "#666",
+      "border-right": "1px solid #666666",
+      "border-bottom": "1px solid #666666"
+    },
+    "actionStyles": {
+      "border-right": "1px solid #666666",
+      "borderbottom": "1px solid #666666"
+    },
+    "editStyles": {
+      "background-color": "#fff6f6",
+      "text-align": "center",
+      "height": "30px",
+      "line-height": "30px",
+      "border-right": "1px solid #666666",
+      "border-bottom": "1px solid #666666"
+    },
+    "amountStyles": {
+      "font-weight": "bold",
+      "height": "30px",
+      "line-height": "30px",
+      "text-align": "center",
+      "background-color": "#dedede",
+      "border-right": "1px solid #666666",
+      "border-bottom": "1px solid #666666"
+    },
+    "itemTitleStyles": {
+      "height": "40px",
+      "background-color": "#ffffff",
+      "line-height": "30px",
+      "padding": "0px 15px",
+      "color": "#fb4747",
+      "font-size": "18px",
+      "font-weight": "bold",
+      "border-bottom": "0px solid #cccccc"
+    },
+    "properties": {
+      "width": "100%",
+      "border": "0",
+      "cellpadding": "3",
+      "cellspacing": "0",
+      "align": "center"
+    }
+  },
+  "datatable$Title": {
     "styles": {
       "background-color": "#dedede"
     }

@@ -6,9 +6,9 @@ import com.x.base.core.project.http.WrapOutBoolean;
 import com.x.base.core.project.jaxrs.WoCaptcha;
 
 public class CaptchaFactory {
-	static {
-		System.setProperty("java.awt.headless", "true");
-	}
+//	static {
+//		System.setProperty("java.awt.headless", "true");
+//	}
 
 	public WoCaptcha create() throws Exception {
 		return this.create(120, 50);
@@ -16,8 +16,8 @@ public class CaptchaFactory {
 
 	public WoCaptcha create(Integer width, Integer height) throws Exception {
 		try {
-			String url = Config.url_x_program_center_jaxrs("captcha", "create", "width", width.toString(), "height",
-					height.toString());
+			String url = Config.url_x_program_center_jaxrs("captcha", "v2", "create", "width", width.toString(),
+					"height", height.toString());
 			Wo o = CipherConnectionAction.get(false, url).getData(Wo.class);
 			return o;
 		} catch (Exception e) {

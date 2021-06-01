@@ -116,7 +116,28 @@ MWF.xApplication.query.QueryManager.LP = {
         "id": "数据应用标识",
         "firstPage": "数据应用主页",
         "controllerList": "管理者",
-        "available": "可用范围"
+        "available": "可用范围",
+
+        "changeIcon" : "更改图标",
+        "setManager" : "设置管理者",
+        "setAppManager" : "设置应用管理者",
+        "setUsableIdentity" : "设置可用身份",
+        "setUsableUnit" : "设置可用组织",
+        "setAppUsableIdentity" : "设置应用可用身份",
+        "setAppUsableUnit" : "设置应用可用组织"
+    },
+    "importer": {
+        "create": "新建导入模型",
+        "search": "搜索导入模型",
+        "searchText": "请输入关键字",
+
+        "noSelectNoticeText": "此数据应用现在还没有导入模型，您可以点击此处创建一个导入模型",
+        "loaded": "导入模型加载完毕",
+
+        "deleteProcessTitle": "删除导入模型确认",
+        "deleteProcess": "是否确定要删除当前导入模型？",
+        "deletePageTemplateTitle": "删除导入模型模板确认",
+        "deletePageTemplate": "是否确定要删除当前导入模型模板吗？"
     },
     "createSelectTemplate": "新建：选择模板",
     "templateCategory": "模板分类：",
@@ -124,5 +145,12 @@ MWF.xApplication.query.QueryManager.LP = {
     "selectorButton" : {
         "ok" : "确　定",
         "cancel" : "取 消"
+    },
+    "navi":{
+	    "viewConfig":"视图配置",
+        "statConfig":"统计配置",
+        "tableConfig":"数据表",
+        "statementConfig":"查询配置",
+        "queryProperty":"数据应用属性"
     }
 };
