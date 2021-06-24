@@ -9,4 +9,6 @@ o2server/x_message_assemble_communicate/pom.xml
 o2server/x_message_assemble_communicate/src/main/java/com/x/message/assemble/communicate/EmailNotificationConsumeQueue.java
 o2server/x_message_assemble_communicate/src/main/java/com/x/message/assemble/communicate/jaxrs/connector/ActionCreate.java
 o2server/x_message_assemble_communicate/src/main/java/com/x/message/assemble/communicate/ThisApplication.java
+o2server/x_processplatform_assemble_surface/src/main/java/com/x/processplatform/assemble/surface/jaxrs/work/ActionCreate.java
+o2server/x_processplatform_service_processing/src/main/java/com/x/processplatform/service/processing/jaxrs/work/ActionProcessing.java
 o2web/source/x_component_cms_Index/Main.js
